@@ -1,9 +1,11 @@
 package bio.knowledge.server.api;
 
+import bio.knowledge.server.impl.ControllerImpl;
 import bio.knowledge.server.model.InlineResponse200;
 
 import io.swagger.annotations.*;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -22,11 +24,11 @@ import javax.validation.constraints.*;
 @Controller
 public class TypesApiController implements TypesApi {
 
-
+	@Autowired ControllerImpl ctrl;
 
     public ResponseEntity<List<InlineResponse200>> linkedTypes() {
         // do some magic!
-        return new ResponseEntity<List<InlineResponse200>>(HttpStatus.OK);
+        return ctrl.linkedTypes();
     }
 
 }
