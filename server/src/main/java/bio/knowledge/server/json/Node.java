@@ -5,23 +5,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Node {
+public class Node extends IdentifiedObject {
 
-	private Long id;
 	private String name;
+	private String represents;
 	
 	private String networkId;
-
-	@JsonProperty("@id")
-	public Long getId() {
-		return id;
-	}
-
-	@JsonProperty("@id")
-	public void setId(Long id) {
-		System.out.println("123 node: " + id);
-		this.id = id;
-	}
 
 	@JsonProperty("n")
 	public String getName() {
@@ -32,13 +21,23 @@ public class Node {
 	public void setName(String name) {
 		this.name = name;
 	}
+	
+	@JsonProperty("r")
+	public String getRepresents() {
+		return represents;
+	}
+
+	@JsonProperty("r")
+	public void setRepresents(String represents) {
+		this.represents = represents;
+	}
 
 	public String getNetworkId() {
 		return networkId;
 	}
 
 	public void setNetworkId(String networkId) {
-		System.out.println("123 fullnode: " + networkId + ":" + id);
+		System.out.println("123 fullnode: " + networkId + ":" + getId());
 		this.networkId = networkId;
 	}
 		

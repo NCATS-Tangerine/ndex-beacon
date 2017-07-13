@@ -1,28 +1,21 @@
 package bio.knowledge.server.json;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Edge {
+public class Edge extends IdentifiedObject { // todo: properly do with types
 	
-	private Long id;
 	private String name;
 	private Long source;
 	private Long target;
 	
 	private Node subject;
 	private Node object;
-	
-	@JsonProperty("@id")
-	public Long getId() {
-		return id;
-	}
-	
-	@JsonProperty("@id")
-	public void setId(Long id) {
-		this.id = id;
-	}
+	private List<Citation> citations;
+	private List<Support> supports;
 
 	@JsonProperty("i")
 	public String getName() {
@@ -68,6 +61,22 @@ public class Edge {
 
 	public void setObject(Node object) {
 		this.object = object;
+	}
+	
+	public List<Citation> getCitations() {
+		return citations;
+	}
+	
+	public void setCitations(List<Citation> citations) {
+		this.citations = citations;
+	}
+	
+	public List<Support> getSupports() {
+		return supports;
+	}
+	
+	public void setSupports(List<Support> support) {
+		this.supports = support;
 	}
 
 }

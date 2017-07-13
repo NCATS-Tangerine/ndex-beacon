@@ -16,6 +16,10 @@ public class Util {
 		return collection.stream().map(f).collect(Collectors.toList());
 	}
 	
+	public static <T> List<T> filter(Predicate<T> p, Collection<T> collection) {
+		return collection.stream().filter(p).collect(Collectors.toList());
+	}
+	
 //	public static <T> List<T> filter(Predicate<T> p, T[] array) {
 //		return Arrays.stream(array).filter(p).collect(Collectors.toList());
 //	}
@@ -24,8 +28,8 @@ public class Util {
 		return Arrays.stream(array).map(f).collect(Collectors.toList());
 	}
 	
-	public static <T,R> List<R> flatmapList(Function<T,List<R>> f, List<T> list) {
-		return list.stream().map(f).flatMap(List::stream).collect(Collectors.toList());
+	public static <T,R> List<R> flatmapList(Function<T,Collection<R>> f, Collection<T> collection) {
+		return collection.stream().map(f).flatMap(Collection::stream).collect(Collectors.toList());
 	}
 
 	public static <T,R> List<R> flatmap(Function<T,R[]> f, List<T> list) {
