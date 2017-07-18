@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Edge extends IdentifiedObject { // todo: properly do with types
+public class Edge extends PropertiedObject {
 	
 	private String name;
 	private Long source;

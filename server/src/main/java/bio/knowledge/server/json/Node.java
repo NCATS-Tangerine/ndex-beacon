@@ -1,11 +1,10 @@
 package bio.knowledge.server.json;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Node extends IdentifiedObject {
+public class Node extends PropertiedObject {
 
 	private String name;
 	private String represents;

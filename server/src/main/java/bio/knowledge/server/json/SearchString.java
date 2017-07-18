@@ -1,6 +1,6 @@
 package bio.knowledge.server.json;
 
-public class SearchString { // todo: renaame
+public class SearchString {
 
 	private String searchString;
 	

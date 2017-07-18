@@ -3,7 +3,7 @@ package bio.knowledge.server.json;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class EdgeSupport extends IdentifyingObject { // todo: delete?
+public class EdgeSupport extends IdentifyingObject {
 
 	private Long[] supports;
 

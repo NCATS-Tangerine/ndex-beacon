@@ -1,14 +1,20 @@
 package bio.knowledge.server.json;
 
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+import bio.knowledge.server.impl.StringListDeserializer;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Attribute {
 	
 	private Long id;
 	private String name;
-	private String value;
+	private List<String> value;
 	
 	@JsonProperty("po")
 	public Long getId() {
@@ -17,7 +23,6 @@ public class Attribute {
 
 	@JsonProperty("po")
 	public void setId(Long id) {
-		System.out.println("123 node id: " + id);
 		this.id = id;
 	}
 	
@@ -28,19 +33,20 @@ public class Attribute {
 
 	@JsonProperty("n")
 	public void setName(String name) {
-		System.out.println("123 node name: " + name);
-		if (name.equals("HGNC")) System.out.println("123 FOUND IT");
+		System.out.println("123 name : " + name);
 		this.name = name;
 	}
 	
 	@JsonProperty("v")
-	public String getValue() {
+	public List<String> getValues() {
 		return value;
 	}
 
-	@JsonProperty("v") // todo: refactor with property...
-	public void setValue(String value) {
-		System.out.println("123 node val: " + value);
+	@JsonProperty("v")
+	@JsonDeserialize(using = StringListDeserializer.class)
+	public void setValues(List<String> value) {
+		System.out.println("123 value: " + value);
 		this.value = value;
 	}
+
 }

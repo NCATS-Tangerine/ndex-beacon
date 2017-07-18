@@ -18,7 +18,6 @@ import bio.knowledge.server.json.SearchString;
 public class NdexClient {
 
 	
-	// todo: test with nulls
 	private RestTemplate rest;
 	private HttpHeaders headers;
 	
@@ -70,7 +69,6 @@ public class NdexClient {
 		return future;
 	}
 	
-	// todo: delete
 	public Network advancedQueryNetwork(String networkId, AdvancedQuery nodeSearch) {	
 
 		try {

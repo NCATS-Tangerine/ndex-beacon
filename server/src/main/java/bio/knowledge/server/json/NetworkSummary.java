@@ -2,7 +2,6 @@ package bio.knowledge.server.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-// todo: delete?
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class NetworkSummary extends NetworkId {
 

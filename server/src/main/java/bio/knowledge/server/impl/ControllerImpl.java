@@ -2,7 +2,9 @@ package bio.knowledge.server.impl;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -28,20 +30,26 @@ import bio.knowledge.server.model.InlineResponse2001;
 import bio.knowledge.server.model.InlineResponse2002;
 import bio.knowledge.server.model.InlineResponse2003;
 import bio.knowledge.server.model.InlineResponse2004;
-import bio.knowledge.server.transl.Graph;
-import bio.knowledge.server.transl.SearchBuilder;
-import bio.knowledge.server.transl.Translator;
 
 @Service
 public class ControllerImpl {
+	
+	// todo: combine results if several equivalent matches
+	// todo: type field
 					
 	// todo: handle bad input eg don't ask ndex if blank
-		
+	// todo: return nicely if invalid eg statement id	
+	
 	// todo: paging
 	// todo: stop once found enough
-
-//	 todo: semantic group, details, synonyms, alias for exactmatch, linkedtypes, predicateId
 	
+	// todo: take advantage of HGNC (etc fields) somehow
+	// todo: maybe try context?
+	// todo: use indra
+	// todo: find other useful fields
+	
+	// todo: redo search with curie(s) if found; todo: try to find curie?
+				
 	@Autowired
 	private SearchBuilder searchBuilder;
 	
@@ -69,19 +77,6 @@ public class ControllerImpl {
 	}
 	
 	
-	private boolean isNdexId(String conceptId) {
-		
-		try {
-			if (conceptId.length() >= 38) {
-				UUID.fromString(conceptId.substring(0, 36));
-				return conceptId.charAt(36) == ':';
-			}
-		
-		} catch (IllegalArgumentException e) {}
-		
-		return false;
-	}
-	
 	private CompletableFuture<Network> get(CompletableFuture<Network> future) {
 		
 		return CompletableFuture.supplyAsync(() -> {
@@ -94,10 +89,22 @@ public class ControllerImpl {
 		
 		});
 	}
-	
-	private List<Graph> search(Function<String, BasicQuery> makeJson, Function<String, String> makeLucene,  String rawString, int pageNumber, int pageSize) {
+
+	private boolean isNdexId(String conceptId) {
 		
-		String luceneSearch = makeLucene.apply(rawString);
+		try {
+			if (conceptId.length() >= 38) {
+				UUID.fromString(conceptId.substring(0, 36));
+				return conceptId.charAt(36) == ':';
+			}
+		
+		} catch (IllegalArgumentException e) {}
+		
+		return false;
+	}
+		
+	private List<Graph> search(Function<String, BasicQuery> makeJson, String luceneSearch, int pageNumber, int pageSize) {
+		
 		SearchString networkSearch = searchBuilder.networksBy(luceneSearch);
 		BasicQuery subnetQuery = makeJson.apply(luceneSearch);
 		
@@ -122,47 +129,49 @@ public class ControllerImpl {
 		return graphs;
 	}
 	
-	private List<Graph> searchById(Function<String, BasicQuery> makeJson, String conceptId) {
+	private List<Graph> searchByIds(Function<String, BasicQuery> makeJson, List<String> c) {
 		
+		List<String> realCuries = new ArrayList<>();
 		List<Graph> graphs = new ArrayList<>();
 		
-		if (isNdexId(conceptId)) {
-		
-			String[] half = conceptId.split(":", 2);
-			String networkId = half[0];
-			String nodeId = half[1];
-		
-			String luceneSearch = searchBuilder.id(nodeId);
-			BasicQuery subnetQuery = makeJson.apply(luceneSearch);
+		for (String conceptId : c) {
+			if (isNdexId(conceptId)) {
 			
-			try {
-				Network network = ndex.queryNetwork(networkId, subnetQuery).get(TIMEOUT, TIMEUNIT);
-				Graph graph = new Graph(network);
-				graphs.add(graph);
+				String[] half = conceptId.split(":", 2);
+				String networkId = half[0];
+				String nodeId = half[1];
+			
+				String luceneSearch = searchBuilder.id(nodeId);
+				BasicQuery subnetQuery = makeJson.apply(luceneSearch);
 				
-			} catch (InterruptedException | ExecutionException | TimeoutException e) {
+				try {
+					Network network = ndex.queryNetwork(networkId, subnetQuery).get(TIMEOUT, TIMEUNIT);
+					Graph graph = new Graph(network);
+					graphs.add(graph);
+					
+				} catch (InterruptedException | ExecutionException | TimeoutException e) {
+				}
+				
+			} else {
+				realCuries.add(conceptId);
 			}
+		}
+		
+		if (!realCuries.isEmpty()) {
+		
+			List<String> phrases = Util.map(searchBuilder::phrase, realCuries);
+			String luceneSearch = searchBuilder.or(phrases);
 			
-		} else {
-			graphs = search(makeJson, searchBuilder::phrase, conceptId, 0, PAGE_SIZE);
+			List<Graph> results = search(makeJson, luceneSearch, 0, PAGE_SIZE);
+			graphs.addAll(results);
+		
 		}
 		
 		return graphs;
 	}
 	
 	
-	public ResponseEntity<List<InlineResponse2001>> getConceptDetails(String conceptId) {
-		
-		conceptId = fix(conceptId);
-			
-		List<Graph> graphs = searchById(searchBuilder::nodesBy, conceptId);		
-		Collection<Node> nodes = Util.flatmapList(Graph::getNodes, graphs);
-		List<InlineResponse2001>  conceptDetails = Util.map(translator::nodeToConceptDetails, nodes);
-		
-		return ResponseEntity.ok(conceptDetails);
-	}
-
-	// todo: get label for cases like 55c84fa4-01b4-11e5-ac0f-000c29cb28fb AKT (debug 1)
+	// todo: get label for cases like 55c84fa4-01b4-11e5-ac0f-000c29cb28fb AKT (debug 1) (function weirdness)
 	// todo: ignore null named?
 	public ResponseEntity<List<InlineResponse2002>> getConcepts(
 			String keywords, String semgroups, Integer pageNumber, Integer pageSize) {
@@ -172,13 +181,41 @@ public class ControllerImpl {
 		pageNumber = fix(pageNumber) - 1;
 		pageSize = fix(pageSize);
 		
-		List<Graph> graphs = search(searchBuilder::nodesBy, searchBuilder::startsWith, keywords, pageNumber, pageSize);		
-		Collection<Node> nodes = Util.flatmapList(Graph::getNodes, graphs);		
+		String luceneSearch = searchBuilder.startsWith(keywords);
+		List<Graph> graphs = search(searchBuilder::nodesBy, luceneSearch, pageNumber, pageSize);		
+		Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);		
 		List<InlineResponse2002> concepts = Util.map(translator::nodeToConcept, nodes);
 		
 		return ResponseEntity.ok(concepts);
 	}
 	
+	public ResponseEntity<List<InlineResponse2001>> getConceptDetails(String conceptId) {
+		
+		conceptId = fix(conceptId);
+			
+		List<Graph> graphs = searchByIds(searchBuilder::nodesBy, Util.list(conceptId));		
+		Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
+		List<InlineResponse2001>  conceptDetails = Util.map(translator::nodeToConceptDetails, nodes);
+		
+		return ResponseEntity.ok(conceptDetails);
+	}
+
+	
+	public ResponseEntity<List<InlineResponse2003>> getStatements(
+			List<String> c, Integer pageNumber, Integer pageSize, String keywords, String semgroups) {
+		
+		c = fix(c);
+		pageNumber = fix(pageNumber) - 1;
+		pageSize = fix(pageSize);
+		keywords = fix(keywords); // todo: handle
+		semgroups = fix(semgroups);
+		
+		List<Graph> graphs = searchByIds(searchBuilder::edgesBy, c);		
+		Collection<Edge> edges = Util.flatmap(Graph::getEdges, graphs);
+		List<InlineResponse2003> statements = Util.map(translator::edgeToStatement, edges);
+		
+		return ResponseEntity.ok(statements);
+	}
 
 	public ResponseEntity<List<InlineResponse2004>> getEvidence(
 			String statementId, String keywords, Integer pageNumber, Integer pageSize) {
@@ -192,7 +229,8 @@ public class ControllerImpl {
 		String conceptId = statementId.substring(0, split);
 		Long statement = Long.valueOf(statementId.substring(split + 1));
 		
-		Collection<Edge> relatedEdges = getEdges(conceptId);
+		List<Graph> graphs = searchByIds(searchBuilder::edgesBy, Util.list(conceptId));		
+		Collection<Edge> relatedEdges = Util.flatmap(Graph::getEdges, graphs);
 		
 		Predicate<Edge> wasRequested = e -> e.getId().equals(statement);
 		Edge edge = Util.filter(wasRequested, relatedEdges).get(0);
@@ -204,45 +242,45 @@ public class ControllerImpl {
 	}
 	
 
+	private Set<String> getAliases(List<String> c) {
+		
+		List<Graph> graphs = searchByIds(searchBuilder::nodesBy, c);		
+		Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
+		
+		Function<Node, List<String>> getAliases = Util.curryRight(Node::get, "alias");
+		List<String> aliases = Util.flatmap(getAliases, nodes);
+		
+		Set<String> set = new HashSet<>();
+		set.addAll(aliases);
+		
+		return set;
+	}
+
 	public ResponseEntity<List<String>> getExactMatchesToConcept(String conceptId) {
-		// TODO Auto-generated method stub
-		return null;
+		
+		conceptId = fix(conceptId);
+		
+		Set<String> set = getAliases(Util.list(conceptId));
+		set.add(conceptId);
+		
+		List<String> exactMatches = Util.list(set);
+		return ResponseEntity.ok(exactMatches);
 	}
 	
-
 	public ResponseEntity<List<String>> getExactMatchesToConceptList(List<String> c) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-	
-	public Collection<Edge> getEdges(String conceptId) {
-		
-		List<Graph> graphs = searchById(searchBuilder::edgesBy, conceptId);		
-		Collection<Edge> edges = Util.flatmapList(Graph::getEdges, graphs);
-		return edges;
-	}
-	
-	
-	// todo: in this and get concepts method, handle outside curies (eg HGNC) as (exactmatch) names
-	public ResponseEntity<List<InlineResponse2003>> getStatements(
-			List<String> c, Integer pageNumber, Integer pageSize, String keywords, String semgroups) {
-		
-		c = fix(c);
-		pageNumber = fix(pageNumber) - 1;
-		pageSize = fix(pageSize);
-		keywords = fix(keywords); // todo: handle
-		semgroups = fix(semgroups);
-		
-		List<Edge> edges = Util.flatmapList(this::getEdges, c);  // todo: nicer naming
-		List<InlineResponse2003> statements = Util.map(translator::edgeToStatement, edges);
-		return ResponseEntity.ok(statements);
-	}
 
+		c = fix(c);
+		
+		Set<String> set = getAliases(c);
+		set.removeAll(c);
+		
+		List<String> exactMatches = Util.list(set);
+		return ResponseEntity.ok(exactMatches);
+	}
+	
 	
 	public ResponseEntity<List<InlineResponse200>> linkedTypes() {
-		// TODO Auto-generated method stub
-		return null;
+		return ResponseEntity.ok(new ArrayList<>());
 	}
 
 }

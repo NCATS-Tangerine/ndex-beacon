@@ -4,9 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Aspect {
-	
-	// todo: document shouldn't return null
-	
+		
 	private NetworkId[] ndexStatus = new NetworkId[0];
 	private Node[] nodes = new Node[0];
 	private Edge[] edges = new Edge[0];
