@@ -54,8 +54,12 @@ public class Graph {
 	
 	private void addNodes(Node[] n) {
 		if (n.length == 0) return;
-		for (Node node : n)
+		
+		for (Node node : n) {
 			nodes.put(node.getId(), node);
+			if (!Node.isCurie(node.getRepresents()))
+				node.setRepresents(null);
+		}
 	}
 	
 	private void addCitations(Citation[] c) {

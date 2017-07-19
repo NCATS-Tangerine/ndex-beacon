@@ -2,14 +2,17 @@ package bio.knowledge.server.impl;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -17,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import bio.knowledge.server.json.Attribute;
 import bio.knowledge.server.json.BasicQuery;
 import bio.knowledge.server.json.Citation;
 import bio.knowledge.server.json.Edge;
@@ -33,22 +37,34 @@ import bio.knowledge.server.model.InlineResponse2004;
 
 @Service
 public class ControllerImpl {
-	
-	// todo: combine results if several equivalent matches
-	// todo: type field
-					
-	// todo: handle bad input eg don't ask ndex if blank
-	// todo: return nicely if invalid eg statement id	
+						
+	// todo: handle bad input
+	// - option: don't ask ndex if blank
+	// - need: return nicely if invalid 
+	//   - example: statement id	
 	
 	// todo: paging
-	// todo: stop once found enough
+	// - option: only return node if has real curie?
+	// - option: try to boost relevant results
+	// - option: change default pagesize
+	// - option: stop once found enough
+	// - option: redo search with curie(s) if found
+	// - option: ignore null named?
+	//   - example: no label for cases like 55c84fa4-01b4-11e5-ac0f-000c29cb28fb AKT (debug 1) (function weirdness)
 	
-	// todo: take advantage of HGNC (etc fields) somehow
-	// todo: maybe try context?
-	// todo: use indra
-	// todo: find other useful fields
+	// todo: improve exactmatches
+	//  - option: take advantage of HGNC, bp:id, bp:db (etc fields) somehow
 	
-	// todo: redo search with curie(s) if found; todo: try to find curie?
+	// todo: get more details
+	// - option: use indra
+		
+	// todo: use non- colon for ndexids...
+	
+	// todo: block non-curie, non-ndex conceptIds
+	
+	// todo: fix: remove property duplicates
+	
+	// todo: deserialize aspectlist properly
 				
 	@Autowired
 	private SearchBuilder searchBuilder;
@@ -90,6 +106,7 @@ public class ControllerImpl {
 		});
 	}
 
+	
 	private boolean isNdexId(String conceptId) {
 		
 		try {
@@ -171,8 +188,42 @@ public class ControllerImpl {
 	}
 	
 	
-	// todo: get label for cases like 55c84fa4-01b4-11e5-ac0f-000c29cb28fb AKT (debug 1) (function weirdness)
-	// todo: ignore null named?
+	private void combineDuplicates(Collection<Node> nodes) {
+		
+		Predicate<Node> hasCurie = n -> n.getRepresents() != null || n.has("alias");
+		List<Node> nodesWithCuries = Util.filter(hasCurie, nodes);
+		
+		Map<String, Node> aliasing = new HashMap<>();
+		
+		for (Node node : nodesWithCuries) {
+			
+			List<String> aliases = node.get("alias");
+			if (node.getRepresents() != null)
+				aliases.add(node.getRepresents());
+			
+			for (String alias : aliases) {
+				if (aliasing.containsKey(alias)) {
+					
+					Node canonical = aliasing.get(alias);
+//					if (node.has("type") && !canonical.has("type"))
+//						canonical.addAttribute(node.getAttribute("type"));
+					
+					Consumer<Attribute> attachAttribute = a -> canonical.addAttribute(a);
+					node.getAttributes().forEach(attachAttribute);
+					
+					if (!node.getName().equals(canonical.getName()))
+						canonical.addSynonym(node.getName());
+					
+					nodes.remove(node);
+					
+				} else {
+					aliasing.put(alias, node);
+				}
+			}
+		}
+		
+	}
+	
 	public ResponseEntity<List<InlineResponse2002>> getConcepts(
 			String keywords, String semgroups, Integer pageNumber, Integer pageSize) {
 		
@@ -183,7 +234,8 @@ public class ControllerImpl {
 		
 		String luceneSearch = searchBuilder.startsWith(keywords);
 		List<Graph> graphs = search(searchBuilder::nodesBy, luceneSearch, pageNumber, pageSize);		
-		Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);		
+		Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
+		combineDuplicates(nodes);
 		List<InlineResponse2002> concepts = Util.map(translator::nodeToConcept, nodes);
 		
 		return ResponseEntity.ok(concepts);
@@ -195,6 +247,7 @@ public class ControllerImpl {
 			
 		List<Graph> graphs = searchByIds(searchBuilder::nodesBy, Util.list(conceptId));		
 		Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
+		combineDuplicates(nodes);
 		List<InlineResponse2001>  conceptDetails = Util.map(translator::nodeToConceptDetails, nodes);
 		
 		return ResponseEntity.ok(conceptDetails);
@@ -241,7 +294,7 @@ public class ControllerImpl {
 		return ResponseEntity.ok(evidence);
 	}
 	
-
+// todo: call from getstatements
 	private Set<String> getAliases(List<String> c) {
 		
 		List<Graph> graphs = searchByIds(searchBuilder::nodesBy, c);		

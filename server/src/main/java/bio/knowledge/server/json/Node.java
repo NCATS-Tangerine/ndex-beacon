@@ -1,7 +1,12 @@
 package bio.knowledge.server.json;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import bio.knowledge.server.impl.Util;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Node extends PropertiedObject {
@@ -10,7 +15,18 @@ public class Node extends PropertiedObject {
 	private String represents;
 	
 	private String networkId;
+	private List<String> synonyms = new ArrayList<>();
+	
+	public static boolean isCurie(String string) {
+		return string != null && string.matches("^([^ :]+:)?[^ ]+$"); //string.matches("^(([\\i-[:]][\\c-[:]]*)?:)?.+$"); // ^(([\i-[:]][\c-[:]]*)?:)?.+$
+	}
 
+	private void makeRepresentsCurie() {		
+		List<String> curieAliases = Util.filter(Node::isCurie, get("alias"));		
+		if (!isCurie(represents) && !curieAliases.isEmpty())
+			setRepresents(curieAliases.get(0));
+	}
+	
 	@JsonProperty("n")
 	public String getName() {
 		return name;
@@ -38,6 +54,20 @@ public class Node extends PropertiedObject {
 	public void setNetworkId(String networkId) {
 		System.out.println("123 fullnode: " + networkId + ":" + getId());
 		this.networkId = networkId;
+	}
+	
+	public List<String> getSynonyms() {
+		return synonyms;
+	}
+
+	public void addSynonym(String synonym) {
+		synonyms.add(synonym);
+	}
+	
+	@Override
+	public void addAttribute(Attribute a) {
+		super.addAttribute(a);
+		makeRepresentsCurie();
 	}
 		
 }

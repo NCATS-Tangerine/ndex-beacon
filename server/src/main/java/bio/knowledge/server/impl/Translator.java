@@ -2,6 +2,7 @@ package bio.knowledge.server.impl;
 
 
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.springframework.stereotype.Service;
@@ -38,15 +39,19 @@ public class Translator {
 	}
 	
 	private String makeSemGroup(Node node) { 
-		List<String> types = node.get("type");
-		if (types.isEmpty()) return "OBJC";
-		String type = types.get(0);
 		
-		switch (type.toLowerCase().replace(" ", "")) {
-			case "protein": return "CHEM";
-			case "smallmolecule": return "CHEM";
-			default: return "OBJC";
+		List<String> types = node.getByRegex("^.+[Tt]ype$");
+		
+		for (String type : types) {
+			switch (type.toLowerCase().replace(" ", "")) {
+				case "disease": return "DISO";
+				case "protein": return "CHEM";
+				case "smallmolecule": return "CHEM";
+				case "smallmoleculedrug": return "CHEM";
+			}
 		}
+		
+		return "OBJC";
 	}
 	
 	
@@ -57,6 +62,7 @@ public class Translator {
 		concept.setId(makeId(node));
 		concept.setName(node.getName());
 		concept.setSemanticGroup(makeSemGroup(node));
+		concept.setSynonyms(node.getSynonyms());
 		
 		return concept;
 	}
@@ -83,11 +89,15 @@ public class Translator {
 		
 		InlineResponse2001 conceptDetails = new InlineResponse2001();
 		
-		List<ConceptsconceptIdDetails> details = Util.flatmap(this::attributeToDetails, node.getAttributes());
 		
 		conceptDetails.setId(makeId(node));
 		conceptDetails.setName(node.getName());
 		conceptDetails.setSemanticGroup(makeSemGroup(node));
+		
+		Consumer<String> addSynonym = s -> conceptDetails.addSynonymsItem(s);
+		node.getSynonyms().forEach(addSynonym);
+
+		List<ConceptsconceptIdDetails> details = Util.flatmap(this::attributeToDetails, node.getAttributes());
 		conceptDetails.setDetails(details);
 		
 		return conceptDetails;
