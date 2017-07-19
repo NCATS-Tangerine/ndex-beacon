@@ -35,12 +35,12 @@ public class Translator {
 	}
 	
 	private String makeId(Edge edge) {
-		return makeNdexId(edge.getSubject()) + ":" + edge.getId();
+		return makeNdexId(edge.getSubject()) + "_" + edge.getId();
 	}
 	
-	private String makeSemGroup(Node node) { 
+	public String makeSemGroup(Node node) { 
 		
-		List<String> types = node.getByRegex("^.+[Tt]ype$");
+		List<String> types = node.getByRegex("(?i).+type");
 		
 		for (String type : types) {
 			switch (type.toLowerCase().replace(" ", "")) {

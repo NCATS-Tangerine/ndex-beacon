@@ -1,6 +1,7 @@
 package bio.knowledge.server.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,22 +53,20 @@ public class ControllerImpl {
 	// - option: ignore null named?
 	//   - example: no label for cases like 55c84fa4-01b4-11e5-ac0f-000c29cb28fb AKT (debug 1) (function weirdness)
 	
+	// todo: handle keywords for statements + other fields...
+	
+	
+	/*
+	 * extras...
 	// todo: improve exactmatches
 	//  - option: take advantage of HGNC, bp:id, bp:db (etc fields) somehow
 	
 	// todo: get more details
 	// - option: use indra
-		
-	// todo: use non- colon for ndexids...
+	*/
 	
-	// todo: block non-curie, non-ndex conceptIds
-	
-	// todo: fix: remove property duplicates
-	
-	// todo: deserialize aspectlist properly
-				
 	@Autowired
-	private SearchBuilder searchBuilder;
+	private SearchBuilder search;
 	
 	@Autowired
 	private NdexClient ndex;
@@ -81,7 +80,7 @@ public class ControllerImpl {
 		
 	
 	private static Integer fix(Integer integer) {
-		return integer == null? 1 : integer;
+		return integer == null || integer < 1 ? 1 : integer;
 	}
 	
 	private static String fix(String string) {
@@ -120,9 +119,13 @@ public class ControllerImpl {
 		return false;
 	}
 		
+	private String restrictQuery(String query) {
+		return search.and(query, search.edgeCount(1, 499000));
+	}
+	
 	private List<Graph> search(Function<String, BasicQuery> makeJson, String luceneSearch, int pageNumber, int pageSize) {
 		
-		SearchString networkSearch = searchBuilder.networksBy(luceneSearch);
+		SearchString networkSearch = search.networksBy(restrictQuery(luceneSearch));
 		BasicQuery subnetQuery = makeJson.apply(luceneSearch);
 		
 		NetworkList networks = ndex.searchNetworks(networkSearch, pageNumber, pageSize);
@@ -158,10 +161,11 @@ public class ControllerImpl {
 				String networkId = half[0];
 				String nodeId = half[1];
 			
-				String luceneSearch = searchBuilder.id(nodeId);
+				String luceneSearch = search.id(nodeId);
 				BasicQuery subnetQuery = makeJson.apply(luceneSearch);
 				
 				try {
+					// todo: this needs to be a future
 					Network network = ndex.queryNetwork(networkId, subnetQuery).get(TIMEOUT, TIMEUNIT);
 					Graph graph = new Graph(network);
 					graphs.add(graph);
@@ -169,15 +173,15 @@ public class ControllerImpl {
 				} catch (InterruptedException | ExecutionException | TimeoutException e) {
 				}
 				
-			} else {
+			} else if (Node.isCurie(conceptId)){
 				realCuries.add(conceptId);
 			}
 		}
 		
 		if (!realCuries.isEmpty()) {
 		
-			List<String> phrases = Util.map(searchBuilder::phrase, realCuries);
-			String luceneSearch = searchBuilder.or(phrases);
+			List<String> phrases = Util.map(search::phrase, realCuries);
+			String luceneSearch = search.or(phrases);
 			
 			List<Graph> results = search(makeJson, luceneSearch, 0, PAGE_SIZE);
 			graphs.addAll(results);
@@ -187,8 +191,24 @@ public class ControllerImpl {
 		return graphs;
 	}
 	
-	
+	private Set<String> getAliases(List<String> c) {
+		
+		List<Graph> graphs = searchByIds(search::nodesBy, c);		
+		Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
+		
+		Function<Node, List<String>> getAliases = Util.curryRight(Node::get, "alias");
+		List<String> aliases = Util.flatmap(getAliases, nodes);
+		List<String> curies = Util.filter(Node::isCurie, aliases);
+		
+		Set<String> set = new HashSet<>();
+		set.addAll(curies);
+		
+		return set;
+	}
+		
 	private void combineDuplicates(Collection<Node> nodes) {
+		
+		// todo: get edges etc
 		
 		Predicate<Node> hasCurie = n -> n.getRepresents() != null || n.has("alias");
 		List<Node> nodesWithCuries = Util.filter(hasCurie, nodes);
@@ -197,7 +217,7 @@ public class ControllerImpl {
 		
 		for (Node node : nodesWithCuries) {
 			
-			List<String> aliases = node.get("alias");
+			Set<String> aliases = new HashSet<>(node.get("alias"));
 			if (node.getRepresents() != null)
 				aliases.add(node.getRepresents());
 			
@@ -205,8 +225,6 @@ public class ControllerImpl {
 				if (aliasing.containsKey(alias)) {
 					
 					Node canonical = aliasing.get(alias);
-//					if (node.has("type") && !canonical.has("type"))
-//						canonical.addAttribute(node.getAttribute("type"));
 					
 					Consumer<Attribute> attachAttribute = a -> canonical.addAttribute(a);
 					node.getAttributes().forEach(attachAttribute);
@@ -224,6 +242,17 @@ public class ControllerImpl {
 		
 	}
 	
+	private Collection<Node> filterTypes(Collection<Node> nodes, String semgroups) {
+		
+		if (semgroups.isEmpty()) return nodes;
+		
+		List<String> types = Arrays.asList(semgroups.split(" "));		
+		Predicate<Node> hasType = n -> types.contains(translator.makeSemGroup(n));
+		nodes = Util.filter(hasType, nodes);
+		return nodes;
+	}
+
+	
 	public ResponseEntity<List<InlineResponse2002>> getConcepts(
 			String keywords, String semgroups, Integer pageNumber, Integer pageSize) {
 		
@@ -232,12 +261,14 @@ public class ControllerImpl {
 		pageNumber = fix(pageNumber) - 1;
 		pageSize = fix(pageSize);
 		
-		String luceneSearch = searchBuilder.startsWith(keywords);
-		List<Graph> graphs = search(searchBuilder::nodesBy, luceneSearch, pageNumber, pageSize);		
+		String luceneSearch = search.startsWith(keywords);
+		List<Graph> graphs = search(search::nodesBy, luceneSearch, pageNumber, pageSize);		
+		
 		Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
 		combineDuplicates(nodes);
-		List<InlineResponse2002> concepts = Util.map(translator::nodeToConcept, nodes);
+		Collection<Node> ofType = filterTypes(nodes, semgroups);
 		
+		List<InlineResponse2002> concepts = Util.map(translator::nodeToConcept, ofType);
 		return ResponseEntity.ok(concepts);
 	}
 	
@@ -245,7 +276,7 @@ public class ControllerImpl {
 		
 		conceptId = fix(conceptId);
 			
-		List<Graph> graphs = searchByIds(searchBuilder::nodesBy, Util.list(conceptId));		
+		List<Graph> graphs = searchByIds(search::nodesBy, Util.list(conceptId));		
 		Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
 		combineDuplicates(nodes);
 		List<InlineResponse2001>  conceptDetails = Util.map(translator::nodeToConceptDetails, nodes);
@@ -263,8 +294,15 @@ public class ControllerImpl {
 		keywords = fix(keywords); // todo: handle
 		semgroups = fix(semgroups);
 		
-		List<Graph> graphs = searchByIds(searchBuilder::edgesBy, c);		
-		Collection<Edge> edges = Util.flatmap(Graph::getEdges, graphs);
+		Set<String> aliases = getAliases(c);
+		aliases.addAll(c);
+		
+		List<Graph> graphs = searchByIds(search::edgesBy, Util.list(aliases));
+		
+		Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
+		Collection<Node> ofType = filterTypes(nodes, semgroups);
+		
+		Collection<Edge> edges = Util.flatmap(Node::getEdges, ofType);
 		List<InlineResponse2003> statements = Util.map(translator::edgeToStatement, edges);
 		
 		return ResponseEntity.ok(statements);
@@ -278,11 +316,11 @@ public class ControllerImpl {
 		pageNumber = fix(pageNumber) - 1;
 		pageSize = fix(pageSize);
 		
-		int split = statementId.lastIndexOf(":");
-		String conceptId = statementId.substring(0, split);
-		Long statement = Long.valueOf(statementId.substring(split + 1));
+		String[] half = statementId.split("_", 2);
+		String conceptId = half[0];
+		Long statement = Long.valueOf(half[1]);
 		
-		List<Graph> graphs = searchByIds(searchBuilder::edgesBy, Util.list(conceptId));		
+		List<Graph> graphs = searchByIds(search::edgesBy, Util.list(conceptId));		
 		Collection<Edge> relatedEdges = Util.flatmap(Graph::getEdges, graphs);
 		
 		Predicate<Edge> wasRequested = e -> e.getId().equals(statement);
@@ -293,28 +331,16 @@ public class ControllerImpl {
 		
 		return ResponseEntity.ok(evidence);
 	}
+
 	
-// todo: call from getstatements
-	private Set<String> getAliases(List<String> c) {
-		
-		List<Graph> graphs = searchByIds(searchBuilder::nodesBy, c);		
-		Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
-		
-		Function<Node, List<String>> getAliases = Util.curryRight(Node::get, "alias");
-		List<String> aliases = Util.flatmap(getAliases, nodes);
-		
-		Set<String> set = new HashSet<>();
-		set.addAll(aliases);
-		
-		return set;
-	}
 
 	public ResponseEntity<List<String>> getExactMatchesToConcept(String conceptId) {
 		
 		conceptId = fix(conceptId);
 		
 		Set<String> set = getAliases(Util.list(conceptId));
-		set.add(conceptId);
+		if (Node.isCurie(conceptId))
+			set.add(conceptId);
 		
 		List<String> exactMatches = Util.list(set);
 		return ResponseEntity.ok(exactMatches);

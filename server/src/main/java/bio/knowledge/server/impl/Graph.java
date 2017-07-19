@@ -33,14 +33,12 @@ public class Graph {
 			addCitations(a.getCitations());
 			
 			annotateNodesWithNetworkId(a.getNdexStatus());
-			
 			connectAttributesToNodes(a.getNodeAttributes());
 			connectAttributesToEdges(a.getEdgeAttributes());
 
-			connectEdgesToNodes(a.getEdges());
+			connectNodesAndEdges(a.getEdges());
 			connectEdgesToCitations(a.getEdgeCitations());
 			connectSupportsToCitations(a.getSupports());
-			
 			interconnectEdgesSupportsAndCitations(a.getEdgeSupports());
 			
 		}
@@ -54,11 +52,8 @@ public class Graph {
 	
 	private void addNodes(Node[] n) {
 		if (n.length == 0) return;
-		
 		for (Node node : n) {
 			nodes.put(node.getId(), node);
-			if (!Node.isCurie(node.getRepresents()))
-				node.setRepresents(null);
 		}
 	}
 	
@@ -102,7 +97,7 @@ public class Graph {
 		edge.addAttribute(attribute);
 	}
 
-	private void connectEdgesToNodes(Edge[] e) {
+	private void connectNodesAndEdges(Edge[] e) {
 		if (e.length == 0) return;
 		for (Edge edge : e)
 			connectEdgeToSourceAndTarget(edge);
@@ -118,6 +113,9 @@ public class Graph {
 		
 		edge.setSubject(subject);
 		edge.setObject(object);
+		
+		subject.addEdge(edge);
+		object.addEdge(edge);
 		
 		edges.put(edge.getId(), edge);		
 	}

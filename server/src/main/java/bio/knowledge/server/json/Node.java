@@ -16,12 +16,13 @@ public class Node extends PropertiedObject {
 	
 	private String networkId;
 	private List<String> synonyms = new ArrayList<>();
+	private List<Edge> edges = new ArrayList<>();
 	
 	public static boolean isCurie(String string) {
-		return string != null && string.matches("^([^ :]+:)?[^ ]+$"); //string.matches("^(([\\i-[:]][\\c-[:]]*)?:)?.+$"); // ^(([\i-[:]][\c-[:]]*)?:)?.+$
+		return string != null && string.matches("([^ :]+:)?[^ ]+"); //string.matches("^(([\\i-[:]][\\c-[:]]*)?:)?.+$"); // ^(([\i-[:]][\c-[:]]*)?:)?.+$
 	}
 
-	private void makeRepresentsCurie() {		
+	private void makeRepresentsCurie() {
 		List<String> curieAliases = Util.filter(Node::isCurie, get("alias"));		
 		if (!isCurie(represents) && !curieAliases.isEmpty())
 			setRepresents(curieAliases.get(0));
@@ -44,7 +45,8 @@ public class Node extends PropertiedObject {
 
 	@JsonProperty("r")
 	public void setRepresents(String represents) {
-		this.represents = represents;
+		if (isCurie(represents))
+			this.represents = represents;
 	}
 
 	public String getNetworkId() {
@@ -68,6 +70,14 @@ public class Node extends PropertiedObject {
 	public void addAttribute(Attribute a) {
 		super.addAttribute(a);
 		makeRepresentsCurie();
+	}
+	
+	public List<Edge> getEdges() {
+		return edges;
+	}
+
+	public void addEdge(Edge edge) {
+		edges.add(edge);
 	}
 		
 }

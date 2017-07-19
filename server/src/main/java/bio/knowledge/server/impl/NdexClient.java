@@ -52,6 +52,8 @@ public class NdexClient {
 	
 	public CompletableFuture<Network> queryNetwork(String networkId, BasicQuery nodeSearch) {	
 
+		System.out.println("123 network: " + networkId);
+		System.out.println("123 query: " + nodeSearch.getSearchString());
 		HttpEntity<BasicQuery> request = new HttpEntity<>(nodeSearch, headers);
 		
 		CompletableFuture<Network> future = CompletableFuture.supplyAsync(() -> {

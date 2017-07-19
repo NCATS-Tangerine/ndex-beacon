@@ -13,16 +13,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import bio.knowledge.server.json.Aspect;
 
-public class StringListDeserializer extends JsonDeserializer<List<String>> {
-
+public class AspectListDeserializer extends JsonDeserializer<Aspect[]> {
+	
 	@Override
-	public List<String> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+	public Aspect[] deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
 		
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
-		List<Object> values = mapper.readValue(p, List.class);
-		List<String> strings = Util.map(Object::toString, values);
-		return strings;
+		Aspect[] values = mapper.readValue(p, Aspect[].class);
+		return values;
 	}
 
 }
