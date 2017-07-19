@@ -6,6 +6,8 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import bio.knowledge.server.impl.Util;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Citation extends IdentifiedObject {
 	
@@ -29,6 +31,12 @@ public class Citation extends IdentifiedObject {
 	
 	public void addSupport(Support support) {
 		supports.add(support);
+	}
+	
+	public String getFullText() {
+		List<String> texts = Util.map(Support::getText, supports);
+		String text = String.join(" ", texts);
+		return text;
 	}
 
 }

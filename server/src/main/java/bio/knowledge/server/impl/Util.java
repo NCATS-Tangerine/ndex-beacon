@@ -58,4 +58,8 @@ public class Util {
 		return collection.stream().reduce(f).orElse(identity);
 	}
 	
+	public static <T> boolean allMatch(Predicate<T> p, Collection<T> collection) {
+		return collection.stream().allMatch(p);
+	}
+	
 }

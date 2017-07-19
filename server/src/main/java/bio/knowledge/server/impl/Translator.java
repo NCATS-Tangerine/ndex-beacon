@@ -145,14 +145,8 @@ public class Translator {
 	public InlineResponse2004 citationToEvidence(Citation citation) {
 		
 		InlineResponse2004 evidence = new InlineResponse2004();
-
-		List<Support> supports = citation.getSupports();
-		List<String> texts = Util.map(Support::getText, supports);
-		String text = String.join(" ", texts);
-		
 		evidence.setId(citation.getCitationId());
-		evidence.setLabel(text);
-		
+		evidence.setLabel(citation.getFullText());
 		return evidence;
 	}
 

@@ -38,33 +38,7 @@ import bio.knowledge.server.model.InlineResponse2004;
 
 @Service
 public class ControllerImpl {
-						
-	// todo: handle bad input
-	// - option: don't ask ndex if blank
-	// - need: return nicely if invalid 
-	//   - example: statement id	
-	
-	// todo: paging
-	// - option: only return node if has real curie?
-	// - option: try to boost relevant results
-	// - option: change default pagesize
-	// - option: stop once found enough
-	// - option: redo search with curie(s) if found
-	// - option: ignore null named?
-	//   - example: no label for cases like 55c84fa4-01b4-11e5-ac0f-000c29cb28fb AKT (debug 1) (function weirdness)
-	
-	// todo: handle keywords for statements + other fields...
-	
-	
-	/*
-	 * extras...
-	// todo: improve exactmatches
-	//  - option: take advantage of HGNC, bp:id, bp:db (etc fields) somehow
-	
-	// todo: get more details
-	// - option: use indra
-	*/
-	
+		
 	@Autowired
 	private SearchBuilder search;
 	
@@ -74,10 +48,15 @@ public class ControllerImpl {
 	@Autowired
 	private Translator translator;
 	
-	private static final int PAGE_SIZE = 5;
-	private static final long TIMEOUT = 10;
+	private static final int DEFAULT_PAGE_SIZE = 5;
+	private static final long TIMEOUT = 5;
 	private static final TimeUnit TIMEUNIT = TimeUnit.SECONDS;
 		
+	
+	private void log(Exception e) {
+		System.err.println(e.getClass() + ": " + e.getMessage());
+	}
+	
 	
 	private static Integer fix(Integer integer) {
 		return integer == null || integer < 1 ? 1 : integer;
@@ -105,6 +84,9 @@ public class ControllerImpl {
 		});
 	}
 
+	private boolean containsAll(String string, List<String> keywords) {
+		return Util.allMatch(string::contains, keywords);
+	}
 	
 	private boolean isNdexId(String conceptId) {
 		
@@ -118,7 +100,8 @@ public class ControllerImpl {
 		
 		return false;
 	}
-		
+
+	
 	private String restrictQuery(String query) {
 		return search.and(query, search.edgeCount(1, 499000));
 	}
@@ -152,6 +135,7 @@ public class ControllerImpl {
 	private List<Graph> searchByIds(Function<String, BasicQuery> makeJson, List<String> c) {
 		
 		List<String> realCuries = new ArrayList<>();
+		List<CompletableFuture<Network>> futures = new ArrayList<>();
 		List<Graph> graphs = new ArrayList<>();
 		
 		for (String conceptId : c) {
@@ -164,15 +148,9 @@ public class ControllerImpl {
 				String luceneSearch = search.id(nodeId);
 				BasicQuery subnetQuery = makeJson.apply(luceneSearch);
 				
-				try {
-					// todo: this needs to be a future
-					Network network = ndex.queryNetwork(networkId, subnetQuery).get(TIMEOUT, TIMEUNIT);
-					Graph graph = new Graph(network);
-					graphs.add(graph);
-					
-				} catch (InterruptedException | ExecutionException | TimeoutException e) {
-				}
-				
+				CompletableFuture<Network> network = get(ndex.queryNetwork(networkId, subnetQuery));
+				futures.add(network);
+			
 			} else if (Node.isCurie(conceptId)){
 				realCuries.add(conceptId);
 			}
@@ -183,9 +161,17 @@ public class ControllerImpl {
 			List<String> phrases = Util.map(search::phrase, realCuries);
 			String luceneSearch = search.or(phrases);
 			
-			List<Graph> results = search(makeJson, luceneSearch, 0, PAGE_SIZE);
+			List<Graph> results = search(makeJson, luceneSearch, 0, DEFAULT_PAGE_SIZE);
 			graphs.addAll(results);
 		
+		}
+		
+		for (CompletableFuture<Network> future : futures) {
+			try {
+				Graph graph = new Graph(future.get(TIMEOUT, TIMEUNIT));
+				graphs.add(graph);
+			} catch (InterruptedException | ExecutionException | TimeoutException e) {
+			}
 		}
 		
 		return graphs;
@@ -205,11 +191,10 @@ public class ControllerImpl {
 		
 		return set;
 	}
-		
+	
+	
 	private void combineDuplicates(Collection<Node> nodes) {
-		
-		// todo: get edges etc
-		
+				
 		Predicate<Node> hasCurie = n -> n.getRepresents() != null || n.has("alias");
 		List<Node> nodesWithCuries = Util.filter(hasCurie, nodes);
 		
@@ -232,6 +217,8 @@ public class ControllerImpl {
 					if (!node.getName().equals(canonical.getName()))
 						canonical.addSynonym(node.getName());
 					
+					node.getEdges().forEach(e -> canonical.addEdge(e));
+					
 					nodes.remove(node);
 					
 				} else {
@@ -251,110 +238,168 @@ public class ControllerImpl {
 		nodes = Util.filter(hasType, nodes);
 		return nodes;
 	}
-
 	
-	public ResponseEntity<List<InlineResponse2002>> getConcepts(
-			String keywords, String semgroups, Integer pageNumber, Integer pageSize) {
+	private Collection<Edge> filterMatching(Collection<Edge> edges, String keywords) {
 		
-		keywords = fix(keywords);
-		semgroups = fix(semgroups);
-		pageNumber = fix(pageNumber) - 1;
-		pageSize = fix(pageSize);
+		if (keywords.isEmpty()) return edges;
+
+		List<String> words = Arrays.asList(keywords.split(" "));
 		
-		String luceneSearch = search.startsWith(keywords);
-		List<Graph> graphs = search(search::nodesBy, luceneSearch, pageNumber, pageSize);		
+		Predicate<Edge> matches = e -> containsAll(e.getName() + " " + e.getSubject().getName() + " " + e.getObject().getName(), words);
+			
+		Collection<Edge> matching = Util.filter(matches, edges);
+		return matching;
+	}
+	
+	private List<Citation> filterMatching(List<Citation> citations, String keywords) {
 		
-		Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
-		combineDuplicates(nodes);
-		Collection<Node> ofType = filterTypes(nodes, semgroups);
+		if (keywords.isEmpty()) return citations;
+
+		List<String> words = Arrays.asList(keywords.split(" "));
+		Predicate<Citation> matches = c -> containsAll(c.getFullText(), words);
+			
+		List<Citation> matching = Util.filter(matches, citations);
+		return matching;
+	}
+	
+	
+	public ResponseEntity<List<InlineResponse2002>> getConcepts(String keywords, String semgroups, Integer pageNumber, Integer pageSize) {
+		try {
+			
+			keywords = fix(keywords);
+			semgroups = fix(semgroups);
+			pageNumber = fix(pageNumber) - 1;
+			pageSize = fix(pageSize);
+			
+			String luceneSearch = search.startsWith(keywords);
+			List<Graph> graphs = search(search::nodesBy, luceneSearch, pageNumber, pageSize);		
+			
+			Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
+			combineDuplicates(nodes);
+			Collection<Node> ofType = filterTypes(nodes, semgroups);
+			
+			List<InlineResponse2002> concepts = Util.map(translator::nodeToConcept, ofType);
+			return ResponseEntity.ok(concepts);
 		
-		List<InlineResponse2002> concepts = Util.map(translator::nodeToConcept, ofType);
-		return ResponseEntity.ok(concepts);
+		} catch (Exception e) {
+			log(e);
+			return ResponseEntity.ok(new ArrayList<>());
+		}
 	}
 	
 	public ResponseEntity<List<InlineResponse2001>> getConceptDetails(String conceptId) {
-		
-		conceptId = fix(conceptId);
+		try {
 			
-		List<Graph> graphs = searchByIds(search::nodesBy, Util.list(conceptId));		
-		Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
-		combineDuplicates(nodes);
-		List<InlineResponse2001>  conceptDetails = Util.map(translator::nodeToConceptDetails, nodes);
+			conceptId = fix(conceptId);
+				
+			List<Graph> graphs = searchByIds(search::nodesBy, Util.list(conceptId));		
+			Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
+			combineDuplicates(nodes);
+			List<InlineResponse2001>  conceptDetails = Util.map(translator::nodeToConceptDetails, nodes);
+			
+			return ResponseEntity.ok(conceptDetails);
 		
-		return ResponseEntity.ok(conceptDetails);
+		} catch (Exception e) {
+			log(e);
+			return ResponseEntity.ok(new ArrayList<>());
+		}
 	}
 
 	
-	public ResponseEntity<List<InlineResponse2003>> getStatements(
-			List<String> c, Integer pageNumber, Integer pageSize, String keywords, String semgroups) {
+	public ResponseEntity<List<InlineResponse2003>> getStatements(List<String> c, Integer pageNumber, Integer pageSize, String keywords, String semgroups) {
+		try {
+			
+			c = fix(c);
+			pageNumber = fix(pageNumber) - 1;
+			pageSize = fix(pageSize);
+			keywords = fix(keywords);
+			semgroups = fix(semgroups);
+			
+			Set<String> aliases = getAliases(c);
+			aliases.addAll(c);
+			
+			List<Graph> graphs = searchByIds(search::edgesBy, Util.list(aliases));
+			
+			Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
+			Collection<Node> ofType = filterTypes(nodes, semgroups);
+			
+			Collection<Edge> edges = Util.flatmap(Node::getEdges, ofType);
+			Collection<Edge> matching = filterMatching(edges, keywords);
+			
+			List<InlineResponse2003> statements = Util.map(translator::edgeToStatement, matching);
+			return ResponseEntity.ok(statements);
 		
-		c = fix(c);
-		pageNumber = fix(pageNumber) - 1;
-		pageSize = fix(pageSize);
-		keywords = fix(keywords); // todo: handle
-		semgroups = fix(semgroups);
-		
-		Set<String> aliases = getAliases(c);
-		aliases.addAll(c);
-		
-		List<Graph> graphs = searchByIds(search::edgesBy, Util.list(aliases));
-		
-		Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
-		Collection<Node> ofType = filterTypes(nodes, semgroups);
-		
-		Collection<Edge> edges = Util.flatmap(Node::getEdges, ofType);
-		List<InlineResponse2003> statements = Util.map(translator::edgeToStatement, edges);
-		
-		return ResponseEntity.ok(statements);
+		} catch (Exception e) {
+			log(e);
+			return ResponseEntity.ok(new ArrayList<>());
+		}
 	}
 
-	public ResponseEntity<List<InlineResponse2004>> getEvidence(
-			String statementId, String keywords, Integer pageNumber, Integer pageSize) {
-
-		statementId = fix(statementId);
-		keywords = fix(keywords);
-		pageNumber = fix(pageNumber) - 1;
-		pageSize = fix(pageSize);
+	public ResponseEntity<List<InlineResponse2004>> getEvidence(String statementId, String keywords, Integer pageNumber, Integer pageSize) {
+		try {
 		
-		String[] half = statementId.split("_", 2);
-		String conceptId = half[0];
-		Long statement = Long.valueOf(half[1]);
-		
-		List<Graph> graphs = searchByIds(search::edgesBy, Util.list(conceptId));		
-		Collection<Edge> relatedEdges = Util.flatmap(Graph::getEdges, graphs);
-		
-		Predicate<Edge> wasRequested = e -> e.getId().equals(statement);
-		Edge edge = Util.filter(wasRequested, relatedEdges).get(0);
-		List<Citation> citations = edge.getCitations(); // todo: also put citations as evidence (eg id but no text?)
-		
-		List<InlineResponse2004> evidence = citations == null? new ArrayList<>() : Util.map(translator::citationToEvidence, citations);
-		
-		return ResponseEntity.ok(evidence);
+			statementId = fix(statementId);
+			keywords = fix(keywords);
+			pageNumber = fix(pageNumber) - 1;
+			pageSize = fix(pageSize);
+			
+			String[] half = statementId.split("_", 2);
+			String conceptId = half[0];
+			Long statement = Long.valueOf(half[1]);
+			
+			List<Graph> graphs = searchByIds(search::edgesBy, Util.list(conceptId));		
+			Collection<Edge> relatedEdges = Util.flatmap(Graph::getEdges, graphs);
+			
+			Predicate<Edge> wasRequested = e -> e.getId().equals(statement);
+			Edge edge = Util.filter(wasRequested, relatedEdges).get(0);
+			
+			List<Citation> citations = edge.getCitations();
+			List<Citation> matching = filterMatching(citations, keywords);
+			
+			List<InlineResponse2004> evidence = citations == null? new ArrayList<>() : Util.map(translator::citationToEvidence, matching);
+			
+			return ResponseEntity.ok(evidence);
+			
+		} catch (Exception e) {
+			log(e);
+			return ResponseEntity.ok(new ArrayList<>());
+		}
 	}
 
 	
-
 	public ResponseEntity<List<String>> getExactMatchesToConcept(String conceptId) {
+		try {
+			
+			conceptId = fix(conceptId);
+			
+			Set<String> set = getAliases(Util.list(conceptId));
+			if (Node.isCurie(conceptId))
+				set.add(conceptId);
+			
+			List<String> exactMatches = Util.list(set);
+			return ResponseEntity.ok(exactMatches);
 		
-		conceptId = fix(conceptId);
-		
-		Set<String> set = getAliases(Util.list(conceptId));
-		if (Node.isCurie(conceptId))
-			set.add(conceptId);
-		
-		List<String> exactMatches = Util.list(set);
-		return ResponseEntity.ok(exactMatches);
+		} catch (Exception e) {
+			log(e);
+			return ResponseEntity.ok(new ArrayList<>());
+		}
 	}
 	
 	public ResponseEntity<List<String>> getExactMatchesToConceptList(List<String> c) {
-
-		c = fix(c);
-		
-		Set<String> set = getAliases(c);
-		set.removeAll(c);
-		
-		List<String> exactMatches = Util.list(set);
-		return ResponseEntity.ok(exactMatches);
+		try {
+			
+			c = fix(c);
+			
+			Set<String> set = getAliases(c);
+			set.removeAll(c);
+			
+			List<String> exactMatches = Util.list(set);
+			return ResponseEntity.ok(exactMatches);
+			
+		} catch (Exception e) {
+			log(e);
+			return ResponseEntity.ok(new ArrayList<>());
+		}
 	}
 	
 	
