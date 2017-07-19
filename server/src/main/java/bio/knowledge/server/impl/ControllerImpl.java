@@ -49,7 +49,7 @@ public class ControllerImpl {
 	private Translator translator;
 	
 	private static final int DEFAULT_PAGE_SIZE = 5;
-	private static final long TIMEOUT = 5;
+	private static final long TIMEOUT = 8;
 	private static final TimeUnit TIMEUNIT = TimeUnit.SECONDS;
 		
 	
@@ -103,7 +103,7 @@ public class ControllerImpl {
 
 	
 	private String restrictQuery(String query) {
-		return search.and(query, search.edgeCount(1, 499000));
+		return search.and(query, search.edgeCount(1, 100000));
 	}
 	
 	private List<Graph> search(Function<String, BasicQuery> makeJson, String luceneSearch, int pageNumber, int pageSize) {
@@ -317,9 +317,10 @@ public class ControllerImpl {
 			
 			Set<String> aliases = getAliases(c);
 			aliases.addAll(c);
-			
 			List<Graph> graphs = searchByIds(search::edgesBy, Util.list(aliases));
 			
+//			List<Graph> graphs = searchByIds(search::edgesBy, c);
+
 			Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
 			Collection<Node> ofType = filterTypes(nodes, semgroups);
 			
