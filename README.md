@@ -17,7 +17,7 @@ cd ndex
 docker build -t ncats:ndex .
 ```
 
-Within the Docker container, the Flask app is set to run at `0.0.0.0:5000`. You can re-map ports when you run a Docker image with the `-p` flag.
+Within the Docker container, the Springboot Server is set to run at `localhost:8080`. You can expose and re-map the ports when you run a Docker image with the `-p` flag.
 
 ```shell
 docker run -p 8080:8080 ncats:ndex
