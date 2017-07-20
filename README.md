@@ -1,6 +1,6 @@
 # ndex-beacon #
 
-Java Spring Boot knowledge beacon wrapping http://ndexbio.org/.
+Knowledge Beacon wrapper for the NDex graph repository
 
 ## Quickstart Using Docker ##
 
