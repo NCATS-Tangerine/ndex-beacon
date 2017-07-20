@@ -48,7 +48,7 @@ public class ControllerImpl {
 	@Autowired
 	private Translator translator;
 	
-	private static final int DEFAULT_PAGE_SIZE = 5;
+	private static final int DEFAULT_PAGE_SIZE = 3;
 	private static final long TIMEOUT = 8;
 	private static final TimeUnit TIMEUNIT = TimeUnit.SECONDS;
 		
@@ -269,7 +269,7 @@ public class ControllerImpl {
 			keywords = fix(keywords);
 			semgroups = fix(semgroups);
 			pageNumber = fix(pageNumber) - 1;
-			pageSize = fix(pageSize);
+			pageSize = DEFAULT_PAGE_SIZE; //fix(pageSize);
 			
 			String luceneSearch = search.startsWith(keywords);
 			List<Graph> graphs = search(search::nodesBy, luceneSearch, pageNumber, pageSize);		
@@ -311,7 +311,7 @@ public class ControllerImpl {
 			
 			c = fix(c);
 			pageNumber = fix(pageNumber) - 1;
-			pageSize = fix(pageSize);
+			pageSize = DEFAULT_PAGE_SIZE; //fix(pageSize);
 			keywords = fix(keywords);
 			semgroups = fix(semgroups);
 			
@@ -342,7 +342,7 @@ public class ControllerImpl {
 			statementId = fix(statementId);
 			keywords = fix(keywords);
 			pageNumber = fix(pageNumber) - 1;
-			pageSize = fix(pageSize);
+			pageSize = DEFAULT_PAGE_SIZE; //fix(pageSize);
 			
 			String[] half = statementId.split("_", 2);
 			String conceptId = half[0];
