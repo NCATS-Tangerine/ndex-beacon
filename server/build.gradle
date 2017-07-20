@@ -1,6 +1,9 @@
 archivesBaseName  = 'knowledge-beacon-server'
 description       = 'NCATS Translator Knowledge Beacon API Server'
 
+apply plugin: 'application'
+mainClassName = 'bio.knowledge.server.Swagger2SpringBoot'
+
 dependencies {
 
     compile("org.springframework:spring-context:4.2.6.RELEASE")
@@ -41,5 +44,9 @@ jar {
     manifest {
         attributes("Main-Class": "bio.knowledge.server.Swagger2SpringBoot")
     }
+}
+
+springBoot {
+  mainClass = 'bio.knowledge.server.Swagger2SpringBoot'
 }
 
