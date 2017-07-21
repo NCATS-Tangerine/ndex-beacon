@@ -1,6 +1,6 @@
 # ndex-beacon #
 
-Knowledge Beacon wrapper for the NDex graph repository
+Knowledge Beacon wrapper for the NDex Bio graph repository
 
 ## Quickstart Using Docker ##
 

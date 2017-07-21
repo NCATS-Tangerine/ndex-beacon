@@ -17,11 +17,11 @@ public class SwaggerDocumentationConfig {
 
     ApiInfo apiInfo() {
         return new ApiInfoBuilder()
-            .title("Translator Knowledge Beacon API")
-            .description("This is the Translator Knowledge Beacon web service application programming interface (API).  See the [tk beacon github repo for more information](https://github.com/NCATS-Tangerine/translator-knowledge-beacon/). ")
+            .title("nDex Bio Knowledge Beacon Wrapper")
+            .description("This is the Translator Knowledge Beacon wrapper for the nDex Bio (ndexbio.org) biological graph resource.")
             .license("MIT License")
             .licenseUrl("http://opensource.org/licenses/MIT")
-            .termsOfServiceUrl("https://ncats.nih.gov/translator")
+            .termsOfServiceUrl("http://www.ndexbio.org/v2")
             .version("1.0.12")
             .contact(new Contact("","", "richard@starinformatics.com"))
             .build();
