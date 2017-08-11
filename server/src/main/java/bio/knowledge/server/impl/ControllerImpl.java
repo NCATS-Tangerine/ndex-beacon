@@ -132,7 +132,7 @@ public class ControllerImpl {
 		return graphs;
 	}
 	
-	private List<Graph> searchByIds(Function<String, BasicQuery> makeJson, List<String> c) {
+	private List<Graph> searchByIds(Function<String, BasicQuery> makeJson, List<String> c, int pageNumber, int pageSize) {
 		
 		List<String> realCuries = new ArrayList<>();
 		List<CompletableFuture<Network>> futures = new ArrayList<>();
@@ -140,6 +140,7 @@ public class ControllerImpl {
 		
 		for (String conceptId : c) {
 			if (isNdexId(conceptId)) {
+				if (pageNumber > 0) continue;
 			
 				String[] half = conceptId.split(":", 2);
 				String networkId = half[0];
@@ -161,7 +162,7 @@ public class ControllerImpl {
 			List<String> phrases = Util.map(search::phrase, realCuries);
 			String luceneSearch = search.or(phrases);
 			
-			List<Graph> results = search(makeJson, luceneSearch, 0, DEFAULT_PAGE_SIZE);
+			List<Graph> results = search(makeJson, luceneSearch, pageNumber, pageSize);
 			graphs.addAll(results);
 		
 		}
@@ -179,7 +180,7 @@ public class ControllerImpl {
 	
 	private Set<String> getAliases(List<String> c) {
 		
-		List<Graph> graphs = searchByIds(search::nodesBy, c);		
+		List<Graph> graphs = searchByIds(search::nodesBy, c, 0, DEFAULT_PAGE_SIZE);		
 		Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
 		
 		Function<Node, List<String>> getAliases = Util.curryRight(Node::get, "alias");
@@ -292,7 +293,7 @@ public class ControllerImpl {
 			
 			conceptId = fix(conceptId);
 				
-			List<Graph> graphs = searchByIds(search::nodesBy, Util.list(conceptId));		
+			List<Graph> graphs = searchByIds(search::nodesBy, Util.list(conceptId), 0, DEFAULT_PAGE_SIZE);		
 			Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
 			combineDuplicates(nodes);
 			List<InlineResponse2001>  conceptDetails = Util.map(translator::nodeToConceptDetails, nodes);
@@ -317,10 +318,8 @@ public class ControllerImpl {
 			
 			Set<String> aliases = getAliases(c);
 			aliases.addAll(c);
-			List<Graph> graphs = searchByIds(search::edgesBy, Util.list(aliases));
+			List<Graph> graphs = searchByIds(search::edgesBy, Util.list(aliases), pageNumber, pageSize);
 			
-//			List<Graph> graphs = searchByIds(search::edgesBy, c);
-
 			Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
 			Collection<Node> ofType = filterTypes(nodes, semgroups);
 			
@@ -348,18 +347,24 @@ public class ControllerImpl {
 			String conceptId = half[0];
 			Long statement = Long.valueOf(half[1]);
 			
-			List<Graph> graphs = searchByIds(search::edgesBy, Util.list(conceptId));		
+			List<Graph> graphs = searchByIds(search::edgesBy, Util.list(conceptId), pageNumber, pageSize);		
 			Collection<Edge> relatedEdges = Util.flatmap(Graph::getEdges, graphs);
 			
 			Predicate<Edge> wasRequested = e -> e.getId().equals(statement);
-			Edge edge = Util.filter(wasRequested, relatedEdges).get(0);
+			List<Edge> maybeEdge = Util.filter(wasRequested, relatedEdges);
 			
-			List<Citation> citations = edge.getCitations();
-			List<Citation> matching = filterMatching(citations, keywords);
+			if (maybeEdge.size() == 1) {
+				
+				Edge edge = maybeEdge.get(0);
+				List<Citation> citations = edge.getCitations();
+				List<Citation> matching = filterMatching(citations, keywords);
+				
+				List<InlineResponse2004> evidence = citations == null? new ArrayList<>() : Util.map(translator::citationToEvidence, matching);
+				return ResponseEntity.ok(evidence);
 			
-			List<InlineResponse2004> evidence = citations == null? new ArrayList<>() : Util.map(translator::citationToEvidence, matching);
-			
-			return ResponseEntity.ok(evidence);
+			} else {
+				return ResponseEntity.ok(new ArrayList<>());
+			}
 			
 		} catch (Exception e) {
 			log(e);
