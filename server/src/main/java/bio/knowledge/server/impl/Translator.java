@@ -78,8 +78,6 @@ public class Translator {
 	
 	private List<ConceptsconceptIdDetails> attributeToDetails(Attribute attribute) {
 		
-		System.out.println("123 attr name: " + attribute.getName());
-		System.out.println("123 attr values: " + attribute.getValues());
 		Function<String, ConceptsconceptIdDetails> valueToDetail = Util.curry(this::makeDetail, attribute.getName());
 		List<ConceptsconceptIdDetails> details = Util.map(valueToDetail, attribute.getValues());
 		return details;

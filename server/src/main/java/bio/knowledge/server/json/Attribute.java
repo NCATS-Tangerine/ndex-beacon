@@ -33,7 +33,6 @@ public class Attribute {
 
 	@JsonProperty("n")
 	public void setName(String name) {
-		System.out.println("123 name : " + name);
 		this.name = name;
 	}
 	
@@ -45,7 +44,6 @@ public class Attribute {
 	@JsonProperty("v")
 	@JsonDeserialize(using = StringListDeserializer.class)
 	public void setValues(List<String> value) {
-		System.out.println("123 value: " + value);
 		this.value = value;
 	}
 

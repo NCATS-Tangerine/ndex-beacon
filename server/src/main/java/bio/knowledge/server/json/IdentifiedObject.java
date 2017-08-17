@@ -13,7 +13,6 @@ public class IdentifiedObject {
 
 	@JsonProperty("@id")
 	public void setId(Long id) {
-		System.out.println("123 node: " + id);
 		this.id = id;
 	}
 	

@@ -54,7 +54,6 @@ public class Node extends PropertiedObject {
 	}
 
 	public void setNetworkId(String networkId) {
-		System.out.println("123 fullnode: " + networkId + ":" + getId());
 		this.networkId = networkId;
 	}
 	
