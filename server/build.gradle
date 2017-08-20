@@ -1,5 +1,5 @@
-archivesBaseName  = 'knowledge-beacon-server'
-description       = 'NCATS Translator Knowledge Beacon API Server'
+archivesBaseName  = 'ndex-beacon'
+description       = 'nDex Knowledge Beacon Server'
 
 apply plugin: 'application'
 mainClassName = 'bio.knowledge.server.Swagger2SpringBoot'
