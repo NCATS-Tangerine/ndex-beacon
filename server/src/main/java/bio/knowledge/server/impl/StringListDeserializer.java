@@ -13,6 +13,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import bio.knowledge.server.json.Aspect;
 
+/**
+ * Used to deserialize the {@code Attribute} value property into a list of strings.
+ * The property can be either a single value or an array of values.
+ * 
+ * @author Meera Godden
+ *
+ */
 public class StringListDeserializer extends JsonDeserializer<List<String>> {
 
 	@Override

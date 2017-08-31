@@ -2,6 +2,12 @@ package bio.knowledge.server.json;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Base class of nodes (like {@code EdgeCitation} and {@code EdgeSupport}) that identify a list of other nodes.
+ * 
+ * @author Meera Godden
+ *
+ */
 public class IdentifyingObject {
 
 	private Long[] id;

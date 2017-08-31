@@ -2,6 +2,16 @@ package bio.knowledge.server.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+/**
+ * 
+ * A {@code Network} object contains an array of aspects.
+ * Each {@code Aspect} has only one property, the name of which tells you what type of data that property contains.
+ * Thus, only one of the fields of this class will be populated at a time.
+ * A single {@code Aspect} class was used to avoid the use of a custom deserializer.
+ * 
+ * @author Meera Godden
+ *
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Aspect {
 		

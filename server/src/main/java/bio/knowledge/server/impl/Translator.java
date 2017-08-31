@@ -38,6 +38,11 @@ public class Translator {
 		return makeNdexId(edge.getSubject()) + "_" + edge.getId();
 	}
 	
+	/**
+	 * Guesses type of a node if it has a recognized type-ish property.
+	 * @param node
+	 * @return
+	 */
 	public String makeSemGroup(Node node) { 
 		
 		List<String> types = node.getByRegex("(?i).+type");

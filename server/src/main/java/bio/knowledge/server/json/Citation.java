@@ -8,6 +8,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import bio.knowledge.server.impl.Util;
 
+/**
+ * Contains citation data. Optionally contains citation text.
+ * 
+ * @author Meera Godden
+ *
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Citation extends IdentifiedObject {
 	

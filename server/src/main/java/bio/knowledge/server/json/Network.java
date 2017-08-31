@@ -5,6 +5,12 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import bio.knowledge.server.impl.AspectListDeserializer;
 
+/**
+ * Represents a subnet of an NDEx network.
+ * 
+ * @author Meera Godden
+ *
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Network {
 	

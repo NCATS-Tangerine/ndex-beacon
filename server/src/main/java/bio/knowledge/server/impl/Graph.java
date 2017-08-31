@@ -18,6 +18,12 @@ import bio.knowledge.server.json.EdgeSupport;
 import bio.knowledge.server.json.Node;
 import bio.knowledge.server.json.Support;
 
+/**
+ * Turns ID-based cross-references into traversable Java references.
+ * 
+ * @author Meera Godden
+ *
+ */
 public class Graph {
 		
 	private Map<Long, Node> nodes = new HashMap<>();
