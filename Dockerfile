@@ -1,6 +1,5 @@
 FROM ubuntu:latest
 MAINTAINER Richard Bruskiewich <richard@starinformatics.com>
-LABEL "nDex Knowledge Beacon"
 USER root
 RUN apt-get -y update
 RUN apt-get -y install default-jre
