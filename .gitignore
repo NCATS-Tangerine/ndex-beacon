@@ -1,3 +1,7 @@
+# don't save local Eclipse settings - problematic? Should be recreated?
+.project
+.classpath
+
 /build/
 /.settings/
 /.gradle/
