@@ -5,13 +5,15 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.springframework.stereotype.Service;
 
 import bio.knowledge.server.json.Attribute;
 import bio.knowledge.server.json.Citation;
 import bio.knowledge.server.json.Edge;
 import bio.knowledge.server.json.Node;
-import bio.knowledge.server.json.Support;
 import bio.knowledge.server.model.ConceptsconceptIdDetails;
 import bio.knowledge.server.model.InlineResponse2001;
 import bio.knowledge.server.model.InlineResponse2002;
@@ -23,7 +25,8 @@ import bio.knowledge.server.model.StatementsSubject;
 
 @Service
 public class Translator {
-		
+	
+	private Logger _logger = LoggerFactory.getLogger(Translator.class);	
 	
 	private String makeNdexId(Node node) {
 		return node.getNetworkId() + ":" + node.getId();
@@ -38,8 +41,14 @@ public class Translator {
 		return makeNdexId(edge.getSubject()) + "_" + edge.getId();
 	}
 	
-	public String makeSemGroup(Node node) { 
+	public String makeSemGroup(Node node) {
+		String nodeId = makeId(node) ;
+		return makeSemGroup(nodeId,node) ;
+	}
+	
+	public String makeSemGroup(String conceptId, Node node) { 
 		
+		// First heuristic: to match on recorded Node types?
 		List<String> types = node.getByRegex("(?i).+type");
 		
 		for (String type : types) {
@@ -51,6 +60,19 @@ public class Translator {
 			}
 		}
 		
+		// Second heuristic: to match on conceptId namespace prefix
+		// Only have a few known namespaces...need to catalog the others?
+		String[] namespace = conceptId.toUpperCase().split(":");
+		switch(namespace[0]) {
+		case "NCBIGENE":
+			return "GENE";
+		case "UNIPROT":
+			return "CHEM";
+		default:
+			_logger.info("'"+namespace[0]+"' nDexBio node id prefix is not yet mapped?");
+			break;
+		}
+		
 		return "OBJC";
 	}
 	
@@ -59,9 +81,11 @@ public class Translator {
 		
 		InlineResponse2002 concept = new InlineResponse2002();
 		
-		concept.setId(makeId(node));
+		String conceptId = makeId(node) ; 
+		
+		concept.setId(conceptId);
 		concept.setName(node.getName());
-		concept.setSemanticGroup(makeSemGroup(node));
+		concept.setSemanticGroup(makeSemGroup(conceptId, node));
 		concept.setSynonyms(node.getSynonyms());
 		
 		return concept;
@@ -87,10 +111,11 @@ public class Translator {
 		
 		InlineResponse2001 conceptDetails = new InlineResponse2001();
 		
+		String conceptId = makeId(node) ; 
 		
-		conceptDetails.setId(makeId(node));
+		conceptDetails.setId(conceptId);
 		conceptDetails.setName(node.getName());
-		conceptDetails.setSemanticGroup(makeSemGroup(node));
+		conceptDetails.setSemanticGroup(makeSemGroup(conceptId,node));
 		
 		Consumer<String> addSynonym = s -> conceptDetails.addSynonymsItem(s);
 		node.getSynonyms().forEach(addSynonym);
