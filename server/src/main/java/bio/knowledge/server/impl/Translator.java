@@ -7,18 +7,17 @@ import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.stereotype.Service;
 
 import bio.knowledge.server.json.Attribute;
 import bio.knowledge.server.json.Citation;
 import bio.knowledge.server.json.Edge;
 import bio.knowledge.server.json.Node;
+import bio.knowledge.server.model.Concept;
 import bio.knowledge.server.model.ConceptsconceptIdDetails;
 import bio.knowledge.server.model.InlineResponse2001;
-import bio.knowledge.server.model.InlineResponse2002;
-import bio.knowledge.server.model.InlineResponse2003;
 import bio.knowledge.server.model.InlineResponse2004;
+import bio.knowledge.server.model.Statement;
 import bio.knowledge.server.model.StatementsObject;
 import bio.knowledge.server.model.StatementsPredicate;
 import bio.knowledge.server.model.StatementsSubject;
@@ -76,6 +75,7 @@ public class Translator {
 		String[] namespace = conceptId.toUpperCase().split(":");
 		switch(namespace[0]) {
 		case "NCBIGENE":
+		case "GENECARDS":
 			return "GENE";
 		case "UNIPROT":
 			return "CHEM";
@@ -90,10 +90,9 @@ public class Translator {
 		return "OBJC";
 	}
 	
-	
-	public InlineResponse2002 nodeToConcept(Node node) {
+	public Concept nodeToConcept(Node node) {
 		
-		InlineResponse2002 concept = new InlineResponse2002();
+		Concept concept = new Concept();
 		
 		String conceptId = makeId(node) ; 
 		
@@ -166,9 +165,9 @@ public class Translator {
 		return object;
 	}
 	
-	public InlineResponse2003 edgeToStatement(Edge edge) {
+	public Statement edgeToStatement(Edge edge) {
 		
-		InlineResponse2003 statement = new InlineResponse2003();
+		Statement statement = new Statement();
 		
 		statement.setId(makeId(edge));
 		statement.setSubject(nodeToSubject(edge.getSubject()));

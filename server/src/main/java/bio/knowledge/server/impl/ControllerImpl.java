@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import bio.knowledge.server.impl.Cache.CacheLocation;
 import bio.knowledge.server.json.Attribute;
 import bio.knowledge.server.json.BasicQuery;
 import bio.knowledge.server.json.Citation;
@@ -30,15 +31,18 @@ import bio.knowledge.server.json.NetworkId;
 import bio.knowledge.server.json.NetworkList;
 import bio.knowledge.server.json.Node;
 import bio.knowledge.server.json.SearchString;
+import bio.knowledge.server.model.Concept;
 import bio.knowledge.server.model.InlineResponse200;
 import bio.knowledge.server.model.InlineResponse2001;
-import bio.knowledge.server.model.InlineResponse2002;
-import bio.knowledge.server.model.InlineResponse2003;
 import bio.knowledge.server.model.InlineResponse2004;
+import bio.knowledge.server.model.Statement;
 
 @Service
 public class ControllerImpl {
 		
+	@Autowired
+	private Cache cache;
+
 	@Autowired
 	private SearchBuilder search;
 	
@@ -100,7 +104,6 @@ public class ControllerImpl {
 		
 		return false;
 	}
-
 	
 	private String restrictQuery(String query) {
 		return search.and(query, search.edgeCount(1, 100000));
@@ -267,7 +270,20 @@ public class ControllerImpl {
 		return matching;
 	}
 
-	public ResponseEntity<List<InlineResponse2002>> getConcepts(String keywords, String semgroups, Integer pageNumber, Integer pageSize) {
+	public List<? extends CachedEntity> getPage(List<? extends CachedEntity> items, Integer pageNumber, Integer pageSize) {
+		Integer size = items.size();
+		if(pageNumber<1) pageNumber = 1;
+		if(pageSize<1)   pageSize   = size;  // default to full size of list
+		Integer fromIndex = (pageNumber-1)*pageSize;
+		if(size==0 || fromIndex>size) {
+			return new ArrayList<>();
+		}
+		Integer toIndex = fromIndex+pageSize;
+		toIndex = toIndex>size?size:toIndex; // coerce upper bound
+		return items.subList(fromIndex, toIndex);
+	}
+	
+	public ResponseEntity<List<Concept>> getConcepts(String keywords, String semgroups, Integer pageNumber, Integer pageSize) {
 		try {
 			
 			keywords = fix(keywords);
@@ -277,31 +293,60 @@ public class ControllerImpl {
 			//pageSize = DEFAULT_PAGE_SIZE; //fix(pageSize);
 			pageSize = fix(pageSize);
 			
-			String luceneSearch = search.startsWith(keywords);
-			List<Graph> graphs = search(search::nodesBy, luceneSearch, pageNumber, pageSize);		
+			List<Concept> concepts = null ;
 			
-			Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
-			combineDuplicates(nodes);
-			Collection<Node> ofType = filterTypes(nodes, semgroups);
+			// I attempt caching of the whole retrieved set
+			CacheLocation cacheLocation = 
+					cache.searchForResultSet(
+							"Concept", 
+							keywords, 
+							new String[] { keywords, semgroups }
+					);
+
+			@SuppressWarnings("unchecked")
+			List<Concept> cachedResult = 
+					(List<Concept>)cacheLocation.getResultSet();
 			
-			List<InlineResponse2002> concepts = Util.map(translator::nodeToConcept, ofType);
+			if(cachedResult==null) {
+				
+				String luceneSearch = search.startsWith(keywords);
+				List<Graph> graphs = search(search::nodesBy, luceneSearch, pageNumber, pageSize);		
+				
+				Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
+				combineDuplicates(nodes);
+				Collection<Node> ofType = filterTypes(nodes, semgroups);
+				
+				concepts = Util.map(translator::nodeToConcept, ofType);
 			
-			return ResponseEntity.ok(concepts);
+				//cache.getResultSetCache().put(cacheKey, searchedConceptResult);
+				cacheLocation.setResultSet(concepts);
+				
+			} else {
+				concepts = cachedResult;
+			}
+			
+			@SuppressWarnings("unchecked")
+			// Paging workaround since nDex paging doesn't seem to work as published?
+			List<Concept> page = (List<Concept>)getPage(concepts, pageNumber, pageSize);
+			
+			return ResponseEntity.ok(page);
 		
 		} catch (Exception e) {
 			log(e);
-			return ResponseEntity.ok(new ArrayList<>());
+			return ResponseEntity.ok(new ArrayList<Concept>());
 		}
 	}
 	
 	public ResponseEntity<List<InlineResponse2001>> getConceptDetails(String conceptId) {
+		
 		try {
 			
 			conceptId = fix(conceptId);
 				
-			List<Graph> graphs = searchByIds(search::nodesBy, Util.list(conceptId), 0, DEFAULT_PAGE_SIZE);		
+			List<Graph> graphs = searchByIds(search::nodesBy, Util.list(conceptId), 1, 100);		
 			Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
 			combineDuplicates(nodes);
+			
 			List<InlineResponse2001>  conceptDetails = Util.map(translator::nodeToConceptDetails, nodes);
 			
 			return ResponseEntity.ok(conceptDetails);
@@ -313,7 +358,7 @@ public class ControllerImpl {
 	}
 
 	
-	public ResponseEntity<List<InlineResponse2003>> getStatements(List<String> c, Integer pageNumber, Integer pageSize, String keywords, String semgroups) {
+	public ResponseEntity<List<Statement>> getStatements(List<String> c, Integer pageNumber, Integer pageSize, String keywords, String semgroups) {
 		try {
 			
 			c = fix(c);
@@ -325,19 +370,46 @@ public class ControllerImpl {
 			keywords = fix(keywords);
 			semgroups = fix(semgroups);
 			
-			Set<String> aliases = getAliases(c);
-			aliases.addAll(c);
-			List<Graph> graphs = searchByIds(search::edgesBy, Util.list(aliases), pageNumber, pageSize);
+			List<Statement> statements = null ;
 			
-			Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
-			Collection<Node> ofType = filterTypes(nodes, semgroups);
+			// I attempt caching of the whole retrieved set
+			CacheLocation cacheLocation = 
+					cache.searchForResultSet(
+							"Statement", 
+							c.toString(), 
+							new String[] { c.toString(), keywords, semgroups }
+					);
+
+			@SuppressWarnings("unchecked")
+			List<Statement> cachedResult = 
+					(List<Statement>)cacheLocation.getResultSet();
 			
-			Collection<Edge> edges = Util.flatmap(Node::getEdges, ofType);
-			Collection<Edge> matching = filterMatching(edges, keywords);
+			if(cachedResult==null) {			
 			
-			List<InlineResponse2003> statements = Util.map(translator::edgeToStatement, matching);
+				Set<String> aliases = getAliases(c);
+				aliases.addAll(c);
+				List<Graph> graphs = searchByIds(search::edgesBy, Util.list(aliases), pageNumber, pageSize);
+				
+				Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
+				Collection<Node> ofType = filterTypes(nodes, semgroups);
+				
+				Collection<Edge> edges = Util.flatmap(Node::getEdges, ofType);
+				Collection<Edge> matching = filterMatching(edges, keywords);
+				
+				statements = Util.map(translator::edgeToStatement, matching);
+				
+				//cache.getResultSetCache().put(cacheKey, searchedConceptResult);
+				cacheLocation.setResultSet(statements);
+				
+			} else {
+				statements = cachedResult;
+			}
 			
-			return ResponseEntity.ok(statements);
+			@SuppressWarnings("unchecked")
+			// Paging workaround since nDex paging doesn't seem to work as published?
+			List<Statement> page = (List<Statement>)getPage(statements, pageNumber, pageSize);
+			
+			return ResponseEntity.ok(page);
 		
 		} catch (Exception e) {
 			log(e);
