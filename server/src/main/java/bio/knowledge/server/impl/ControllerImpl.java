@@ -112,12 +112,13 @@ public class ControllerImpl {
 		BasicQuery subnetQuery = makeJson.apply(luceneSearch);
 		
 		NetworkList networks = ndex.searchNetworks(networkSearch, pageNumber, pageSize);
+		
 		List<String> networkIds = Util.map(NetworkId::getExternalId, networks.getNetworks());
 		
 		Function<String, CompletableFuture<Network>> executeSearch = Util.curryRight(ndex::queryNetwork, subnetQuery);
 		
 		List<CompletableFuture<Network>> futures = Util.map(executeSearch, networkIds);
-		futures = Util.map(this::get, futures);
+		//futures = Util.map(this::get, futures);
 		
 		List<Network> subnetworks = new ArrayList<>();
 		
@@ -270,7 +271,9 @@ public class ControllerImpl {
 			keywords = fix(keywords);
 			semgroups = fix(semgroups);
 			pageNumber = fix(pageNumber) - 1;
-			pageSize = DEFAULT_PAGE_SIZE; //fix(pageSize);
+			
+			//pageSize = DEFAULT_PAGE_SIZE; //fix(pageSize);
+			pageSize = fix(pageSize);
 			
 			String luceneSearch = search.startsWith(keywords);
 			List<Graph> graphs = search(search::nodesBy, luceneSearch, pageNumber, pageSize);		
@@ -280,6 +283,7 @@ public class ControllerImpl {
 			Collection<Node> ofType = filterTypes(nodes, semgroups);
 			
 			List<InlineResponse2002> concepts = Util.map(translator::nodeToConcept, ofType);
+			
 			return ResponseEntity.ok(concepts);
 		
 		} catch (Exception e) {
@@ -312,7 +316,10 @@ public class ControllerImpl {
 			
 			c = fix(c);
 			pageNumber = fix(pageNumber) - 1;
-			pageSize = DEFAULT_PAGE_SIZE; //fix(pageSize);
+			
+			//pageSize = DEFAULT_PAGE_SIZE; //fix(pageSize);
+			pageSize = fix(pageSize);
+			
 			keywords = fix(keywords);
 			semgroups = fix(semgroups);
 			
@@ -327,6 +334,7 @@ public class ControllerImpl {
 			Collection<Edge> matching = filterMatching(edges, keywords);
 			
 			List<InlineResponse2003> statements = Util.map(translator::edgeToStatement, matching);
+			
 			return ResponseEntity.ok(statements);
 		
 		} catch (Exception e) {
@@ -341,13 +349,21 @@ public class ControllerImpl {
 			statementId = fix(statementId);
 			keywords = fix(keywords);
 			pageNumber = fix(pageNumber) - 1;
-			pageSize = DEFAULT_PAGE_SIZE; //fix(pageSize);
+			
+			//pageSize = DEFAULT_PAGE_SIZE; //fix(pageSize);
+			pageSize = fix(pageSize);
+			
+			if(statementId.startsWith(Translator.NDEX_NS)) {
+				statementId = statementId.replaceAll("^"+Translator.NDEX_NS, "");
+			}
 			
 			String[] half = statementId.split("_", 2);
 			String conceptId = half[0];
 			Long statement = Long.valueOf(half[1]);
 			
-			List<Graph> graphs = searchByIds(search::edgesBy, Util.list(conceptId), pageNumber, pageSize);		
+			// RMB: I don't think that this search (or the conceptId) is correct?
+			List<Graph> graphs = searchByIds(search::edgesBy, Util.list(conceptId), pageNumber, pageSize);
+			
 			Collection<Edge> relatedEdges = Util.flatmap(Graph::getEdges, graphs);
 			
 			Predicate<Edge> wasRequested = e -> e.getId().equals(statement);
@@ -410,7 +426,31 @@ public class ControllerImpl {
 	
 	
 	public ResponseEntity<List<InlineResponse200>> linkedTypes() {
-		return ResponseEntity.ok(new ArrayList<>());
+		
+		List<InlineResponse200> types = new ArrayList<InlineResponse200>();
+		
+		// Hard code some known types... See Translator.makeSemGroup()
+		InlineResponse200 GENE_Type = new InlineResponse200();
+		GENE_Type.setId("GENE");
+		types.add(GENE_Type);
+		
+		InlineResponse200 CHEM_Type = new InlineResponse200();
+		CHEM_Type.setId("CHEM");
+		types.add(CHEM_Type);
+		
+		InlineResponse200 DISO_Type = new InlineResponse200();
+		DISO_Type.setId("DISO");
+		types.add(DISO_Type);
+		
+		InlineResponse200 PHYS_Type = new InlineResponse200();
+		PHYS_Type.setId("PHYS");
+		types.add(PHYS_Type);
+		
+		InlineResponse200 OBJC_Type = new InlineResponse200();
+		OBJC_Type.setId("OBJC");
+		types.add(OBJC_Type);
+		
+		return ResponseEntity.ok(types);
 	}
 
 }

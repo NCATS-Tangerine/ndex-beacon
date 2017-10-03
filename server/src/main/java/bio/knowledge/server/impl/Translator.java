@@ -26,10 +26,20 @@ import bio.knowledge.server.model.StatementsSubject;
 @Service
 public class Translator {
 	
+	/*
+	 *  Not sure if this is the best choice but better than a colon, 
+	 *  which is a CURIE namespace delimiter whereas the hash is 
+	 *  accepted in IRI parts of CURIES as a fragment delimiter, 
+	 *  which in effect, a node/edge part of a network kind of is...
+	 */
+	public static final String NETWORK_NODE_DELIMITER = "#";
+	
+	public static final String NDEX_NS = "ndex:";
+	
 	private Logger _logger = LoggerFactory.getLogger(Translator.class);	
 	
 	private String makeNdexId(Node node) {
-		return node.getNetworkId() + ":" + node.getId();
+		return node.getNetworkId() + NETWORK_NODE_DELIMITER + node.getId();
 	}
 	
 	private String makeId(Node node) {
@@ -38,7 +48,7 @@ public class Translator {
 	}
 	
 	private String makeId(Edge edge) {
-		return makeNdexId(edge.getSubject()) + "_" + edge.getId();
+		return NDEX_NS+makeNdexId(edge.getSubject()) + "_" + edge.getId();
 	}
 	
 	public String makeSemGroup(Node node) {
@@ -68,6 +78,9 @@ public class Translator {
 			return "GENE";
 		case "UNIPROT":
 			return "CHEM";
+		case "KEGG":
+		case "KEGG.PATHWAY":
+			return "PHYS";
 		default:
 			_logger.info("'"+namespace[0]+"' nDexBio node id prefix is not yet mapped?");
 			break;

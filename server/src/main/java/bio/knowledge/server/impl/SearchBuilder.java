@@ -1,7 +1,6 @@
 package bio.knowledge.server.impl;
 
 import java.util.List;
-import java.util.function.BinaryOperator;
 
 import org.springframework.stereotype.Service;
 
