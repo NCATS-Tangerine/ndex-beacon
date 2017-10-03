@@ -72,21 +72,22 @@ public class Translator {
 		
 		// Second heuristic: to match on conceptId namespace prefix
 		// Only have a few known namespaces...need to catalog the others?
-		String[] namespace = conceptId.toUpperCase().split(":");
-		switch(namespace[0]) {
-		case "NCBIGENE":
-		case "GENECARDS":
-			return "GENE";
-		case "UNIPROT":
-			return "CHEM";
-		case "KEGG":
-		case "KEGG.PATHWAY":
-			return "PHYS";
-		default:
-			_logger.info("'"+namespace[0]+"' nDexBio node id prefix is not yet mapped?");
-			break;
+		if(conceptId.contains(":")) {
+			String[] namespace = conceptId.toUpperCase().split(":");
+			switch(namespace[0]) {
+			case "NCBIGENE":
+			case "GENECARDS":
+				return "GENE";
+			case "UNIPROT":
+				return "CHEM";
+			case "KEGG":
+			case "KEGG.PATHWAY":
+				return "PHYS";
+			default:
+				_logger.info("'"+namespace[0]+"' nDexBio node id prefix is not yet mapped?");
+				break;
+			}
 		}
-		
 		return "OBJC";
 	}
 	
