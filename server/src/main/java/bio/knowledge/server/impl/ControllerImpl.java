@@ -93,7 +93,7 @@ public class ControllerImpl {
 		try {
 			if (conceptId.length() >= 38) {
 				UUID.fromString(conceptId.substring(0, 36));
-				return conceptId.charAt(36) == ':';
+				return conceptId.charAt(36) == Translator.NETWORK_NODE_DELIMITER_CHAR;
 			}
 		
 		} catch (IllegalArgumentException e) {}
@@ -130,6 +130,7 @@ public class ControllerImpl {
 		}
 		
 		List<Graph> graphs = Util.map(Graph::new, subnetworks);
+		
 		return graphs;
 	}
 	
@@ -141,9 +142,11 @@ public class ControllerImpl {
 		
 		for (String conceptId : c) {
 			if (isNdexId(conceptId)) {
-				if (pageNumber > 0) continue;
+				
+				// NOT SURE WHY THIS IS NEEDED...
+				//if (pageNumber > 0) continue;
 			
-				String[] half = conceptId.split(":", 2);
+				String[] half = conceptId.split(Translator.NETWORK_NODE_DELIMITER, 2);
 				String networkId = half[0];
 				String nodeId = half[1];
 			
@@ -263,8 +266,7 @@ public class ControllerImpl {
 		List<Citation> matching = Util.filter(matches, citations);
 		return matching;
 	}
-	
-	
+
 	public ResponseEntity<List<InlineResponse2002>> getConcepts(String keywords, String semgroups, Integer pageNumber, Integer pageSize) {
 		try {
 			

@@ -33,6 +33,7 @@ public class Translator {
 	 *  which in effect, a node/edge part of a network kind of is...
 	 */
 	public static final String NETWORK_NODE_DELIMITER = "#";
+	public static final Character NETWORK_NODE_DELIMITER_CHAR = '#';
 	
 	public static final String NDEX_NS = "ndex:";
 	
