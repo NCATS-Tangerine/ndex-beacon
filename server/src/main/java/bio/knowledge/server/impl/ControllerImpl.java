@@ -271,14 +271,18 @@ public class ControllerImpl {
 
 	public List<? extends CachedEntity> getPage(List<? extends CachedEntity> items, Integer pageNumber, Integer pageSize) {
 		Integer size = items.size();
-		if(pageNumber<1) pageNumber = 1;
+		if(size==0) {
+			return new ArrayList<>();
+		}
+		if(pageNumber<0) pageNumber = 0;
 		if(pageSize<1)   pageSize   = size;  // default to full size of list
-		Integer fromIndex = (pageNumber-1)*pageSize;
-		if(size==0 || fromIndex>size) {
+		Integer fromIndex = pageNumber*pageSize;
+		if(fromIndex>size) {
 			return new ArrayList<>();
 		}
 		Integer toIndex = fromIndex+pageSize;
 		toIndex = toIndex>size?size:toIndex; // coerce upper bound
+		
 		return items.subList(fromIndex, toIndex);
 	}
 	
