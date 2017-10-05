@@ -171,7 +171,6 @@ public class ControllerImpl {
 			
 			List<Graph> results = search(makeJson, luceneSearch, pageNumber, pageSize);
 			graphs.addAll(results);
-		
 		}
 		
 		for (CompletableFuture<Network> future : futures) {
@@ -434,8 +433,7 @@ public class ControllerImpl {
 			String[] half = statementId.split("_", 2);
 			String conceptId = half[0];
 			Long statement = Long.valueOf(half[1]);
-			
-			// RMB: I don't think that this search (or the conceptId) is correct?
+
 			List<Graph> graphs = searchByIds(search::edgesBy, Util.list(conceptId), pageNumber, pageSize);
 			
 			Collection<Edge> relatedEdges = Util.flatmap(Graph::getEdges, graphs);
@@ -445,11 +443,28 @@ public class ControllerImpl {
 			
 			if (maybeEdge.size() == 1) {
 				
+				List<InlineResponse2004> evidence = new ArrayList<InlineResponse2004>();
+
+				/*
+				 *  Insert the current Graph network identifier 
+				 *  as one piece of "evidence" alongside 
+				 *  any other discovered citation evidence
+				 */
+				InlineResponse2004 networkEvidence = new InlineResponse2004();
+				String[] idPart = statementId.split(Translator.NETWORK_NODE_DELIMITER, 2);
+				networkEvidence.setId("ndex.network:"+idPart[0]);
+				networkEvidence.setLabel("nDex Network");
+				networkEvidence.setType("TAS");
+				evidence.add(networkEvidence);
+				
+				// Add any edge Citation annotation, if available
 				Edge edge = maybeEdge.get(0);
 				List<Citation> citations = edge.getCitations();
 				List<Citation> matching = filterMatching(citations, keywords);
 				
-				List<InlineResponse2004> evidence = citations == null? new ArrayList<>() : Util.map(translator::citationToEvidence, matching);
+				if(citations != null)
+					evidence.addAll( Util.map(translator::citationToEvidence, matching) );
+				
 				return ResponseEntity.ok(evidence);
 			
 			} else {
