@@ -9,6 +9,12 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import bio.knowledge.server.impl.StringListDeserializer;
 
+/**
+ * Used by the nodeAttributes and edgeAttributes Aspects to represent node/edge properties as key-value pairs.
+ * 
+ * @author Meera Godden
+ *
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Attribute {
 	

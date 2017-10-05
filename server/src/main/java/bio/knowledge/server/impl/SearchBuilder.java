@@ -7,6 +7,15 @@ import org.springframework.stereotype.Service;
 import bio.knowledge.server.json.BasicQuery;
 import bio.knowledge.server.json.SearchString;
 
+/**
+ * Provides helpers for building Lucene searches.
+ * See {@link https://lucene.apache.org/core/2_9_4/queryparsersyntax.html}.
+ * The "id:<NODE_ID>" ({@code id(String nodeId)}) construction is unique to NDExBio.
+ * NDEx does not support querying networks with more than 500,000 nodes.
+ * 
+ * @author Meera Godden
+ *
+ */
 @Service
 public class SearchBuilder {
 		

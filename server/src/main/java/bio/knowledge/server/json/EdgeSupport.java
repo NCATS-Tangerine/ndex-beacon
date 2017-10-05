@@ -2,6 +2,12 @@ package bio.knowledge.server.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+/**
+ * Connects edges to supporting text.
+ * 
+ * @author Meera Godden
+ *
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class EdgeSupport extends IdentifyingObject {
 

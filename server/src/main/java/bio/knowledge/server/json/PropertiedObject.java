@@ -11,6 +11,12 @@ import java.util.function.Predicate;
 
 import bio.knowledge.server.impl.Util;
 
+/**
+ * Base class of nodes (like {@code Node} and {@Edge} that can be referred to and have properties).
+ * 
+ * @author Meera Godden
+ *
+ */
 public class PropertiedObject extends IdentifiedObject {
 
 	private Map<String, Attribute> attributes = new HashMap<>();

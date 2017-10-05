@@ -13,6 +13,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import bio.knowledge.server.json.Aspect;
 
+/**
+ * Used to deserialize {@code data} (aspect list) propery of a {@code Network}.
+ * NDEx fills that property with a message object if the net is empty.
+ * 
+ * @author Meera Godden
+ *
+ */
 public class AspectListDeserializer extends JsonDeserializer<Aspect[]> {
 	
 	@Override

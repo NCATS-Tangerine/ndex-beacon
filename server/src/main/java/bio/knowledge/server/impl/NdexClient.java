@@ -14,6 +14,13 @@ import bio.knowledge.server.json.AdvancedQuery;
 import bio.knowledge.server.json.BasicQuery;
 import bio.knowledge.server.json.SearchString;
 
+
+/**
+ * Queries NDEx for networks and subnets.
+ * 
+ * @author Meera Godden
+ *
+ */
 @Service
 public class NdexClient {
 

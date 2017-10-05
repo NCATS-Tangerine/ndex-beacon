@@ -10,6 +10,13 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+/**
+ * List-processing utilities.
+ * Does not currently use co-/contra- variance in function parameters, so type-checker complaints may be misleading.
+ * 
+ * @author Meera Godden
+ *
+ */
 public class Util {
 		
 	public static <T> List<T> list(T... array) {
