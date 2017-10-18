@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  */
 public class Util {
 		
-	public static <T> List<T> list(T... array) {
+	public static <T> List<T> list(@SuppressWarnings("unchecked") T... array) {
 		return Arrays.asList(array);
 	}
 	

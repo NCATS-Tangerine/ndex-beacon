@@ -1,24 +1,26 @@
 package bio.knowledge.server.model;
 
 import java.util.Objects;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.*;
-/**
- * StatementsObject
- */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2017-06-26T09:57:13.188-07:00")
 
-public class StatementsObject   {
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import io.swagger.annotations.ApiModelProperty;
+/**
+ * StatementObject
+ */
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2017-10-18T13:42:46.892-07:00")
+
+public class StatementObject   {
   @JsonProperty("id")
   private String id = null;
 
   @JsonProperty("name")
   private String name = null;
 
-  public StatementsObject id(String id) {
+  @JsonProperty("semanticGroup")
+  private String semanticGroup = null;
+
+  public StatementObject id(String id) {
     this.id = id;
     return this;
   }
@@ -36,7 +38,7 @@ public class StatementsObject   {
     this.id = id;
   }
 
-  public StatementsObject name(String name) {
+  public StatementObject name(String name) {
     this.name = name;
     return this;
   }
@@ -54,6 +56,24 @@ public class StatementsObject   {
     this.name = name;
   }
 
+  public StatementObject semanticGroup(String semanticGroup) {
+    this.semanticGroup = semanticGroup;
+    return this;
+  }
+
+   /**
+   * a semantic group for the object concept (specified as a code CHEM, GENE, etc. - see [Semantic Groups](https://metamap.nlm.nih.gov/Docs/SemGroups_2013.txt) for the full list of codes) 
+   * @return semanticGroup
+  **/
+  @ApiModelProperty(value = "a semantic group for the object concept (specified as a code CHEM, GENE, etc. - see [Semantic Groups](https://metamap.nlm.nih.gov/Docs/SemGroups_2013.txt) for the full list of codes) ")
+  public String getSemanticGroup() {
+    return semanticGroup;
+  }
+
+  public void setSemanticGroup(String semanticGroup) {
+    this.semanticGroup = semanticGroup;
+  }
+
 
   @Override
   public boolean equals(java.lang.Object o) {
@@ -63,23 +83,25 @@ public class StatementsObject   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    StatementsObject statementsObject = (StatementsObject) o;
-    return Objects.equals(this.id, statementsObject.id) &&
-        Objects.equals(this.name, statementsObject.name);
+    StatementObject statementObject = (StatementObject) o;
+    return Objects.equals(this.id, statementObject.id) &&
+        Objects.equals(this.name, statementObject.name) &&
+        Objects.equals(this.semanticGroup, statementObject.semanticGroup);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, name);
+    return Objects.hash(id, name, semanticGroup);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class StatementsObject {\n");
+    sb.append("class StatementObject {\n");
     
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
+    sb.append("    semanticGroup: ").append(toIndentedString(semanticGroup)).append("\n");
     sb.append("}");
     return sb.toString();
   }

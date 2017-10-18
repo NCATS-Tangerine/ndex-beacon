@@ -13,14 +13,14 @@ import bio.knowledge.server.json.Attribute;
 import bio.knowledge.server.json.Citation;
 import bio.knowledge.server.json.Edge;
 import bio.knowledge.server.json.Node;
+import bio.knowledge.server.model.Annotation;
 import bio.knowledge.server.model.Concept;
-import bio.knowledge.server.model.ConceptsconceptIdDetails;
-import bio.knowledge.server.model.InlineResponse2001;
-import bio.knowledge.server.model.InlineResponse2004;
+import bio.knowledge.server.model.ConceptDetail;
+import bio.knowledge.server.model.ConceptWithDetails;
 import bio.knowledge.server.model.Statement;
-import bio.knowledge.server.model.StatementsObject;
-import bio.knowledge.server.model.StatementsPredicate;
-import bio.knowledge.server.model.StatementsSubject;
+import bio.knowledge.server.model.StatementObject;
+import bio.knowledge.server.model.StatementPredicate;
+import bio.knowledge.server.model.StatementSubject;
 
 @Service
 public class Translator {
@@ -111,24 +111,24 @@ public class Translator {
 	}
 
 	
-	private ConceptsconceptIdDetails makeDetail(String name, String value) {
+	private ConceptDetail makeDetail(String name, String value) {
 		
-		ConceptsconceptIdDetails detail = new ConceptsconceptIdDetails();
+		ConceptDetail detail = new ConceptDetail();
 		detail.setTag(name);
 		detail.setValue(value);
 		return detail;	
 	}
 	
-	private List<ConceptsconceptIdDetails> attributeToDetails(Attribute attribute) {
+	private List<ConceptDetail> attributeToDetails(Attribute attribute) {
 		
-		Function<String, ConceptsconceptIdDetails> valueToDetail = Util.curry(this::makeDetail, attribute.getName());
-		List<ConceptsconceptIdDetails> details = Util.map(valueToDetail, attribute.getValues());
+		Function<String, ConceptDetail> valueToDetail = Util.curry(this::makeDetail, attribute.getName());
+		List<ConceptDetail> details = Util.map(valueToDetail, attribute.getValues());
 		return details;
 	}
 	
-	public InlineResponse2001 nodeToConceptDetails(Node node) {
+	public ConceptWithDetails nodeToConceptDetails(Node node) {
 		
-		InlineResponse2001 conceptDetails = new InlineResponse2001();
+		ConceptWithDetails conceptDetails = new ConceptWithDetails();
 		
 		String conceptId = makeId(node) ; 
 		
@@ -139,31 +139,31 @@ public class Translator {
 		Consumer<String> addSynonym = s -> conceptDetails.addSynonymsItem(s);
 		node.getSynonyms().forEach(addSynonym);
 
-		List<ConceptsconceptIdDetails> details = Util.flatmap(this::attributeToDetails, node.getAttributes());
+		List<ConceptDetail> details = Util.flatmap(this::attributeToDetails, node.getAttributes());
 		conceptDetails.setDetails(details);
 		
 		return conceptDetails;
 	}
 	
 	
-	private StatementsSubject nodeToSubject(Node node) {
+	private StatementSubject nodeToSubject(Node node) {
 		
-		StatementsSubject subject = new StatementsSubject();
+		StatementSubject subject = new StatementSubject();
 		subject.setId(makeId(node));
 		subject.setName(node.getName());
 		return subject;
 	}
 	
-	private StatementsPredicate edgeToPredicate(Edge edge) {
+	private StatementPredicate edgeToPredicate(Edge edge) {
 		
-		StatementsPredicate predicate = new StatementsPredicate();
+		StatementPredicate predicate = new StatementPredicate();
 		predicate.setName(edge.getName());
 		return predicate;
 	}
 	
-	private StatementsObject nodeToObject(Node node) {
+	private StatementObject nodeToObject(Node node) {
 		
-		StatementsObject object = new StatementsObject();
+		StatementObject object = new StatementObject();
 		
 		object.setId(makeId(node));
 		object.setName(node.getName());
@@ -184,9 +184,9 @@ public class Translator {
 	}
 
 	
-	public InlineResponse2004 citationToEvidence(Citation citation) {
+	public Annotation citationToEvidence(Citation citation) {
 		
-		InlineResponse2004 evidence = new InlineResponse2004();
+		Annotation evidence = new Annotation();
 		evidence.setId(citation.getCitationId());
 		evidence.setLabel(citation.getFullText());
 		return evidence;

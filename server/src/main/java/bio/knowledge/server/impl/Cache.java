@@ -28,8 +28,6 @@ package bio.knowledge.server.impl;
 import java.util.List;
 import java.util.Map;
 
-import bio.knowledge.server.impl.CachedEntity;
-
 /**
  * @author Chandan Mishra (cmishra@sfu.ca)
  * @author Richard Bruskiewich (Nov. 2016 cache elaboration)

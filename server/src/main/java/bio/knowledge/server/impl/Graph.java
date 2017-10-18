@@ -10,11 +10,11 @@ import java.util.function.Predicate;
 import bio.knowledge.server.json.Aspect;
 import bio.knowledge.server.json.Attribute;
 import bio.knowledge.server.json.Citation;
-import bio.knowledge.server.json.Network;
-import bio.knowledge.server.json.NetworkId;
 import bio.knowledge.server.json.Edge;
 import bio.knowledge.server.json.EdgeCitation;
 import bio.knowledge.server.json.EdgeSupport;
+import bio.knowledge.server.json.Network;
+import bio.knowledge.server.json.NetworkId;
 import bio.knowledge.server.json.Node;
 import bio.knowledge.server.json.Support;
 

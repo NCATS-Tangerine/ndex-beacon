@@ -1,24 +1,23 @@
 package bio.knowledge.server.model;
 
 import java.util.Objects;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.*;
-/**
- * StatementsPredicate
- */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2017-06-26T09:57:13.188-07:00")
 
-public class StatementsPredicate   {
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import io.swagger.annotations.ApiModelProperty;
+/**
+ * StatementPredicate
+ */
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2017-10-18T13:42:46.892-07:00")
+
+public class StatementPredicate   {
   @JsonProperty("id")
   private String id = null;
 
   @JsonProperty("name")
   private String name = null;
 
-  public StatementsPredicate id(String id) {
+  public StatementPredicate id(String id) {
     this.id = id;
     return this;
   }
@@ -36,7 +35,7 @@ public class StatementsPredicate   {
     this.id = id;
   }
 
-  public StatementsPredicate name(String name) {
+  public StatementPredicate name(String name) {
     this.name = name;
     return this;
   }
@@ -63,9 +62,9 @@ public class StatementsPredicate   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    StatementsPredicate statementsPredicate = (StatementsPredicate) o;
-    return Objects.equals(this.id, statementsPredicate.id) &&
-        Objects.equals(this.name, statementsPredicate.name);
+    StatementPredicate statementPredicate = (StatementPredicate) o;
+    return Objects.equals(this.id, statementPredicate.id) &&
+        Objects.equals(this.name, statementPredicate.name);
   }
 
   @Override
@@ -76,7 +75,7 @@ public class StatementsPredicate   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class StatementsPredicate {\n");
+    sb.append("class StatementPredicate {\n");
     
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    name: ").append(toIndentedString(name)).append("\n");

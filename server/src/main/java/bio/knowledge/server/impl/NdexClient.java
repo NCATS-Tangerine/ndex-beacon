@@ -8,10 +8,10 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import bio.knowledge.server.json.Network;
-import bio.knowledge.server.json.NetworkList;
 import bio.knowledge.server.json.AdvancedQuery;
 import bio.knowledge.server.json.BasicQuery;
+import bio.knowledge.server.json.Network;
+import bio.knowledge.server.json.NetworkList;
 import bio.knowledge.server.json.SearchString;
 
 

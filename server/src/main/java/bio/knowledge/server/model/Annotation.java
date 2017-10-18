@@ -1,17 +1,16 @@
 package bio.knowledge.server.model;
 
 import java.util.Objects;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.*;
-/**
- * InlineResponse2004
- */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2017-06-26T09:57:13.188-07:00")
 
-public class InlineResponse2004   {
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import io.swagger.annotations.ApiModelProperty;
+/**
+ * Annotation
+ */
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2017-10-18T13:42:46.892-07:00")
+
+public class Annotation   {
   @JsonProperty("id")
   private String id = null;
 
@@ -24,7 +23,7 @@ public class InlineResponse2004   {
   @JsonProperty("date")
   private String date = null;
 
-  public InlineResponse2004 id(String id) {
+  public Annotation id(String id) {
     this.id = id;
     return this;
   }
@@ -42,7 +41,7 @@ public class InlineResponse2004   {
     this.id = id;
   }
 
-  public InlineResponse2004 label(String label) {
+  public Annotation label(String label) {
     this.label = label;
     return this;
   }
@@ -60,16 +59,16 @@ public class InlineResponse2004   {
     this.label = label;
   }
 
-  public InlineResponse2004 type(String type) {
+  public Annotation type(String type) {
     this.type = type;
     return this;
   }
 
    /**
-   * CURIE-encoded evidence type (e.g. use an evidence ontology CURIE) 
+   * Gene Ontology Evidence Code (http://www.geneontology.org/page/guide-go-evidence-codes) 
    * @return type
   **/
-  @ApiModelProperty(value = "CURIE-encoded evidence type (e.g. use an evidence ontology CURIE) ")
+  @ApiModelProperty(value = "Gene Ontology Evidence Code (http://www.geneontology.org/page/guide-go-evidence-codes) ")
   public String getType() {
     return type;
   }
@@ -78,7 +77,7 @@ public class InlineResponse2004   {
     this.type = type;
   }
 
-  public InlineResponse2004 date(String date) {
+  public Annotation date(String date) {
     this.date = date;
     return this;
   }
@@ -105,11 +104,11 @@ public class InlineResponse2004   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    InlineResponse2004 inlineResponse2004 = (InlineResponse2004) o;
-    return Objects.equals(this.id, inlineResponse2004.id) &&
-        Objects.equals(this.label, inlineResponse2004.label) &&
-        Objects.equals(this.type, inlineResponse2004.type) &&
-        Objects.equals(this.date, inlineResponse2004.date);
+    Annotation annotation = (Annotation) o;
+    return Objects.equals(this.id, annotation.id) &&
+        Objects.equals(this.label, annotation.label) &&
+        Objects.equals(this.type, annotation.type) &&
+        Objects.equals(this.date, annotation.date);
   }
 
   @Override
@@ -120,7 +119,7 @@ public class InlineResponse2004   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class InlineResponse2004 {\n");
+    sb.append("class Annotation {\n");
     
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    label: ").append(toIndentedString(label)).append("\n");

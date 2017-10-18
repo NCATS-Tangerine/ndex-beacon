@@ -34,8 +34,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Component;
 
-import bio.knowledge.server.impl.CachedEntity;
-
 /**
  * @author Chandan Mishra (cmishra@sfu.ca)
  * @author Richard Bruskiewich (Nov. 2016 cache elaboration - direct cache access is now deprecated!)

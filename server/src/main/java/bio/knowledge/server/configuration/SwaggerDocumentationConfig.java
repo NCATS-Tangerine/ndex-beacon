@@ -10,19 +10,19 @@ import springfox.documentation.service.Contact;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2017-06-26T09:57:13.188-07:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2017-10-18T13:42:46.892-07:00")
 
 @Configuration
 public class SwaggerDocumentationConfig {
 
     ApiInfo apiInfo() {
         return new ApiInfoBuilder()
-            .title("nDex Bio Knowledge Beacon Wrapper")
-            .description("This is the Translator Knowledge Beacon wrapper for the nDex Bio (ndexbio.org) biological graph resource.")
+            .title("Translator Knowledge Beacon API")
+            .description("This is the Translator Knowledge Beacon Aggregator web service application programming interface (API) wrapping the [nDex Biological Graph Data Archive](http://ndexbio.org). ")
             .license("MIT License")
             .licenseUrl("http://opensource.org/licenses/MIT")
-            .termsOfServiceUrl("http://www.ndexbio.org/v2")
-            .version("1.0.12")
+            .termsOfServiceUrl("http://starinformatics.com")
+            .version("1.0.14")
             .contact(new Contact("","", "richard@starinformatics.com"))
             .build();
     }

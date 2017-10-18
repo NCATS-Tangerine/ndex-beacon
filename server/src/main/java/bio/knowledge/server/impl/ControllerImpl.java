@@ -15,7 +15,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -31,11 +30,12 @@ import bio.knowledge.server.json.NetworkId;
 import bio.knowledge.server.json.NetworkList;
 import bio.knowledge.server.json.Node;
 import bio.knowledge.server.json.SearchString;
+import bio.knowledge.server.model.Annotation;
 import bio.knowledge.server.model.Concept;
-import bio.knowledge.server.model.InlineResponse200;
-import bio.knowledge.server.model.InlineResponse2001;
-import bio.knowledge.server.model.InlineResponse2004;
+import bio.knowledge.server.model.ConceptWithDetails;
+import bio.knowledge.server.model.Predicate;
 import bio.knowledge.server.model.Statement;
+import bio.knowledge.server.model.Summary;
 
 @Service
 public class ControllerImpl {
@@ -202,7 +202,7 @@ public class ControllerImpl {
 	
 	private void combineDuplicates(Collection<Node> nodes) {
 				
-		Predicate<Node> hasCurie = n -> n.getRepresents() != null || n.has("alias");
+		java.util.function.Predicate<Node> hasCurie = n -> n.getRepresents() != null || n.has("alias");
 		List<Node> nodesWithCuries = Util.filter(hasCurie, nodes);
 		
 		Map<String, Node> aliasing = new HashMap<>();
@@ -236,12 +236,12 @@ public class ControllerImpl {
 		
 	}
 	
-	private Collection<Node> filterTypes(Collection<Node> nodes, String semgroups) {
+	private Collection<Node> filterTypes(Collection<Node> nodes, String semanticGroups) {
 		
-		if (semgroups.isEmpty()) return nodes;
+		if (semanticGroups.isEmpty()) return nodes;
 		
-		List<String> types = Arrays.asList(semgroups.split(" "));		
-		Predicate<Node> hasType = n -> types.contains(translator.makeSemGroup(n));
+		List<String> types = Arrays.asList(semanticGroups.split(" "));		
+		java.util.function.Predicate<Node> hasType = n -> types.contains(translator.makeSemGroup(n));
 		nodes = Util.filter(hasType, nodes);
 		return nodes;
 	}
@@ -252,7 +252,7 @@ public class ControllerImpl {
 
 		List<String> words = Arrays.asList(keywords.split(" "));
 		
-		Predicate<Edge> matches = e -> containsAll(e.getName() + " " + e.getSubject().getName() + " " + e.getObject().getName(), words);
+		java.util.function.Predicate<Edge> matches = e -> containsAll(e.getName() + " " + e.getSubject().getName() + " " + e.getObject().getName(), words);
 			
 		Collection<Edge> matching = Util.filter(matches, edges);
 		return matching;
@@ -263,7 +263,7 @@ public class ControllerImpl {
 		if (keywords.isEmpty()) return citations;
 
 		List<String> words = Arrays.asList(keywords.split(" "));
-		Predicate<Citation> matches = c -> containsAll(c.getFullText(), words);
+		java.util.function.Predicate<Citation> matches = c -> containsAll(c.getFullText(), words);
 			
 		List<Citation> matching = Util.filter(matches, citations);
 		return matching;
@@ -286,11 +286,11 @@ public class ControllerImpl {
 		return items.subList(fromIndex, toIndex);
 	}
 	
-	public ResponseEntity<List<Concept>> getConcepts(String keywords, String semgroups, Integer pageNumber, Integer pageSize) {
+	public ResponseEntity<List<Concept>> getConcepts(String keywords, String semanticGroups, Integer pageNumber, Integer pageSize) {
 		try {
 			
 			keywords = fix(keywords);
-			semgroups = fix(semgroups);
+			semanticGroups = fix(semanticGroups);
 			pageNumber = fix(pageNumber) - 1;
 			
 			//pageSize = DEFAULT_PAGE_SIZE; //fix(pageSize);
@@ -303,7 +303,7 @@ public class ControllerImpl {
 					cache.searchForResultSet(
 							"Concept", 
 							keywords, 
-							new String[] { keywords, semgroups }
+							new String[] { keywords, semanticGroups }
 					);
 
 			@SuppressWarnings("unchecked")
@@ -317,7 +317,7 @@ public class ControllerImpl {
 				
 				Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
 				combineDuplicates(nodes);
-				Collection<Node> ofType = filterTypes(nodes, semgroups);
+				Collection<Node> ofType = filterTypes(nodes, semanticGroups);
 				
 				concepts = Util.map(translator::nodeToConcept, ofType);
 			
@@ -340,7 +340,7 @@ public class ControllerImpl {
 		}
 	}
 	
-	public ResponseEntity<List<InlineResponse2001>> getConceptDetails(String conceptId) {
+	public ResponseEntity<List<ConceptWithDetails>> getConceptDetails(String conceptId) {
 		
 		try {
 			
@@ -350,7 +350,7 @@ public class ControllerImpl {
 			Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
 			combineDuplicates(nodes);
 			
-			List<InlineResponse2001>  conceptDetails = Util.map(translator::nodeToConceptDetails, nodes);
+			List<ConceptWithDetails>  conceptDetails = Util.map(translator::nodeToConceptDetails, nodes);
 			
 			return ResponseEntity.ok(conceptDetails);
 		
@@ -360,8 +360,46 @@ public class ControllerImpl {
 		}
 	}
 
+
+	public ResponseEntity<List<Predicate>> getPredicates() {
+		
+		List<Predicate> types = new ArrayList<Predicate>();
+		
+		// Hard code a stub general type for now
+		Predicate interactsWith = new Predicate();
+		interactsWith.setId("interacts with");
+		types.add(interactsWith);
+		
+		return ResponseEntity.ok(types);
+	}
+
 	
-	public ResponseEntity<List<Statement>> getStatements(List<String> c, Integer pageNumber, Integer pageSize, String keywords, String semgroups) {
+	public ResponseEntity<List<String>> getExactMatchesToConceptList(List<String> c) {
+		try {
+			
+			c = fix(c);
+			
+			Set<String> set = getAliases(c);
+			set.removeAll(c);
+			
+			List<String> exactMatches = Util.list(set);
+			return ResponseEntity.ok(exactMatches);
+			
+		} catch (Exception e) {
+			log(e);
+			return ResponseEntity.ok(new ArrayList<>());
+		}
+	}
+	
+
+	public ResponseEntity<List<Statement>> getStatements(
+			List<String> c, 
+			String keywords, 
+			String semanticGroups,
+			String relations,
+			Integer pageNumber, 
+			Integer pageSize 
+	) {
 		try {
 			
 			c = fix(c);
@@ -371,7 +409,7 @@ public class ControllerImpl {
 			pageSize = fix(pageSize);
 			
 			keywords = fix(keywords);
-			semgroups = fix(semgroups);
+			semanticGroups = fix(semanticGroups);
 			
 			List<Statement> statements = null ;
 			
@@ -380,7 +418,7 @@ public class ControllerImpl {
 					cache.searchForResultSet(
 							"Statement", 
 							c.toString(), 
-							new String[] { c.toString(), keywords, semgroups }
+							new String[] { c.toString(), keywords, semanticGroups }
 					);
 
 			@SuppressWarnings("unchecked")
@@ -394,7 +432,7 @@ public class ControllerImpl {
 				List<Graph> graphs = searchByIds(search::edgesBy, Util.list(aliases), pageNumber, pageSize);
 				
 				Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
-				Collection<Node> ofType = filterTypes(nodes, semgroups);
+				Collection<Node> ofType = filterTypes(nodes, semanticGroups);
 				
 				Collection<Edge> edges = Util.flatmap(Node::getEdges, ofType);
 				Collection<Edge> matching = filterMatching(edges, keywords);
@@ -420,7 +458,7 @@ public class ControllerImpl {
 		}
 	}
 
-	public ResponseEntity<List<InlineResponse2004>> getEvidence(String statementId, String keywords, Integer pageNumber, Integer pageSize) {
+	public ResponseEntity<List<Annotation>> getEvidence(String statementId, String keywords, Integer pageNumber, Integer pageSize) {
 		try {
 		
 			statementId = fix(statementId);
@@ -442,19 +480,19 @@ public class ControllerImpl {
 			
 			Collection<Edge> relatedEdges = Util.flatmap(Graph::getEdges, graphs);
 			
-			Predicate<Edge> wasRequested = e -> e.getId().equals(statement);
+			java.util.function.Predicate<Edge> wasRequested = e -> e.getId().equals(statement);
 			List<Edge> maybeEdge = Util.filter(wasRequested, relatedEdges);
 			
 			if (maybeEdge.size() == 1) {
 				
-				List<InlineResponse2004> evidence = new ArrayList<InlineResponse2004>();
+				List<Annotation> evidence = new ArrayList<Annotation>();
 
 				/*
 				 *  Insert the current Graph network identifier 
 				 *  as one piece of "evidence" alongside 
 				 *  any other discovered citation evidence
 				 */
-				InlineResponse2004 networkEvidence = new InlineResponse2004();
+				Annotation networkEvidence = new Annotation();
 				String[] idPart = statementId.split(Translator.NETWORK_NODE_DELIMITER, 2);
 				networkEvidence.setId("ndex.network:"+idPart[0]);
 				networkEvidence.setLabel("nDex Network");
@@ -499,51 +537,32 @@ public class ControllerImpl {
 			return ResponseEntity.ok(new ArrayList<>());
 		}
 	}
-	
-	public ResponseEntity<List<String>> getExactMatchesToConceptList(List<String> c) {
-		try {
-			
-			c = fix(c);
-			
-			Set<String> set = getAliases(c);
-			set.removeAll(c);
-			
-			List<String> exactMatches = Util.list(set);
-			return ResponseEntity.ok(exactMatches);
-			
-		} catch (Exception e) {
-			log(e);
-			return ResponseEntity.ok(new ArrayList<>());
-		}
-	}
-	
-	
-	public ResponseEntity<List<InlineResponse200>> linkedTypes() {
+
+	public ResponseEntity<List<Summary>> linkedTypes() {
 		
-		List<InlineResponse200> types = new ArrayList<InlineResponse200>();
+		List<Summary> types = new ArrayList<Summary>();
 		
 		// Hard code some known types... See Translator.makeSemGroup()
-		InlineResponse200 GENE_Type = new InlineResponse200();
+		Summary GENE_Type = new Summary();
 		GENE_Type.setId("GENE");
 		types.add(GENE_Type);
 		
-		InlineResponse200 CHEM_Type = new InlineResponse200();
+		Summary CHEM_Type = new Summary();
 		CHEM_Type.setId("CHEM");
 		types.add(CHEM_Type);
 		
-		InlineResponse200 DISO_Type = new InlineResponse200();
+		Summary DISO_Type = new Summary();
 		DISO_Type.setId("DISO");
 		types.add(DISO_Type);
 		
-		InlineResponse200 PHYS_Type = new InlineResponse200();
+		Summary PHYS_Type = new Summary();
 		PHYS_Type.setId("PHYS");
 		types.add(PHYS_Type);
 		
-		InlineResponse200 OBJC_Type = new InlineResponse200();
+		Summary OBJC_Type = new Summary();
 		OBJC_Type.setId("OBJC");
 		types.add(OBJC_Type);
 		
 		return ResponseEntity.ok(types);
 	}
-
 }

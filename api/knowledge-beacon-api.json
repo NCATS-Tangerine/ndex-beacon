@@ -9,13 +9,13 @@
       "responsibleDeveloper": "Richard Bruskiewich",
       "responsibleOrganization": "STAR Informatics/Delphinai Corporation"
     },
-    "description": "This is the Translator Knowledge Beacon Aggregator web service application programming interface (API) wrapping of the [nDexbio.org Biomedical Graph Data Archive](http://ndexbio.org).\n",
+    "description": "This is the Translator Knowledge Beacon Aggregator web service application programming interface (API) wrapping the [nDex Biological Graph Data Archive](http://ndexbio.org).\n",
     "license": {
       "name": "MIT License",
       "url": "http://opensource.org/licenses/MIT"
     }
   },
-  "host": "ndex-kb.ncats.io",
+  "host": "reference-beacon.ncats.io",
   "basePath": "/",
   "schemes": [
     "https"
@@ -120,7 +120,7 @@
             "schema": {
               "type": "array",
               "items": {
-                "title": "ConceptDetail",
+                "title": "ConceptWithDetails",
                 "type": "object",
                 "properties": {
                   "id": {
@@ -149,6 +149,7 @@
                   "details": {
                     "type": "array",
                     "items": {
+                      "title": "ConceptDetail",
                       "type": "object",
                       "properties": {
                         "tag": {
