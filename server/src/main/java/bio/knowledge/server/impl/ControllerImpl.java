@@ -351,7 +351,6 @@ public class ControllerImpl {
 				
 				concepts = Util.map(translator::nodeToConcept, ofType);
 			
-				//cache.getResultSetCache().put(cacheKey, searchedConceptResult);
 				cacheLocation.setResultSet(concepts);
 				
 			} else {

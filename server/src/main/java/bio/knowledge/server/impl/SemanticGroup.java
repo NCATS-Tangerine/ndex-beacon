@@ -78,20 +78,34 @@ public class SemanticGroup {
 		 * before scrutiny of CURIES (below) given polymorphism in the
 		 * semantic groups of CURIE namespaces like KEGG, REACT and SMPDB
 		 */
+		
+		if( 
+				name.contains("therapy") ||
+				name.contains("agent") ||
+				name.contains("transplant")
+				
+		) return "PROC";
+
 		if( 
 				name.contains("cancer") ||
+				name.contains("asthma") ||
+				name.contains("anemia") ||
 				name.contains("disease") ||
 				name.contains("failure") ||
 				name.contains("dysfunction") ||
 				name.contains("disorder") ||
 				name.contains("deficiency") ||
 				name.contains("injury") ||
-				name.contains("path") ||
+				name.contains("pathy") ||
+				name.contains("pathic") ||
 				name.contains("rejection") ||
 				name.contains("hypoplasia") ||
 				name.contains("hyperplasia") ||
 				name.contains("aciduria") ||
-				name.contains("syndrome") 
+				name.contains("syndrome") ||
+				
+				// Are there other common disease suffixes?
+				name.endsWith("itis")
 				
 		) return "DISO";
 		
@@ -132,13 +146,6 @@ public class SemanticGroup {
 				name.endsWith("mab")
 				
 		) return "CHEM";
-
-		
-		if( 
-				name.contains("therapy") ||
-				name.contains("transplant")
-				
-		) return "PROC";
 		
 		/* 
 		 * Third heuristic: to match on conceptId CURIE namespace prefix
