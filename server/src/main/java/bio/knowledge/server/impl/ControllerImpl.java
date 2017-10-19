@@ -333,7 +333,7 @@ public class ControllerImpl {
 					cache.searchForResultSet(
 							"Concept", 
 							keywords, 
-							new String[] { keywords, semanticGroups }
+							new String[] { keywords, semanticGroups, pageNumber.toString(), pageSize.toString() }
 					);
 
 			@SuppressWarnings("unchecked")
@@ -479,7 +479,13 @@ public class ControllerImpl {
 					cache.searchForResultSet(
 							"Statement", 
 							c.toString(), 
-							new String[] { keywords, semanticGroups, relations }
+							new String[] { 
+									keywords, 
+									semanticGroups, 
+									relations, 
+									pageNumber.toString(), 
+									pageSize.toString() 
+							}
 					);
 
 			@SuppressWarnings("unchecked")
