@@ -370,22 +370,43 @@ public class ControllerImpl {
 	}
 	
 	public ResponseEntity<List<ConceptWithDetails>> getConceptDetails(String conceptId) {
-		
+
 		try {
-			
 			conceptId = fix(conceptId);
+
+			List<ConceptWithDetails> conceptDetails = null ;
+			
+			// I attempt caching of the whole retrieved set
+			CacheLocation cacheLocation = 
+					cache.searchForResultSet(
+							"ConceptWithDetails", 
+							conceptId, 
+							new String[] { "1" }
+							);
+
+			@SuppressWarnings("unchecked")
+			List<ConceptWithDetails> cachedResult = (List<ConceptWithDetails>)cacheLocation.getResultSet();
+
+			if(cachedResult==null) {
+
+				List<Graph> graphs = searchByIds(search::nodesBy, Util.list(conceptId), 1, 100);		
+				Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
+				combineDuplicates(nodes);
+
+				conceptDetails= Util.map(translator::nodeToConceptDetails, nodes);
 				
-			List<Graph> graphs = searchByIds(search::nodesBy, Util.list(conceptId), 1, 100);		
-			Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
-			combineDuplicates(nodes);
-			
-			List<ConceptWithDetails>  conceptDetails = Util.map(translator::nodeToConceptDetails, nodes);
-			
+				cacheLocation.setResultSet(conceptDetails);
+
+			} else {
+				
+				conceptDetails = cachedResult;
+			}
+
 			return ResponseEntity.ok(conceptDetails);
-		
+
 		} catch (Exception e) {
 			log(e);
-			return ResponseEntity.ok(new ArrayList<>());
+			return ResponseEntity.ok(new ArrayList<ConceptWithDetails>());
 		}
 	}
 
@@ -398,7 +419,6 @@ public class ControllerImpl {
 	
 	public ResponseEntity<List<String>> getExactMatchesToConceptList(List<String> c) {
 		try {
-			
 			c = fix(c);
 			
 			Set<String> set = getAliases(c);
@@ -416,7 +436,6 @@ public class ControllerImpl {
 	
 	public ResponseEntity<List<String>> getExactMatchesToConcept(String conceptId) {
 		try {
-			
 			conceptId = fix(conceptId);
 			
 			Set<String> set = getAliases(Util.list(conceptId));
@@ -460,7 +479,7 @@ public class ControllerImpl {
 					cache.searchForResultSet(
 							"Statement", 
 							c.toString(), 
-							new String[] { c.toString(), keywords, semanticGroups, relations }
+							new String[] { keywords, semanticGroups, relations }
 					);
 
 			@SuppressWarnings("unchecked")
