@@ -16,6 +16,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -39,7 +41,9 @@ import bio.knowledge.server.model.Summary;
 
 @Service
 public class ControllerImpl {
-		
+
+	private static Logger _logger = LoggerFactory.getLogger(ControllerImpl.class);	
+
 	@Autowired
 	private Cache cache;
 
@@ -51,14 +55,17 @@ public class ControllerImpl {
 	
 	@Autowired
 	private Translator translator;
-	
+
+	@Autowired 
+	PredicatesRegistry predicateRegistry;
+
 	private static final int DEFAULT_PAGE_SIZE = 3;
 	private static final long TIMEOUT = 8;
 	private static final TimeUnit TIMEUNIT = TimeUnit.SECONDS;
 		
 	
 	private void log(Exception e) {
-		System.err.println(e.getClass() + ": " + e.getMessage());
+		_logger.error(e.getClass() + ": " + e.getMessage());
 	}
 	
 	
@@ -221,8 +228,11 @@ public class ControllerImpl {
 					Consumer<Attribute> attachAttribute = a -> canonical.addAttribute(a);
 					node.getAttributes().forEach(attachAttribute);
 					
-					if (!node.getName().equals(canonical.getName()))
-						canonical.addSynonym(node.getName());
+					String nodeName = node.getName();
+					
+					if (! Util.nullOrEmpty(nodeName) )
+						if( nodeName.equals(canonical.getName()))
+							canonical.addSynonym(node.getName());
 					
 					node.getEdges().forEach(e -> canonical.addEdge(e));
 					
@@ -236,7 +246,7 @@ public class ControllerImpl {
 		
 	}
 	
-	private Collection<Node> filterTypes(Collection<Node> nodes, String semanticGroups) {
+	private Collection<Node> filterSemanticGroup(Collection<Node> nodes, String semanticGroups) {
 		
 		if (semanticGroups.isEmpty()) return nodes;
 		
@@ -246,7 +256,7 @@ public class ControllerImpl {
 		return nodes;
 	}
 	
-	private Collection<Edge> filterMatching(Collection<Edge> edges, String keywords) {
+	private Collection<Edge> filterByText(Collection<Edge> edges, String keywords) {
 		
 		if (keywords.isEmpty()) return edges;
 
@@ -255,6 +265,26 @@ public class ControllerImpl {
 		java.util.function.Predicate<Edge> matches = e -> containsAll(e.getName() + " " + e.getSubject().getName() + " " + e.getObject().getName(), words);
 			
 		Collection<Edge> matching = Util.filter(matches, edges);
+		return matching;
+	}
+	
+	private Collection<Edge> filterByPredicate(Collection<Edge> edges, String predicateFilter) {
+		
+		if (predicateFilter.isEmpty()) return edges;
+
+		// these are Predicate Ids from the client
+		List<String> predicateIds = Arrays.asList(predicateFilter.split(" "));
+		
+		// Translate predicate ids to their names
+		List<String> relations = new ArrayList<String>();
+		for(String pid : predicateIds) 
+			if(predicateRegistry.containsKey(pid)) 
+				relations.add(predicateRegistry.get(pid).getName());
+			// else - ignore as unknown?
+		
+		java.util.function.Predicate<Edge> matches = e -> containsAll( e.getName(), relations );
+		Collection<Edge> matching = Util.filter(matches, edges);
+		
 		return matching;
 	}
 	
@@ -317,7 +347,7 @@ public class ControllerImpl {
 				
 				Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
 				combineDuplicates(nodes);
-				Collection<Node> ofType = filterTypes(nodes, semanticGroups);
+				Collection<Node> ofType = filterSemanticGroup(nodes, semanticGroups);
 				
 				concepts = Util.map(translator::nodeToConcept, ofType);
 			
@@ -362,15 +392,8 @@ public class ControllerImpl {
 
 
 	public ResponseEntity<List<Predicate>> getPredicates() {
-		
-		List<Predicate> types = new ArrayList<Predicate>();
-		
-		// Hard code a stub general type for now
-		Predicate interactsWith = new Predicate();
-		interactsWith.setId("interacts with");
-		types.add(interactsWith);
-		
-		return ResponseEntity.ok(types);
+		List<Predicate> responses = new ArrayList<Predicate>(predicateRegistry.values());
+		return ResponseEntity.ok(responses);		
 	}
 
 	
@@ -390,8 +413,27 @@ public class ControllerImpl {
 			return ResponseEntity.ok(new ArrayList<>());
 		}
 	}
-	
 
+	
+	public ResponseEntity<List<String>> getExactMatchesToConcept(String conceptId) {
+		try {
+			
+			conceptId = fix(conceptId);
+			
+			Set<String> set = getAliases(Util.list(conceptId));
+			if (Node.isCurie(conceptId))
+				set.add(conceptId);
+			
+			List<String> exactMatches = Util.list(set);
+			return ResponseEntity.ok(exactMatches);
+		
+		} catch (Exception e) {
+			log(e);
+			return ResponseEntity.ok(new ArrayList<>());
+		}
+	}
+	
+	
 	public ResponseEntity<List<Statement>> getStatements(
 			List<String> c, 
 			String keywords, 
@@ -410,6 +452,7 @@ public class ControllerImpl {
 			
 			keywords = fix(keywords);
 			semanticGroups = fix(semanticGroups);
+			relations = fix(relations);
 			
 			List<Statement> statements = null ;
 			
@@ -418,7 +461,7 @@ public class ControllerImpl {
 					cache.searchForResultSet(
 							"Statement", 
 							c.toString(), 
-							new String[] { c.toString(), keywords, semanticGroups }
+							new String[] { c.toString(), keywords, semanticGroups, relations }
 					);
 
 			@SuppressWarnings("unchecked")
@@ -429,13 +472,17 @@ public class ControllerImpl {
 			
 				Set<String> aliases = getAliases(c);
 				aliases.addAll(c);
+				
 				List<Graph> graphs = searchByIds(search::edgesBy, Util.list(aliases), pageNumber, pageSize);
 				
 				Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
-				Collection<Node> ofType = filterTypes(nodes, semanticGroups);
+				Collection<Node> ofType = filterSemanticGroup(nodes, semanticGroups);
 				
 				Collection<Edge> edges = Util.flatmap(Node::getEdges, ofType);
-				Collection<Edge> matching = filterMatching(edges, keywords);
+				
+				Collection<Edge> edgesByRelations = filterByPredicate(edges, relations);
+						 
+				Collection<Edge> matching = filterByText(edgesByRelations, keywords);
 				
 				statements = Util.map(translator::edgeToStatement, matching);
 				
@@ -519,24 +566,6 @@ public class ControllerImpl {
 		}
 	}
 
-	
-	public ResponseEntity<List<String>> getExactMatchesToConcept(String conceptId) {
-		try {
-			
-			conceptId = fix(conceptId);
-			
-			Set<String> set = getAliases(Util.list(conceptId));
-			if (Node.isCurie(conceptId))
-				set.add(conceptId);
-			
-			List<String> exactMatches = Util.list(set);
-			return ResponseEntity.ok(exactMatches);
-		
-		} catch (Exception e) {
-			log(e);
-			return ResponseEntity.ok(new ArrayList<>());
-		}
-	}
 
 	public ResponseEntity<List<Summary>> linkedTypes() {
 		

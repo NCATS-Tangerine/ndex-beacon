@@ -18,6 +18,10 @@ import java.util.stream.Collectors;
  *
  */
 public class Util {
+	
+	public static boolean nullOrEmpty(String str) {
+		return str == null || str.isEmpty();
+	}
 		
 	public static <T> List<T> list(@SuppressWarnings("unchecked") T... array) {
 		return Arrays.asList(array);

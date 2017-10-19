@@ -5,8 +5,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import bio.knowledge.server.json.Attribute;
@@ -25,19 +24,19 @@ import bio.knowledge.server.model.StatementSubject;
 @Service
 public class Translator {
 	
+	@Autowired PredicatesRegistry predicateRegistry;
+
 	/*
 	 *  Not sure if this is the best choice but better than a colon, 
 	 *  which is a CURIE namespace delimiter whereas the hash is 
 	 *  accepted in IRI parts of CURIES as a fragment delimiter, 
 	 *  which in effect, a node/edge part of a network kind of is...
 	 */
-	public static final String NETWORK_NODE_DELIMITER = "#";
+	public static final String    NETWORK_NODE_DELIMITER = "#";
 	public static final Character NETWORK_NODE_DELIMITER_CHAR = '#';
 	
 	public static final String NDEX_NS = "ndex:";
-	
-	private Logger _logger = LoggerFactory.getLogger(Translator.class);	
-	
+
 	private String makeNdexId(Node node) {
 		return node.getNetworkId() + NETWORK_NODE_DELIMITER + node.getId();
 	}
@@ -61,39 +60,13 @@ public class Translator {
 		return makeSemGroup(nodeId,node) ;
 	}
 	
-	public String makeSemGroup(String conceptId, Node node) { 
+	public String makeSemGroup( String conceptId, Node node ) { 
 		
 		// First heuristic: to match on recorded Node types?
 		List<String> types = node.getByRegex("(?i).+type");
+		String nodeName = node.getName().toLowerCase();
 		
-		for (String type : types) {
-			switch (type.toLowerCase().replace(" ", "")) {
-				case "disease": return "DISO";
-				case "protein": return "CHEM";
-				case "smallmolecule": return "CHEM";
-				case "smallmoleculedrug": return "CHEM";
-			}
-		}
-		
-		// Second heuristic: to match on conceptId namespace prefix
-		// Only have a few known namespaces...need to catalog the others?
-		if(conceptId.contains(":")) {
-			String[] namespace = conceptId.toUpperCase().split(":");
-			switch(namespace[0]) {
-			case "NCBIGENE":
-			case "GENECARDS":
-				return "GENE";
-			case "UNIPROT":
-				return "CHEM";
-			case "KEGG":
-			case "KEGG.PATHWAY":
-				return "PHYS";
-			default:
-				_logger.info("'"+namespace[0]+"' nDexBio node id prefix is not yet mapped?");
-				break;
-			}
-		}
-		return "OBJC";
+		return SemanticGroup.makeSemGroup( conceptId, nodeName, types );
 	}
 	
 	public Concept nodeToConcept(Node node) {
@@ -112,7 +85,6 @@ public class Translator {
 
 	
 	private ConceptDetail makeDetail(String name, String value) {
-		
 		ConceptDetail detail = new ConceptDetail();
 		detail.setTag(name);
 		detail.setValue(value);
@@ -133,7 +105,9 @@ public class Translator {
 		String conceptId = makeId(node) ; 
 		
 		conceptDetails.setId(conceptId);
+		
 		conceptDetails.setName(node.getName());
+		
 		conceptDetails.setSemanticGroup(makeSemGroup(conceptId,node));
 		
 		Consumer<String> addSynonym = s -> conceptDetails.addSynonymsItem(s);
@@ -149,15 +123,33 @@ public class Translator {
 	private StatementSubject nodeToSubject(Node node) {
 		
 		StatementSubject subject = new StatementSubject();
-		subject.setId(makeId(node));
+		
+		String conceptId = makeId(node);
+		subject.setId(conceptId);
+		
 		subject.setName(node.getName());
+		
+		subject.setSemanticGroup(makeSemGroup(conceptId,node));
+		
 		return subject;
 	}
 	
 	private StatementPredicate edgeToPredicate(Edge edge) {
 		
 		StatementPredicate predicate = new StatementPredicate();
-		predicate.setName(edge.getName());
+		
+		/*
+		 * Harvest the Predicate here? 
+		 * Until you have a better solution, just
+		 * convert the name into a synthetic CURIE
+		 */
+		String pName  = edge.getName();
+		String pCurie = "ndex:"+edge.getName().trim().replaceAll("\\s", "_");
+		predicateRegistry.indexPredicate( pCurie, pName, "" );
+		
+		predicate.setId(pCurie);
+		predicate.setName(pName);
+		
 		return predicate;
 	}
 	
@@ -165,8 +157,12 @@ public class Translator {
 		
 		StatementObject object = new StatementObject();
 		
-		object.setId(makeId(node));
+		String conceptId = makeId(node);
+		object.setId(conceptId);
+		
 		object.setName(node.getName());
+		
+		object.setSemanticGroup(makeSemGroup(conceptId,node));
 		
 		return object;
 	}
