@@ -231,7 +231,7 @@ public class ControllerImpl {
 					String nodeName = node.getName();
 					
 					if (! Util.nullOrEmpty(nodeName) )
-						if( nodeName.equals(canonical.getName()))
+						if( !nodeName.equals(canonical.getName()))
 							canonical.addSynonym(node.getName());
 					
 					node.getEdges().forEach(e -> canonical.addEdge(e));

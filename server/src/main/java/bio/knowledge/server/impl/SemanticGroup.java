@@ -3,7 +3,9 @@
  */
 package bio.knowledge.server.impl;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,126 +58,216 @@ public class SemanticGroup {
 		}
 	}
 	
-	public static String makeSemGroup(String id, String name, List<String> properties ) { 
-		
-		// First heuristic: scan caller submitted property tags for clues?
+	/*
+	 * We can *globally* cache these semantic types for a given id
+	 * since such concept identities may be accessed frequently,
+	 * in particular, for the /statements endpoint. It is therefore
+	 * wasteful to run this computation more than once for a given id.
+	 */
+	private static Map<String,String> semanticGroupCache = new HashMap<String,String>();
+	
+	/*
+	 * functions to cache newly discovered semantic groups,
+	 * indexed against id (and possibly name) on the fly...
+	 */
+	private static String assignedGroup(String id, String group) {
+		semanticGroupCache.put(id, group);
+		return group;
+	}
 
+	private static String assignedGroup(String id, String name, String group) {
+		assignedGroup(id, group);
+		semanticGroupCache.put(name, group);
+		return group;
+	}
+	
+	public static String makeSemGroup(String id, String name, List<String> properties ) {
+		
+		String group;
+		
+		String lcName = name.toLowerCase();
+		
+		/*
+		 *  Check the cache first...
+		 *  Maybe already indexed by id...
+		 *  This is a "hard" assignment
+		 *  of semantic group to a given 
+		 *  "concept" identifier.
+		 */
+		if(semanticGroupCache.containsKey(id)) {
+			group = semanticGroupCache.get(id);
+			if(! Util.nullOrEmpty(group) ) 
+				return group; // return if found in cache
+		} 
+		
+		/*
+		 *  Otherwise, currently unknown semantic group: 
+		 *  attempt to assign by various heuristics
+		 */  
+		
+		/* 
+		 * First heuristic: to match conceptId CURIE assuming that
+		 * the namespace prefix implies a standard semantic group.
+		 * Only currently have a few known namespaces (above)
+		 */
+		if(id.contains(":")) {
+			
+			String[] namespace = id.toUpperCase().split(":");
+			group = NameSpace.getSemanticGroup(namespace[0]);
+			
+			if(!group.isEmpty()) 
+				return assignedGroup( id, lcName, group );
+			
+		}
+
+		/*
+		 *  Second heuristic: scan caller-submitted 
+		 *  property tags for clues?
+		 */
 		for (String tag : properties) {
 			
-			switch (tag.toLowerCase().replace(" ", "")) {	
-				case "disease": return "DISO";
-				case "protein": return "CHEM";
-				case "smallmolecule": return "CHEM";
-				case "smallmoleculedrug": return "CHEM";
+			String lcTag = tag.toLowerCase();
+			
+			if(lcTag.endsWith(" gene")) return assignedGroup(id, lcName, "GENE");
+			
+			lcTag = lcTag.replace(" ", "");
+			
+			switch (lcTag) {	
+				case "disease": 
+					return assignedGroup(id, lcName, "DISO");
+				case "gene": 
+					return assignedGroup(id, lcName, "GENE");
+				case "pathway": 
+					return assignedGroup(id, lcName, "PHYS");
+				case "protein": 
+				case "proteinreference": 
+				case "rna": 
+				case "mirna": 
+				case "smallmolecule": 
+				case "smallmoleculedrug": 
+					return assignedGroup(id, lcName, "CHEM");
 				default:
-					_logger.debug("SemanticGroup.makeSemGroup(): encountered unrecognized tag: "+tag);
+					_logger.debug("SemanticGroup.makeSemGroup(): encountered unrecognized tag: "+
+								   tag+" in item '"+id+"'called '"+name+"'");
 			}
 		}
 		
-		/* 
-		 * Second heuristic: take a look at the node name to match common 
-		 * "big picture" key words like 'disease' and 'cancer'. Do this first
-		 * before scrutiny of CURIES (below) given polymorphism in the
-		 * semantic groups of CURIE namespaces like KEGG, REACT and SMPDB
+		/* Third heuristic: take a look at the node name to match common 
+		 * "big picture" keywords like 'therapy' and 'cancer'.
+		 *  
+		 * Do this first, since this is a strong class of concepts in 
+		 * Translator Knowledge Beacons and the other heuristics which 
+		 * follow may be less discriminating and semantically polymorphic
 		 */
-		
-		if( 
-				name.contains("therapy") ||
-				name.contains("agent") ||
-				name.contains("transplant")
-				
-		) return "PROC";
 
 		if( 
-				name.contains("cancer") ||
-				name.contains("asthma") ||
-				name.contains("anemia") ||
-				name.contains("disease") ||
-				name.contains("failure") ||
-				name.contains("dysfunction") ||
-				name.contains("disorder") ||
-				name.contains("deficiency") ||
-				name.contains("injury") ||
-				name.contains("pathy") ||
-				name.contains("pathic") ||
-				name.contains("rejection") ||
-				name.contains("hypoplasia") ||
-				name.contains("hyperplasia") ||
-				name.contains("aciduria") ||
-				name.contains("syndrome") ||
+				lcName.contains("therapy") ||
+				lcName.contains("agent") ||
+				lcName.contains("transplant")
 				
-				// Are there other common disease suffixes?
-				name.endsWith("itis")
-				
-		) return "DISO";
-		
-		/* 
-		 * Fourth heuristic: continue to take a look at the node name to match 
-		 * other common contextual key words or syllables 
-		 */
-		if( 
-				name.contains("pathway") ||
-				name.contains("signaling") ||
-				name.contains("metabolism") ||
-				name.contains("biosynthesis") ||
-				name.contains("transcription") ||
-				name.contains("translation") ||
-				name.contains("secretion")
-				
-		)  return "PHYS";
+		) return assignedGroup(id, lcName, "PROC");
 		
 		if( 
-				name.contains("vaccine") ||
-				name.contains("peptide") ||
-				name.contains("protein") ||
-				name.contains("microrna") ||
+				lcName.contains("pathway") ||
+				lcName.contains("signaling") ||
+				lcName.contains("metabolism") ||
+				lcName.contains("biosynthesis") ||
+				lcName.contains("transcription") ||
+				lcName.contains("translation") ||
+				lcName.contains("secretion")
+				
+		)  return assignedGroup(id, lcName, "PHYS");
+		
+		if( 
+				lcName.contains("vaccine") ||
+				lcName.contains("peptide") ||
+				lcName.contains("protein") ||
+				lcName.contains("microrna") ||
 				
 				// Common subgroups in names - are there others?
-				name.contains("hydroxy") ||
-				name.contains("methyl") ||
-				name.contains("phenyl") ||
-				name.contains("amino") ||
-				name.contains("acid") ||
+				lcName.contains("hydroxy") ||
+				lcName.contains("methyl") ||
+				lcName.contains("phenyl") ||
+				lcName.contains("amino") ||
+				lcName.contains("acid") ||
 				
 				/*
 				 *  is there a better way to guess the nature of drugs...
 				 *  maybe API to look up of names somewhere?
 				 *  e.g. https://open.fda.gov/drug/label/reference/??
 				 */
-				name.endsWith("inib") ||
-				name.endsWith("mab")
+				lcName.endsWith("inib") ||
+				lcName.endsWith("mab")
 				
-		) return "CHEM";
-		
-		/* 
-		 * Third heuristic: to match on conceptId CURIE namespace prefix
-		 * Only currently have a few known namespaces (above)
-		 */
-		if(id.contains(":")) {
-			
-			String[] namespace = id.toUpperCase().split(":");
-			String sg = NameSpace.getSemanticGroup(namespace[0]);
-			if(!sg.isEmpty()) return sg;
-			
-		} /*
-		   * else, if I fall through here, continue 
-		   * searching generically on some keywords
-		   */
+		) return assignedGroup(id, lcName, "CHEM");
+
+		if( 
+				lcName.contains("cancer") ||
+				lcName.contains("asthma") ||
+				lcName.contains("anemia") ||
+				lcName.contains("disease") ||
+				lcName.contains("failure") ||
+				lcName.contains("dysfunction") ||
+				lcName.contains("disorder") ||
+				lcName.contains("deficiency") ||
+				lcName.contains("injury") ||
+				lcName.contains("pathy") ||
+				lcName.contains("pathic") ||
+				lcName.contains("rejection") ||
+				lcName.contains("hypoplasia") ||
+				lcName.contains("hyperplasia") ||
+				lcName.contains("aciduria") ||
+				lcName.contains("syndrome") ||
+				
+				// Are there other common disease suffixes?
+				lcName.endsWith("itis")
+				
+		) return assignedGroup(id, lcName, "DISO");
 		
 		if( 
-				name.contains("cell") ||
-				name.contains("tissue") ||
-				name.contains("heart") ||
-				name.contains("lung") ||
-				name.contains("kidney") ||
-				name.contains("skin") ||
-				name.contains("brain")
+				lcName.contains("cell") ||
+				lcName.contains("tissue") ||
+				lcName.contains("heart") ||
+				lcName.contains("lung") ||
+				lcName.contains("kidney") ||
+				lcName.contains("skin") ||
+				lcName.contains("brain")
 				
-		)  return "ANAT";
+		)  return assignedGroup(id, lcName, "ANAT");
 		
-		// Give up for now...
-		_logger.debug("SemanticGroup.makeSemGroup(): encountered semantically unclassified item called: "+name);			
+		/*
+		 *  Check the cache for indexing by exact name.
+		 *  
+		 *  Here, the caching is less a question of
+		 *  performance than it is a question of
+		 *  last ditch inference of data type based 
+		 *  on the name as a symbol.
+		 *  
+		 *  Assumption here is that gene symbols 
+		 *  and (some) concept names may be universal.
+		 * 
+		 */ 
+		if(semanticGroupCache.containsKey(lcName)) {
+			group = semanticGroupCache.get(lcName);
+			if(! Util.nullOrEmpty(group) ) { 
+				/*  
+				 * Return if found by name in the cache.
+				 * Also index it against the current id
+				 */
+				return assignedGroup( id, group );
+			}
+		}
 
+		// Give up for now...
+		_logger.debug("SemanticGroup.makeSemGroup(): encountered semantically "
+				    + "unclassified item '"+id+"'called '"+name+"'");			
+
+		/*
+		 *  We hesitate to cache our default guess here
+		 *  in the event that we discover a more sensible
+		 *  mapping (i.e. to the concept name) by some
+		 *  other means, in the future...
+		 */
 		return "OBJC";
 	}
 }

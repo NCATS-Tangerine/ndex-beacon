@@ -64,7 +64,7 @@ public class Translator {
 		
 		// First heuristic: to match on recorded Node types?
 		List<String> types = node.getByRegex("(?i).+type");
-		String nodeName = node.getName().toLowerCase();
+		String nodeName = node.getName();
 		
 		return SemanticGroup.makeSemGroup( conceptId, nodeName, types );
 	}
