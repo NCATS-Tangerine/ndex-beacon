@@ -38,7 +38,7 @@ public class Translator {
 	public static final String NDEX_NS = "ndex:";
 
 	private String makeNdexId(Node node) {
-		return node.getNetworkId() + NETWORK_NODE_DELIMITER + node.getId();
+		return NDEX_NS + node.getNetworkId() + NETWORK_NODE_DELIMITER + node.getId();
 	}
 	
 	private String makeId(Node node) {
@@ -47,7 +47,7 @@ public class Translator {
 	}
 	
 	private String makeId(Edge edge) {
-		return NDEX_NS+makeNdexId(edge.getSubject()) + "_" + edge.getId();
+		return makeNdexId(edge.getSubject()) + "_" + edge.getId();
 	}
 	
 	/**
@@ -144,7 +144,8 @@ public class Translator {
 		 * convert the name into a synthetic CURIE
 		 */
 		String pName  = edge.getName();
-		String pCurie = "ndex:"+edge.getName().trim().replaceAll("\\s", "_");
+		String pCurie = NDEX_NS+edge.getName().trim().replaceAll("\\s", "_");
+		
 		predicateRegistry.indexPredicate( pCurie, pName, "" );
 		
 		predicate.setId(pCurie);
