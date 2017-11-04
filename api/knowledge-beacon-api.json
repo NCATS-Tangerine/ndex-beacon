@@ -13,7 +13,7 @@
       "url": "http://opensource.org/licenses/MIT"
     }
   },
-  "host": "reference-beacon.ncats.io",
+  "host": "ndex-kb.ncats.io",
   "basePath": "/",
   "schemes": [
     "https"
