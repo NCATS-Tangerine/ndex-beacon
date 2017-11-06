@@ -329,6 +329,8 @@ public class ControllerImpl {
 				relations.add(predicateRegistry.get(pid).getName());
 			// else - ignore as unknown?
 		
+		if(relations.isEmpty()) return edges;
+		
 		java.util.function.Predicate<Edge> matches = e -> containsAll( e.getName(), relations );
 		Collection<Edge> matching = Util.filter(matches, edges);
 		

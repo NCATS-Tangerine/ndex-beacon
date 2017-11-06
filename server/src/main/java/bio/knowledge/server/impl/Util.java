@@ -46,7 +46,7 @@ public class Util {
 	}
 	
 	public static <T,R> List<R> flatmap(Function<T, ? extends Collection<R>> f, Collection<T> collection) {
-		return collection.stream().map(f).flatMap(Collection::stream).collect(Collectors.toList());
+		return collection.stream().map(f).flatMap(Collection::stream).distinct().collect(Collectors.toList());
 	}
 
 	public static <T,R> List<R> flatmap(Function<T,R[]> f, List<T> list) {
