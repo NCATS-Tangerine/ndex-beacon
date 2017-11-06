@@ -329,6 +329,8 @@ public class SemanticGroup {
 			
 			if(lcTag.endsWith(" gene")) return assignedGroup(id, lcName, "GENE");
 			
+			if(lcTag.endsWith(" target")) return assignedGroup(id, lcName, "CHEM");
+			
 			lcTag = lcTag.replace(" ", "");
 			
 			switch (lcTag) {	
@@ -346,8 +348,8 @@ public class SemanticGroup {
 				case "smallmoleculedrug": 
 					return assignedGroup(id, lcName, "CHEM");
 				default:
-					_logger.debug("SemanticGroup.makeSemGroup(): encountered unrecognized tag: "+
-									tag+" in item '"+id+"' called '"+name+"'");
+					_logger.debug("SemanticGroup.makeSemGroup(): encountered unrecognized tag: '"+
+									tag+"' in item '"+id+"' called '"+name+"'");
 			}
 		}
 		
@@ -381,6 +383,8 @@ public class SemanticGroup {
 		)  return assignedGroup(id, lcName, "PHYS");
 		
 		if( 
+				lcName.contains("receptor") ||
+				lcName.contains("ligand") ||
 				lcName.contains("vaccine") ||
 				lcName.contains("peptide") ||
 				lcName.contains("protein") ||

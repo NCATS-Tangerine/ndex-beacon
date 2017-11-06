@@ -25,6 +25,8 @@ import bio.knowledge.server.model.StatementSubject;
 @Service
 public class Translator {
 	
+	@Autowired AliasNamesRegistry aliasRegistry;
+
 	@Autowired PredicatesRegistry predicateRegistry;
 
 	/*
@@ -44,7 +46,13 @@ public class Translator {
 	
 	public String makeId(Node node) {
 		String represents = node.getRepresents();
-		return represents == null? makeNdexId(node) : represents;
+		String nDexId = makeNdexId(node);
+		if( represents != null ) {
+			if( ! aliasRegistry.containsKey(represents))
+				aliasRegistry.indexAlias(represents, nDexId);
+			return represents;
+		} else 
+			return nDexId;
 	}
 	
 	private String makeId(Edge edge) {

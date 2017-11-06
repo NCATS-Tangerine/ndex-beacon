@@ -57,6 +57,9 @@ public class ControllerImpl {
 	private Translator translator;
 
 	@Autowired 
+	AliasNamesRegistry aliasRegistry;
+
+	@Autowired 
 	PredicatesRegistry predicateRegistry;
 
 	private static final int DEFAULT_PAGE_SIZE = 3;
@@ -198,21 +201,47 @@ public class ControllerImpl {
 		return graphs;
 	}
 	
-	private Set<String> getAliases(List<String> c) {
+	private  Set<String> addCachedAliases(Collection<String> ids) {
 		
-		List<Graph> graphs = searchByIds(search::nodesBy, c, 0, DEFAULT_PAGE_SIZE);		
-		Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
+		Set<String> aliases = new HashSet<>();
+		/*
+		 * Augment full set of aliases with any names 
+		 * from the alias names registry?
+		 */
+		for(String id : ids) {
+			aliases.add(id);
+			if(aliasRegistry.containsKey(id))
+				aliases.addAll(aliasRegistry.get(id));
+		}
+		return aliases;
+	}
+	/*
+	 * This only returns the aliases of the members of the 'c' list of input identifiers
+	 * but not directly the 'c' identifiers themselves nor their locally cached related ids
+	 */
+	private Set<String> getAliases( List<String> c ) {
+		
+		List<Graph> graphs = searchByIds( search::nodesBy, c, 0, DEFAULT_PAGE_SIZE );
+		
+		Collection<Node> nodes = Util.flatmap( Graph::getNodes, graphs );
 		
 		Function<Node, List<String>> getAliases = Util.curryRight(Node::get, "alias");
 		List<String> aliases = Util.flatmap(getAliases, nodes);
-		List<String> curies = Util.filter(Node::isCurie, aliases);
 		
-		Set<String> set = new HashSet<>();
-		set.addAll(curies);
+		List<String> curies  = Util.filter(Node::isCurie, aliases);
 		
-		return set;
+		return addCachedAliases(curies);
 	}
 	
+	/*
+	 *  Exhaustive list of aliases including the ids
+	 *  themselves and their locally cached ndex ids
+	 */
+	private Set<String> allAliases( List<String> ids ) {
+		Set<String> aliases = getAliases( ids ); 
+		aliases.addAll( addCachedAliases(ids) );
+		return aliases;
+	}
 	
 	private void combineDuplicates(Collection<Node> nodes) {
 				
@@ -523,10 +552,12 @@ public class ControllerImpl {
 			conceptId = fix(conceptId);
 			
 			Set<String> set = getAliases(Util.list(conceptId));
+			
 			if (Node.isCurie(conceptId))
 				set.add(conceptId);
 			
 			List<String> exactMatches = Util.list(set);
+			
 			return ResponseEntity.ok(exactMatches);
 		
 		} catch (Exception e) {
@@ -584,8 +615,7 @@ public class ControllerImpl {
 			
 			if(cachedResult==null) {			
 			
-				Set<String> sourceAliases = getAliases(sourceIds);
-				sourceAliases.addAll(sourceIds);
+				Set<String> sourceAliases = allAliases(sourceIds);
 				
 				List<Graph> graphs = searchByIds(search::edgesBy, Util.list(sourceAliases), pageNumber, pageSize);
 				
