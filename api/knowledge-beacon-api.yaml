@@ -6,8 +6,8 @@ info:
     url: 'http://starinformatics.com'
     email: richard@starinformatics.com
   description: >
-    This is the Translator Knowledge Beacon web service application programming
-    interface (API).
+    This is the nDexBio (www.ndexbio.org) biomedical graph archive wrapped with the 
+    Translator Knowledge Beacon web service application programming interface (API).
   license:
     name: MIT License
     url: 'http://opensource.org/licenses/MIT'
