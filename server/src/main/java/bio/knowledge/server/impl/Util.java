@@ -34,7 +34,7 @@ public class Util {
 	}
 		
 	public static <T,R> List<R> map(Function<T, R> f, Collection<T> collection) {
-		return collection.stream().map(f).collect(Collectors.toList());
+		return collection.stream().map(f).distinct().collect(Collectors.toList());
 	}
 	
 	public static <T> List<T> filter(Predicate<T> p, Collection<T> collection) {

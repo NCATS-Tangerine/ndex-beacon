@@ -460,6 +460,13 @@ public class ControllerImpl {
 				
 				Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
 				combineDuplicates(nodes);
+				
+				/* 
+				 * Execute makeId on all the returned nodes for the
+				 * side effect of registering their alias ndex node ids
+				 */
+				Util.map(translator::makeId, nodes);
+				
 				Collection<Node> ofType = filterSemanticGroup(nodes, semanticGroups);
 				
 				concepts = Util.map(translator::nodeToConcept, ofType);
@@ -620,6 +627,12 @@ public class ControllerImpl {
 				List<Graph> graphs = searchByIds(search::edgesBy, Util.list(sourceAliases), pageNumber, pageSize);
 				
 				Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
+				
+				/* 
+				 * Execute makeId on all the returned nodes for the
+				 * side effect of registering their alias ndex node ids
+				 */
+				Util.map(translator::makeId, nodes);
 				
 				Collection<Edge> edges = Util.flatmap(Node::getEdges, nodes);
 				
