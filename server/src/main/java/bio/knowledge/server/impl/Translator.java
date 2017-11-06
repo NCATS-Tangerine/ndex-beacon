@@ -8,6 +8,7 @@ import java.util.function.Function;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import bio.knowledge.server.impl.SemanticGroup.NameSpace;
 import bio.knowledge.server.json.Attribute;
 import bio.knowledge.server.json.Citation;
 import bio.knowledge.server.json.Edge;
@@ -41,7 +42,7 @@ public class Translator {
 		return NDEX_NS + node.getNetworkId() + NETWORK_NODE_DELIMITER + node.getId();
 	}
 	
-	private String makeId(Node node) {
+	public String makeId(Node node) {
 		String represents = node.getRepresents();
 		return represents == null? makeNdexId(node) : represents;
 	}
@@ -69,6 +70,31 @@ public class Translator {
 		return SemanticGroup.makeSemGroup( conceptId, nodeName, types );
 	}
 	
+	/**
+	 * Retrieve or infer a suitable name
+	 * from the Node name or identifier
+	 * 
+	 * @param node
+	 * @return
+	 */
+	public String makeName(Node node) {
+		
+		String name = node.getName();
+		if(! Util.nullOrEmpty(name))
+			return name;
+		
+		// Need to infer another name
+		String id = makeId(node);
+		
+		return NameSpace.makeName(id);
+	}
+
+	
+	/**
+	 * 
+	 * @param node
+	 * @return
+	 */
 	public Concept nodeToConcept(Node node) {
 		
 		Concept concept = new Concept();
@@ -76,7 +102,7 @@ public class Translator {
 		String conceptId = makeId(node) ; 
 		
 		concept.setId(conceptId);
-		concept.setName(node.getName());
+		concept.setName(makeName(node));
 		concept.setSemanticGroup(makeSemGroup(conceptId, node));
 		concept.setSynonyms(node.getSynonyms());
 		
@@ -106,7 +132,7 @@ public class Translator {
 		
 		conceptDetails.setId(conceptId);
 		
-		conceptDetails.setName(node.getName());
+		conceptDetails.setName(makeName(node));
 		
 		conceptDetails.setSemanticGroup(makeSemGroup(conceptId,node));
 		
@@ -127,7 +153,7 @@ public class Translator {
 		String conceptId = makeId(node);
 		subject.setId(conceptId);
 		
-		subject.setName(node.getName());
+		subject.setName(makeName(node));
 		
 		subject.setSemanticGroup(makeSemGroup(conceptId,node));
 		
@@ -144,7 +170,16 @@ public class Translator {
 		 * convert the name into a synthetic CURIE
 		 */
 		String pName  = edge.getName();
-		String pCurie = NDEX_NS+edge.getName().trim().replaceAll("\\s", "_");
+		String pCurie = "";
+		if(NameSpace.isCurie(pName))
+			/*
+			 *  The edgename looks like a 
+			 *  CURIE so use it directly
+			 */
+			pCurie = pName;
+		else
+			// Treat as an nDex defined CURIE
+			pCurie = NDEX_NS+edge.getName().trim().replaceAll("\\s", "_");
 		
 		predicateRegistry.indexPredicate( pCurie, pName, "" );
 		
@@ -161,7 +196,7 @@ public class Translator {
 		String conceptId = makeId(node);
 		object.setId(conceptId);
 		
-		object.setName(node.getName());
+		object.setName(makeName(node));
 		
 		object.setSemanticGroup(makeSemGroup(conceptId,node));
 		

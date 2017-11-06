@@ -77,8 +77,8 @@ public class ControllerImpl {
 		return string == null? "" : string;
 	}
 	
-	private static List<String> fix(List<String> strings) {
-		return Util.map(ControllerImpl::fix, strings);
+	private static List<String> fix(List<String> stringList ) {
+		return  stringList == null? new ArrayList<String>() : Util.map(ControllerImpl::fix, stringList );
 	}
 	
 	
@@ -101,6 +101,12 @@ public class ControllerImpl {
 	
 	private boolean isNdexId(String conceptId) {
 		
+		// Remember the artificial prefix you've added internally in the ndex beacon!
+		if(conceptId.startsWith(Translator.NDEX_NS)) {
+			return true;
+		}
+		
+		// ...old test, in case you
 		try {
 			if (conceptId.length() >= 38) {
 				UUID.fromString(conceptId.substring(0, 36));
@@ -153,9 +159,10 @@ public class ControllerImpl {
 		for (String conceptId : c) {
 			if (isNdexId(conceptId)) {
 				
-				// NOT SURE WHY THIS IS NEEDED...
-				//if (pageNumber > 0) continue;
-			
+				// Remember to remove the artificial prefix you've added internally in the ndex beacon!
+				if(conceptId.startsWith(Translator.NDEX_NS))
+					conceptId = conceptId.replace(Translator.NDEX_NS,"");
+
 				String[] half = conceptId.split(Translator.NETWORK_NODE_DELIMITER, 2);
 				String networkId = half[0];
 				String nodeId = half[1];
@@ -250,13 +257,52 @@ public class ControllerImpl {
 		
 		if (semanticGroups.isEmpty()) return nodes;
 		
-		List<String> types = Arrays.asList(semanticGroups.split(" "));		
+		List<String> types = Arrays.asList(semanticGroups.split(" "));	
+		
 		java.util.function.Predicate<Node> hasType = n -> types.contains(translator.makeSemGroup(n));
 		nodes = Util.filter(hasType, nodes);
+		
 		return nodes;
 	}
+
+	/*
+	 * This is a variant of the semantic group filter which focuses on the semantic group of the 
+	 * 'target' node side of edges, opposite of any edge node matching a source alias name?
+	 */
+	private boolean testTargetSemanticGroup( Edge edge, Set<String> sourceAliases, List<String> types )  {
+		
+		Node subject = edge.getSubject();
+		String subjectId = translator.makeId( subject );
+
+		Node object = edge.getObject();
+		String objectId = translator.makeId( object );
+		
+		if( sourceAliases.contains(subjectId) ) 
+			return types.contains(translator.makeSemGroup(object));
+			
+		 else if( sourceAliases.contains(objectId) )
+			return types.contains(translator.makeSemGroup(subject));
+ 
+		// Strange situation... one of the two id's should match a source alias!
+		_logger.warn("ControllerImpl.testTargetSemanticGroup(): strange!... neither subject id '"+subjectId+
+				     "' nor object id '"+objectId+"' found in source alias list '"+String.join(",", sourceAliases)+"'?");
+		return false;
+
+	}
 	
-	private Collection<Edge> filterByText(Collection<Edge> edges, String keywords) {
+	private Collection<Edge> filterSemanticGroup( Collection<Edge> edges, Set<String> sourceAliases, String semanticGroups ) {
+		
+		if (semanticGroups.isEmpty()) return edges;
+		
+		List<String> types = Arrays.asList(semanticGroups.split(" "));	
+		
+		java.util.function.Predicate<Edge> hasTargetType = e -> testTargetSemanticGroup( e, sourceAliases, types );
+		edges = Util.filter(hasTargetType, edges);
+		
+		return edges;
+	}
+	
+	private Collection<Edge> filterByText( Collection<Edge> edges, String keywords ) {
 		
 		if (keywords.isEmpty()) return edges;
 
@@ -265,6 +311,7 @@ public class ControllerImpl {
 		java.util.function.Predicate<Edge> matches = e -> containsAll(e.getName() + " " + e.getSubject().getName() + " " + e.getObject().getName(), words);
 			
 		Collection<Edge> matching = Util.filter(matches, edges);
+		
 		return matching;
 	}
 	
@@ -287,7 +334,36 @@ public class ControllerImpl {
 		
 		return matching;
 	}
+
+	private boolean testTargetId( Edge edge, Set<String> sourceAliases, Set<String> targetAliases ) {
+		
+		Node subject = edge.getSubject();
+		String subjectId = translator.makeId( subject );
+
+		Node object = edge.getObject();
+		String objectId = translator.makeId( object );
+		
+		if( sourceAliases.contains(subjectId) ) 
+			return targetAliases.contains(objectId);
+			
+		 else if( sourceAliases.contains(objectId) )
+			return targetAliases.contains(subjectId);
+ 
+		// Strange situation... one of the two id's should match a source alias!
+		_logger.warn("ControllerImpl.testTargetId(): strange!... neither subject id '"+subjectId+
+				     "' nor object id '"+objectId+"' found in source alias list '"+String.join(",", sourceAliases)+"'?");
+		return false;
+	}
+
+	private Collection<Edge> filterByTarget( Collection<Edge> edges, Set<String> sourceAliases, Set<String> targetAliases ) {
+		
+		java.util.function.Predicate<Edge> hasTargetId = e -> testTargetId( e, sourceAliases, targetAliases );
+		edges = Util.filter( hasTargetId, edges );
+		
+		return edges;
+	}
 	
+
 	private List<Citation> filterMatching(List<Citation> citations, String keywords) {
 		
 		if (keywords.isEmpty()) return citations;
@@ -333,7 +409,13 @@ public class ControllerImpl {
 					cache.searchForResultSet(
 							"Concept", 
 							keywords, 
-							new String[] { keywords, semanticGroups, pageNumber.toString(), pageSize.toString() }
+							new String[] { 
+									keywords, 
+									semanticGroups 
+									// NO POINT IN INDEXING ON pageNumber and pageSize if nDex doesn't care?, 
+									//pageNumber.toString(), 
+									//pageSize.toString() 
+							}
 					);
 
 			@SuppressWarnings("unchecked")
@@ -453,24 +535,28 @@ public class ControllerImpl {
 	
 	
 	public ResponseEntity<List<Statement>> getStatements(
-			List<String> c, 
+			
+			List<String> sourceIds, 
+			String relations,
+			List<String> targetIds, 
 			String keywords, 
 			String semanticGroups,
-			String relations,
 			Integer pageNumber, 
 			Integer pageSize 
 	) {
 		try {
 			
-			c = fix(c);
+			sourceIds = fix(sourceIds);
+			relations = fix(relations);
+			targetIds = fix(targetIds);
+			
+			keywords = fix(keywords);
+			semanticGroups = fix(semanticGroups);
+
 			pageNumber = fix(pageNumber) - 1;
 			
 			//pageSize = DEFAULT_PAGE_SIZE; //fix(pageSize);
 			pageSize = fix(pageSize);
-			
-			keywords = fix(keywords);
-			semanticGroups = fix(semanticGroups);
-			relations = fix(relations);
 			
 			List<Statement> statements = null ;
 			
@@ -478,13 +564,15 @@ public class ControllerImpl {
 			CacheLocation cacheLocation = 
 					cache.searchForResultSet(
 							"Statement", 
-							c.toString(), 
-							new String[] { 
+							sourceIds.toString(), 
+							new String[] {
+									targetIds.toString(),
 									keywords, 
 									semanticGroups, 
-									relations, 
-									pageNumber.toString(), 
-									pageSize.toString() 
+									relations 
+									// NO POINT IN INDEXING ON pageNumber and pageSize if nDex doesn't care?, 
+									//pageNumber.toString(), 
+									//pageSize.toString() 
 							}
 					);
 
@@ -494,23 +582,41 @@ public class ControllerImpl {
 			
 			if(cachedResult==null) {			
 			
-				Set<String> aliases = getAliases(c);
-				aliases.addAll(c);
+				Set<String> sourceAliases = getAliases(sourceIds);
+				sourceAliases.addAll(sourceIds);
 				
-				List<Graph> graphs = searchByIds(search::edgesBy, Util.list(aliases), pageNumber, pageSize);
+				List<Graph> graphs = searchByIds(search::edgesBy, Util.list(sourceAliases), pageNumber, pageSize);
 				
 				Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
-				Collection<Node> ofType = filterSemanticGroup(nodes, semanticGroups);
 				
-				Collection<Edge> edges = Util.flatmap(Node::getEdges, ofType);
+				Collection<Edge> edges = Util.flatmap(Node::getEdges, nodes);
 				
-				Collection<Edge> edgesByRelations = filterByPredicate(edges, relations);
-						 
-				Collection<Edge> matching = filterByText(edgesByRelations, keywords);
+				if( ! targetIds.isEmpty() ) {
+					
+					Set<String> targetAliases = getAliases(targetIds);
+					targetAliases.addAll(targetIds);
+					
+					// Filter for edges with specified targets opposite to source nodes
+					edges = filterByTarget( edges, sourceAliases, targetAliases );
+				}
 				
-				statements = Util.map(translator::edgeToStatement, matching);
+				edges = filterByPredicate(edges, relations);
 				
-				//cache.getResultSetCache().put(cacheKey, searchedConceptResult);
+				edges = filterByText(edges, keywords);
+
+				/*
+				 * We only filter targets for semantic groups if  
+				 * exact target id's were NOT available for filtering? 
+				 * We do this filtering last because it is more involved
+				 * hence, we should do this on the smallest filtered 
+				 * edge list, after all other filters are applied.
+				 */
+				if( targetIds.isEmpty() )
+					 edges = filterSemanticGroup( edges, sourceAliases, semanticGroups );
+				
+				statements = Util.map( translator::edgeToStatement, edges );
+				
+				// Store result in the cache
 				cacheLocation.setResultSet(statements);
 				
 			} else {

@@ -11,9 +11,9 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * ConceptWithDetails
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2017-10-18T13:42:46.892-07:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2017-11-05T07:12:50.191-08:00")
 
-public class ConceptWithDetails  implements CachedEntity  {
+public class ConceptWithDetails implements CachedEntity {
   @JsonProperty("id")
   private String id = null;
 

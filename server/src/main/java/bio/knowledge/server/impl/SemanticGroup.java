@@ -21,40 +21,225 @@ import org.slf4j.LoggerFactory;
 public class SemanticGroup {
 	
 	private static Logger _logger = LoggerFactory.getLogger(SemanticGroup.class);	
-		
+	
 	public enum NameSpace {
 		
-		NCBIGENE("GENE"),
-		GENECARDS("GENE"),
-		UNIPROT("CHEM"),
-		CHEBI("CHEM"),
-		DRUGBANK("CHEM"),
-		KEGG("PHYS"),
-		KEGG_PATHWAY("PHYS"),
-		SMPDB("PHYS"), // Small Molecular Pathway Database, http://smpdb.ca/
-		REACT("PHYS"), // Reactome == pathways?
+		NCBIGENE( "GENE", new String[]{
+				"http://identifiers.org/ncbigene",
+				"https://www.ncbi.nlm.nih.gov/gene"
+		} ),
+		GENECARDS("GENE", new String[] {"http://www.genecards.org/"} ),
+		UNIPROT("CHEM", new String[] {
+				"http://identifiers.org/uniprot",
+				"http://www.uniprot.org/"
+		} ),
+		CHEBI("CHEM", new String[] { "http://identifiers.org/chebi" } ),
+		DRUGBANK("CHEM", new String[] {
+				"http://identifiers.org/drugbank/",
+				"http://bio2rdf.org/drugbank"
+		} ),
+		KEGG("PHYS", 
+				new String[] {
+					"http://identifiers.org/kegg",
+					"http://www.genome.jp/kegg/"
+		} ), // Kyoto Encyclopedia of Genes and Genomes
+		KEGG_PATHWAY("PHYS", 
+				new String[] {
+					"http://identifiers.org/kegg",
+					"http://www.genome.jp/kegg/"
+		} ), // Kyoto Encyclopedia of Genes and Genomes
+		PMID("CONC", // could also be "PROC"? 
+				new String[] {
+					"http://identifiers.org/pubmed",
+					"https://www.ncbi.nlm.nih.gov/pubmed"
+				} ), // PubMed
+		REACT("PHYS", new String[] {"https://reactome.org/"} ),    // REACTome == pathways?
+		REACTOME("PHYS", new String[] {"https://reactome.org/"} ), // REACTOME == pathways?
+		BP("PHYS", new String[] {"http://www.biopax.org/"} ), // BioPAX
+		PATHWAYCOMMONS("PHYS", 
+				new String[] {
+						"http://purl.org/pc2/7",
+						"http://www.pathwaycommons.org/pc2"
+				} ),  // Pathway Commons
+		SMPDB("PHYS", new String[] {"http://smpdb.ca/"} )   // Small Molecular Pathway Database
 		;
 		
-		private static Logger _logger = LoggerFactory.getLogger(NameSpace.class);	
+		static private Logger _logger = LoggerFactory.getLogger(NameSpace.class);	
 		
+		private  String[] uris;
 		private String semanticGroup;
 		
-		private NameSpace(String semanticGroup) {
+		private NameSpace( String semanticGroup, String[] uris ) {
 			this.semanticGroup = semanticGroup;
+			this.uris = uris ;
 		}
 		
-		public static String getSemanticGroup(String prefix) {
+		static public String getSemanticGroupByCurie(String id) {
 			
-			if(Util.nullOrEmpty(prefix)) return "";
+			if(Util.nullOrEmpty(id)) return "";
+			
+			String[] namespace = id.toUpperCase().split(":");
+			String prefix = namespace[0];
 			
 			prefix = prefix.toUpperCase().replaceAll("\\.", "_");
+			
 			try {
+				
 				NameSpace bns = NameSpace.valueOf(prefix);
 				return bns.semanticGroup;
+				
 			} catch( IllegalArgumentException e) {
-				_logger.info("nDexBio node id prefix '"+prefix.toString()+"' encountered is not yet mapped to a semantic group?");
+				/*
+				 * Highlight newly encountered prefixes *other than* 
+				 * NDEX (which is a locally assigned designation)
+				 */
+				if( ! prefix.toString().equals("NDEX"))
+					_logger.debug("nDexBio node id prefix '"+prefix.toString()+
+							      "' encountered is not yet mapped to a semantic group?");
+				
 				return "";
 			}
+		}
+
+		/**
+		 * Simplistic predicate to test whether or not the input id looks like a URI
+		 * 
+		 * @param id
+		 * @return
+		 */
+		static public boolean isURI(String id) {
+			if( id.toLowerCase().startsWith("http://") ||  
+					id.toLowerCase().startsWith("https://") ) {
+					return true;			 
+				}
+			return false;
+		}
+		
+		/**
+		 * 
+		 * @param uri 'uniform resource identifier' source of the object id
+		 * @param delimiter separating objectId from base URI path
+		 * @return String baseline URI of the URI
+		 */
+		static public String getBaseUri(String uri,String delimiter) {
+			int pathEnd = uri.lastIndexOf(delimiter) ;
+			if(pathEnd>-1) {
+				return uri.substring(0,pathEnd) ;
+			} else
+				return uri ; // just pass through?
+		}
+		
+		/**
+		 * Same as two argument method, with delimiter defaulting to "/"
+		 * @param uri 'uniform resource identifier' source of the object id
+		 * @return
+		 */
+		static public String getBaseUri(String uri) {
+			return getBaseUri(uri,"/");
+		}
+		
+
+		/**
+
+		 * 
+
+		 * @param accessionId
+
+		 * @return
+
+		 */
+
+		static public String resolveUri(String id) {
+
+			String baseuri = getBaseUri(id);
+			
+			for( NameSpace ns : NameSpace.values()) {
+				for( String uri : ns.uris )
+					if( uri.equals( baseuri.toLowerCase() ) )
+						return ns.name()+":"+getObjectId(id);
+			}
+			
+			/*
+			 *  Just return the URI if I 
+			 *  don't recognize the namespace
+			 */
+			return id;
+		}
+		
+		static public String getObjectId(String uri,String delimiter) {
+			int pathEnd = uri.lastIndexOf(delimiter) ;
+			if(pathEnd>-1) {
+				return uri.substring(pathEnd+1) ;
+			} else
+				return uri ; // just pass through?
+		}
+		
+		/**
+		 * Same as two argument method, with delimiter defaulting to "/"
+		 * @param uri 'uniform resource identifier' source of the object id
+		 * @return
+		 */
+		static public String getObjectId(String uri) {
+			return getObjectId(uri,"/");
+		}
+		
+		static public String getSemanticGroupByUri(String id) {
+			
+			if(Util.nullOrEmpty(id)) return "";
+			
+			String baseuri = getBaseUri(id);
+			
+			for( NameSpace ns : NameSpace.values()) {
+				for( String uri : ns.uris )
+					if( uri.equals( baseuri.toLowerCase() ) )
+						return ns.semanticGroup;
+			}
+			
+			// no URI mapping found?
+			_logger.warn("SemanticGroup.NameSpace.getSemanticGroupByUri(): URI  '"+id+"' not recognized?");
+			return "";
+		}
+
+		/**
+		 * Simpleminded predicate for CURIE identifiers
+		 * @param id
+		 * @return
+		 */
+		static public boolean isCurie(String id) {
+			
+			if( id.toLowerCase().startsWith("http://") ||  
+					id.toLowerCase().startsWith("https://") ) {
+					return false;
+					
+			} else 
+				/*
+				 * Simpleminded test for CURIE
+				 * Deficiency: Will not fail with identifiers
+				 * which have more than one colon?
+				 */
+				if(id.contains(":"))
+					return true;
+				
+			return false;
+		}
+		
+		
+		/**
+		 * Infer a suitable name from a identifier
+		 * @param id
+		 * @return
+		 */
+		static public String makeName(String id) {
+			
+			if( NameSpace.isURI(id) )
+				return NameSpace.resolveUri(id);
+						
+			else if( NameSpace.isCurie(id) ) 
+				return NameSpace.getObjectId(id,":");
+			
+			// otherwise, just return the full id?
+			_logger.debug("Translator.makeName(id): couldn't guess a canonical name for node id '"+id+"'?");
+			return id;
 		}
 	}
 	
@@ -81,11 +266,9 @@ public class SemanticGroup {
 		return group;
 	}
 	
-	public static String makeSemGroup(String id, String name, List<String> properties ) {
+	static public String makeSemGroup(String id, String name, List<String> properties ) {
 		
 		String group;
-		
-		String lcName = name.toLowerCase();
 		
 		/*
 		 *  Check the cache first...
@@ -105,15 +288,31 @@ public class SemanticGroup {
 		 *  attempt to assign by various heuristics
 		 */  
 		
+		String lcName = "";
+		if(! ( name==null || name.isEmpty() ) )
+			lcName = name.toLowerCase();
+		else
+			// What other option do I have here?
+			lcName = NameSpace.makeName(id);
+
+		// Some nodes are unnamed but have URI's?
+		if( NameSpace.isURI(id) ) {
+			
+			group = NameSpace.getSemanticGroupByUri(id);
+			
+			if( !group.isEmpty() ) {
+				return assignedGroup( id, lcName, group );
+			}
+		}
+		
 		/* 
 		 * First heuristic: to match conceptId CURIE assuming that
 		 * the namespace prefix implies a standard semantic group.
 		 * Only currently have a few known namespaces (above)
 		 */
-		if(id.contains(":")) {
+		if(NameSpace.isCurie(id)) {
 			
-			String[] namespace = id.toUpperCase().split(":");
-			group = NameSpace.getSemanticGroup(namespace[0]);
+			group = NameSpace.getSemanticGroupByCurie(id);
 			
 			if(!group.isEmpty()) 
 				return assignedGroup( id, lcName, group );
@@ -148,7 +347,7 @@ public class SemanticGroup {
 					return assignedGroup(id, lcName, "CHEM");
 				default:
 					_logger.debug("SemanticGroup.makeSemGroup(): encountered unrecognized tag: "+
-								   tag+" in item '"+id+"'called '"+name+"'");
+									tag+" in item '"+id+"' called '"+name+"'");
 			}
 		}
 		
@@ -169,9 +368,12 @@ public class SemanticGroup {
 		
 		if( 
 				lcName.contains("pathway") ||
+				lcName.contains("network") ||
 				lcName.contains("signaling") ||
+				lcName.contains("regulation") ||
 				lcName.contains("metabolism") ||
 				lcName.contains("biosynthesis") ||
+				lcName.contains("degradation") ||
 				lcName.contains("transcription") ||
 				lcName.contains("translation") ||
 				lcName.contains("secretion")
@@ -235,13 +437,19 @@ public class SemanticGroup {
 				
 		)  return assignedGroup(id, lcName, "ANAT");
 		
+		if( 
+				lcName.contains("homo sapiens") ||
+				lcName.contains("mus") 
+				
+		)  return assignedGroup(id, lcName, "LIVB");
+		
 		/*
 		 *  Check the cache for indexing by exact name.
 		 *  
 		 *  Here, the caching is less a question of
 		 *  performance than it is a question of
-		 *  last ditch inference of data type based 
-		 *  on the name as a symbol.
+		 *  a penultimate last ditch inference of 
+		 *  data type based on the name as a symbol.
 		 *  
 		 *  Assumption here is that gene symbols 
 		 *  and (some) concept names may be universal.
@@ -257,6 +465,23 @@ public class SemanticGroup {
 				return assignedGroup( id, group );
 			}
 		}
+		
+		/*
+		 * Final heuristic: some id's observed in nDex
+		 * contain embedded substrings which suggest 
+		 * a particular semantic group membership
+		 */
+		
+		if( 
+				id.toLowerCase().contains("biosource")
+				
+		)  return assignedGroup(id, lcName, "LIVB");
+		
+		if( 
+				id.toLowerCase().contains("pathway") ||
+				id.toLowerCase().contains("reactome")
+				
+		)  return assignedGroup(id, lcName, "PHYS");
 
 		// Give up for now...
 		_logger.debug("SemanticGroup.makeSemGroup(): encountered semantically "

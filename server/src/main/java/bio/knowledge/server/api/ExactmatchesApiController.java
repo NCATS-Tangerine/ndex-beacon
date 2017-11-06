@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import bio.knowledge.server.impl.ControllerImpl;
 import io.swagger.annotations.ApiParam;
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2017-10-18T13:42:46.892-07:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2017-11-05T07:12:50.191-08:00")
 
 @Controller
 public class ExactmatchesApiController implements ExactmatchesApi {
