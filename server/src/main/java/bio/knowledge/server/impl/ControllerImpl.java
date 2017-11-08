@@ -448,10 +448,9 @@ public class ControllerImpl {
 							keywords, 
 							new String[] { 
 									keywords, 
-									semanticGroups 
-									// NO POINT IN INDEXING ON pageNumber and pageSize if nDex doesn't care?, 
-									//pageNumber.toString(), 
-									//pageSize.toString() 
+									semanticGroups, 
+									pageNumber.toString(), 
+									pageSize.toString() 
 							}
 					);
 
@@ -623,10 +622,9 @@ public class ControllerImpl {
 									targetIds.toString(),
 									keywords, 
 									semanticGroups, 
-									relations 
-									// NO POINT IN INDEXING ON pageNumber and pageSize if nDex doesn't care?, 
-									//pageNumber.toString(), 
-									//pageSize.toString() 
+									relations,
+									pageNumber.toString(), 
+									pageSize.toString() 
 							}
 					);
 
