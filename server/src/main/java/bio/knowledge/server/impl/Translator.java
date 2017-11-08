@@ -38,7 +38,7 @@ public class Translator {
 	public static final String    NETWORK_NODE_DELIMITER = "#";
 	public static final Character NETWORK_NODE_DELIMITER_CHAR = '#';
 	
-	public static final String NDEX_NS = "ndex:";
+	public static final String NDEX_NS = "NDEX:";
 
 	private String makeNdexId(Node node) {
 		return NDEX_NS + node.getNetworkId() + NETWORK_NODE_DELIMITER + node.getId();
