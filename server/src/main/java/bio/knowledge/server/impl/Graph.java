@@ -34,7 +34,9 @@ public class Graph {
 	public Graph(Network network) {
 	
 		for (Aspect a : network.getData()) {
-						
+			
+			if(a==null) continue;
+			
 			addNodes(a.getNodes());
 			addCitations(a.getCitations());
 			
@@ -46,31 +48,37 @@ public class Graph {
 			connectEdgesToCitations(a.getEdgeCitations());
 			connectSupportsToCitations(a.getSupports());
 			interconnectEdgesSupportsAndCitations(a.getEdgeSupports());
-			
 		}
-		
 	}
 
 
 	private boolean hasCitation(Support support) {
+		
+		if(support==null) return false;
+		
 		return support.getCitation() != null;
 	}
 	
 	private void addNodes(Node[] n) {
-		if (n.length == 0) return;
+		
+		if (n==null || n.length == 0) return;
+		
 		for (Node node : n) {
 			nodes.put(node.getId(), node);
 		}
 	}
 	
 	private void addCitations(Citation[] c) {
-		if (c.length == 0) return;
+		
+		if ( c==null || c.length == 0) return;
+		
 		for (Citation citation : c)
 			citations.put(citation.getId(), citation);		
 	}
 	
 	private void annotateNodesWithNetworkId(NetworkId i[]) {
-		if (i.length == 0) return;
+		
+		if ( i==null || i.length == 0 ) return;
 		
 		for (NetworkId id : i) {
 			String networkId = id.getExternalId();
@@ -80,24 +88,34 @@ public class Graph {
 	
 
 	private void connectAttributesToNodes(Attribute[] a) {
-		if (a.length == 0) return;
+		
+		if ( a==null || a.length == 0 ) return;
+		
 		for (Attribute attribute : a)
 			connectAttributeToNode(attribute);
 	}
 	
 	private void connectAttributeToNode(Attribute attribute) {
+		
+		if(attribute == null || nodes==null) return;
+		
 		Long id = attribute.getId();
 		Node node = nodes.get(id);
 		node.addAttribute(attribute);
 	}
 	
 	private void connectAttributesToEdges(Attribute[] a) {
+		
 		if (a.length == 0) return;
+		
 		for (Attribute attribute : a)
 			connectAttributeToEdge(attribute);
 	}
 	
 	private void connectAttributeToEdge(Attribute attribute) {
+		
+		if(attribute==null || edges==null) return;
+		
 		Long id = attribute.getId();
 		Edge edge = edges.get(id);
 		edge.addAttribute(attribute);
@@ -111,6 +129,8 @@ public class Graph {
 	
 	private void connectEdgeToSourceAndTarget(Edge edge) {
 		
+		if(edge==null || nodes == null) return;
+		
 		Long source = edge.getSource();
 		Long target = edge.getTarget();
 		
@@ -120,21 +140,28 @@ public class Graph {
 		edge.setSubject(subject);
 		edge.setObject(object);
 		
-		subject.addEdge(edge);
-		object.addEdge(edge);
+		if(subject!=null)
+			subject.addEdge(edge);
+		
+		if(object!=null)
+			object.addEdge(edge);
 		
 		edges.put(edge.getId(), edge);		
 	}
 
 	
 	private void connectEdgesToCitations(EdgeCitation[] c) {
-		if (c.length == 0) return;
+		
+		if (c==null || c.length == 0) return;
+		
 		for (EdgeCitation edgeCitation : c) {
 			connectEdgeToCitation(edgeCitation);
 		}
 	}
 	
 	private void connectEdgeToCitation(EdgeCitation edgeCitation) {
+		
+		if(edgeCitation==null) return;
 		
 		Long[] edgeIds = edgeCitation.getId();
 		Long[] citationIds = edgeCitation.getCitations();
@@ -147,12 +174,16 @@ public class Graph {
 	
 	
 	private void connectSupportsToCitations(Support[] s) {
-		if (s.length == 0) return;
+		
+		if(s==null || s.length == 0) return;
+		
 		for (Support support : s)
 			connectSupportToCitation(support);
 	}
 	
 	private void connectSupportToCitation(Support support) {
+		
+		if(support==null) return;
 		
 		Long citationId = support.getCitationId();
 		Citation citation = citations.getOrDefault(citationId, null);
@@ -163,7 +194,9 @@ public class Graph {
 	
 	
 	private void interconnectEdgesSupportsAndCitations(EdgeSupport[] s) {
-		if (s.length == 0) return;
+		
+		if (s==null || s.length == 0) return;
+		
 		for (EdgeSupport edgeSupport : s) {
 			connectEdgeToSupports(edgeSupport);
 			inferCitationForSupports(edgeSupport);
@@ -172,6 +205,8 @@ public class Graph {
 	}
 
 	private void connectEdgeToSupports(EdgeSupport edgeSupport) {
+		
+		if(edgeSupport==null) return;
 		
 		Long[] edgeIds = edgeSupport.getId();
 		Long[] supportIds = edgeSupport.getSupports();
@@ -183,6 +218,8 @@ public class Graph {
 	}
 	
 	private void inferCitationForSupports(EdgeSupport edgeSupport) {
+
+		if(edgeSupport==null) return;
 		
 		Long[] edgeIds = edgeSupport.getId();
 		
@@ -199,6 +236,8 @@ public class Graph {
 	}
 	
 	public void connectCitationsToSupports(EdgeSupport edgeSupport) {
+
+		if(edgeSupport==null) return;
 		
 		Long[] supportIds = edgeSupport.getSupports();
 		List<Support> relatedSupports = Util.map(supports::get, supportIds);
@@ -213,10 +252,16 @@ public class Graph {
 	
 	
 	public Collection<Node> getNodes() {
+		
+		if(nodes==null) return null;
+			
 		return nodes.values();
 	}
 	
 	public Collection<Edge> getEdges() {
+		
+		if(edges==null) return null;
+		
 		return edges.values();
 	}
 	

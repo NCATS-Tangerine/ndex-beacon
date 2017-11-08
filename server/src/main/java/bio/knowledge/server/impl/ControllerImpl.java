@@ -691,7 +691,7 @@ public class ControllerImpl {
 			return ResponseEntity.ok(page);
 		
 		} catch (Exception e) {
-			_logger.error("Entering ControllerImpl.getStatements() ERROR: "+e.getMessage());
+			_logger.error("Exiting ControllerImpl.getStatements() ERROR: "+e.getMessage());
 			log(e);
 			return ResponseEntity.ok(new ArrayList<>());
 		}
