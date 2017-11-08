@@ -42,12 +42,11 @@ public class StringListDeserializer extends JsonDeserializer<List<String>> {
 			
 		} catch (NullPointerException npe) {
 			
-			_logger.error("StringListDeserializer() ERROR: Null pointer encountered?");
+			_logger.error("StringListDeserializer.deserialize() ERROR: Null pointer encountered?");
 			
 		} catch (IOException ioe) {
 			
-			_logger.error("StringListDeserializer() ERROR: IOException encountered? "+ioe.getMessage());
-			throw new IOException(ioe);
+			_logger.error("StringListDeserializer.deserialize() ERROR: IOException encountered? "+ioe.getMessage());
 			
 		} finally {
 			
