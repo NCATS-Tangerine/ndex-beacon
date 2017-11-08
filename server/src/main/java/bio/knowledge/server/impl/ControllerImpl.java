@@ -155,6 +155,8 @@ public class ControllerImpl {
 	
 	private List<Graph> searchByIds(Function<String, BasicQuery> makeJson, List<String> c, int pageNumber, int pageSize) {
 		
+		_logger.debug("Entering searchByIds(c: '"+String.join(",", c)+"')");
+		
 		List<String> realCuries = new ArrayList<>();
 		List<CompletableFuture<Network>> futures = new ArrayList<>();
 		List<Graph> graphs = new ArrayList<>();
@@ -174,6 +176,7 @@ public class ControllerImpl {
 				BasicQuery subnetQuery = makeJson.apply(luceneSearch);
 				
 				CompletableFuture<Network> network = get(ndex.queryNetwork(networkId, subnetQuery));
+				
 				futures.add(network);
 			
 			} else if (Node.isCurie(conceptId)){
@@ -187,6 +190,7 @@ public class ControllerImpl {
 			String luceneSearch = search.or(phrases);
 			
 			List<Graph> results = search(makeJson, luceneSearch, pageNumber, pageSize);
+			
 			graphs.addAll(results);
 		}
 		
@@ -197,6 +201,8 @@ public class ControllerImpl {
 			} catch (InterruptedException | ExecutionException | TimeoutException e) {
 			}
 		}
+		
+		_logger.debug("Exiting searchByIds(): "+new Integer(graphs.size())+" graphs found?");
 		
 		return graphs;
 	}
@@ -592,6 +598,14 @@ public class ControllerImpl {
 			
 			keywords = fix(keywords);
 			semanticGroups = fix(semanticGroups);
+			
+			_logger.debug("Entering ControllerImpl.getStatements():\n"
+					+ "\tsourceIds: '"+String.join(",",sourceIds)
+					+ "',\n\trelations: '"+relations
+					+ "',\n\ttargetIds: '"+String.join(",",targetIds)
+					+ "',\n\tkeywords: '"+keywords
+					+ "',\n\tsemanticGroups: '"+semanticGroups
+			);
 
 			pageNumber = fix(pageNumber) - 1;
 			
@@ -623,6 +637,8 @@ public class ControllerImpl {
 			if(cachedResult==null) {			
 			
 				Set<String> sourceAliases = allAliases(sourceIds);
+				
+				_logger.debug("sourceAliases: '"+String.join(",",sourceIds)+"'");
 				
 				List<Graph> graphs = searchByIds(search::edgesBy, Util.list(sourceAliases), pageNumber, pageSize);
 				
@@ -675,6 +691,7 @@ public class ControllerImpl {
 			return ResponseEntity.ok(page);
 		
 		} catch (Exception e) {
+			_logger.error("Entering ControllerImpl.getStatements() ERROR: "+e.getMessage());
 			log(e);
 			return ResponseEntity.ok(new ArrayList<>());
 		}
