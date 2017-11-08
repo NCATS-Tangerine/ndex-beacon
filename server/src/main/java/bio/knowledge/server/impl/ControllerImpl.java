@@ -763,6 +763,18 @@ public class ControllerImpl {
 		PHYS_Type.setId("PHYS");
 		types.add(PHYS_Type);
 		
+		Summary ANAT_Type = new Summary();
+		ANAT_Type.setId("ANAT");
+		types.add(ANAT_Type);
+		
+		Summary LIVB_Type = new Summary();
+		LIVB_Type.setId("LIVB");
+		types.add(LIVB_Type);
+		
+		Summary PROC_Type = new Summary();
+		PROC_Type.setId("PROC");
+		types.add(PROC_Type);
+		
 		Summary OBJC_Type = new Summary();
 		OBJC_Type.setId("OBJC");
 		types.add(OBJC_Type);
