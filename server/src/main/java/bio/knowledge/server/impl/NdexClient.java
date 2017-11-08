@@ -84,7 +84,6 @@ public class NdexClient {
 			return network;
 		
 		} catch (Exception e) {
-			
 			log(e);
 			return new Network();
 		}
