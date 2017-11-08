@@ -34,11 +34,17 @@ public class StringListDeserializer extends JsonDeserializer<List<String>> {
 		List<String> strings = null;
 		try {
 			
+			_logger.debug("StringListDeserializer.deserialize(): just BEFORE readValue, with parser: "+p.toString());
+			
 			@SuppressWarnings("unchecked")
 			List<Object> values = mapper.readValue(p, List.class);
 			
+			_logger.debug("StringListDeserializer.deserialize(): just AFTER readValue");
+
 			if(values!=null && values.size()>0)
 				strings = Util.map(Object::toString, values);
+			
+			_logger.debug("StringListDeserializer.deserialize(): just AFTER mapping values to List<String>");
 			
 		} catch (NullPointerException npe) {
 			
