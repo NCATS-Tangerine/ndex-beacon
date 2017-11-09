@@ -61,6 +61,13 @@ public class SemanticGroup {
 						"http://purl.org/pc2/7",
 						"http://www.pathwaycommons.org/pc2"
 				} ),  // Pathway Commons
+		
+		MIR("CHEM", 
+				new String[] {
+						"http://identifiers.org/mirtarbase",
+						"http://mirtarbase.mbc.nctu.edu.tw/#"
+				}), // mirtarbase - micro RNA targets
+		
 		SMPDB("PHYS", new String[] {"http://smpdb.ca/"} )   // Small Molecular Pathway Database
 		;
 		
@@ -187,7 +194,12 @@ public class SemanticGroup {
 			
 			if(Util.nullOrEmpty(id)) return "";
 			
-			String baseuri = getBaseUri(id);
+			String baseuri;
+			if(id.contains("#")) {
+				baseuri = getBaseUri(id,"#"); // URI ending in a hash?
+			} else {
+				baseuri = getBaseUri(id);
+			}
 			
 			for( NameSpace ns : NameSpace.values()) {
 				for( String uri : ns.uris )
