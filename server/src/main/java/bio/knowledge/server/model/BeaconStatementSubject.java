@@ -1,26 +1,27 @@
 package bio.knowledge.server.model;
 
 import java.util.Objects;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import javax.validation.constraints.*;
 /**
- * StatementSubject
+ * BeaconStatementSubject
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2017-11-05T07:12:50.191-08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-04-17T14:24:56.897-07:00")
 
-public class StatementSubject   {
+public class BeaconStatementSubject   {
   @JsonProperty("id")
   private String id = null;
 
   @JsonProperty("name")
   private String name = null;
 
-  @JsonProperty("semanticGroup")
-  private String semanticGroup = null;
+  @JsonProperty("type")
+  private String type = null;
 
-  public StatementSubject id(String id) {
+  public BeaconStatementSubject id(String id) {
     this.id = id;
     return this;
   }
@@ -38,7 +39,7 @@ public class StatementSubject   {
     this.id = id;
   }
 
-  public StatementSubject name(String name) {
+  public BeaconStatementSubject name(String name) {
     this.name = name;
     return this;
   }
@@ -56,22 +57,22 @@ public class StatementSubject   {
     this.name = name;
   }
 
-  public StatementSubject semanticGroup(String semanticGroup) {
-    this.semanticGroup = semanticGroup;
+  public BeaconStatementSubject type(String type) {
+    this.type = type;
     return this;
   }
 
    /**
-   * a semantic group for the subject concept (specified as a code CHEM, GENE, etc. - see [Semantic Groups](https://metamap.nlm.nih.gov/Docs/SemGroups_2013.txt) for the full list of codes) 
-   * @return semanticGroup
+   * a semantic group for the subject concept (specified as a code gene, pathway, disease, etc. - see [Biolink Model](https://biolink.github.io/biolink-model) for the full list of codes) 
+   * @return type
   **/
-  @ApiModelProperty(value = "a semantic group for the subject concept (specified as a code CHEM, GENE, etc. - see [Semantic Groups](https://metamap.nlm.nih.gov/Docs/SemGroups_2013.txt) for the full list of codes) ")
-  public String getSemanticGroup() {
-    return semanticGroup;
+  @ApiModelProperty(value = "a semantic group for the subject concept (specified as a code gene, pathway, disease, etc. - see [Biolink Model](https://biolink.github.io/biolink-model) for the full list of codes) ")
+  public String getType() {
+    return type;
   }
 
-  public void setSemanticGroup(String semanticGroup) {
-    this.semanticGroup = semanticGroup;
+  public void setType(String type) {
+    this.type = type;
   }
 
 
@@ -83,25 +84,25 @@ public class StatementSubject   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    StatementSubject statementSubject = (StatementSubject) o;
-    return Objects.equals(this.id, statementSubject.id) &&
-        Objects.equals(this.name, statementSubject.name) &&
-        Objects.equals(this.semanticGroup, statementSubject.semanticGroup);
+    BeaconStatementSubject beaconStatementSubject = (BeaconStatementSubject) o;
+    return Objects.equals(this.id, beaconStatementSubject.id) &&
+        Objects.equals(this.name, beaconStatementSubject.name) &&
+        Objects.equals(this.type, beaconStatementSubject.type);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, name, semanticGroup);
+    return Objects.hash(id, name, type);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class StatementSubject {\n");
+    sb.append("class BeaconStatementSubject {\n");
     
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
-    sb.append("    semanticGroup: ").append(toIndentedString(semanticGroup)).append("\n");
+    sb.append("    type: ").append(toIndentedString(type)).append("\n");
     sb.append("}");
     return sb.toString();
   }

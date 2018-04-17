@@ -10,7 +10,7 @@ import springfox.documentation.service.Contact;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2017-11-05T07:12:50.191-08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-04-17T14:24:56.897-07:00")
 
 @Configuration
 public class SwaggerDocumentationConfig {
@@ -18,11 +18,11 @@ public class SwaggerDocumentationConfig {
     ApiInfo apiInfo() {
         return new ApiInfoBuilder()
             .title("Translator Knowledge Beacon API")
-            .description("This is the nDexBio (www.ndexbio.org) biomedical graph archive wrapped with the Translator Knowledge Beacon web service application programming interface (API). ")
+            .description("This is the nDexBio (www.ndexbio.org) biomedical graph archive wrapped with the  Translator Knowledge Beacon web service application programming interface (API). ")
             .license("MIT License")
             .licenseUrl("http://opensource.org/licenses/MIT")
             .termsOfServiceUrl("http://starinformatics.com")
-            .version("1.0.15")
+            .version("1.0.17")
             .contact(new Contact("","", "richard@starinformatics.com"))
             .build();
     }

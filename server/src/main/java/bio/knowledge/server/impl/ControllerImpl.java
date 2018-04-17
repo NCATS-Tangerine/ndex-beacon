@@ -3,6 +3,7 @@ package bio.knowledge.server.impl;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -15,10 +16,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -32,12 +35,13 @@ import bio.knowledge.server.json.NetworkId;
 import bio.knowledge.server.json.NetworkList;
 import bio.knowledge.server.json.Node;
 import bio.knowledge.server.json.SearchString;
-import bio.knowledge.server.model.Annotation;
-import bio.knowledge.server.model.Concept;
-import bio.knowledge.server.model.ConceptWithDetails;
-import bio.knowledge.server.model.Predicate;
-import bio.knowledge.server.model.Statement;
-import bio.knowledge.server.model.Summary;
+import bio.knowledge.server.model.BeaconAnnotation;
+import bio.knowledge.server.model.BeaconConcept;
+import bio.knowledge.server.model.BeaconConceptType;
+import bio.knowledge.server.model.BeaconConceptWithDetails;
+import bio.knowledge.server.model.BeaconKnowledgeMapStatement;
+import bio.knowledge.server.model.BeaconPredicate;
+import bio.knowledge.server.model.BeaconStatement;
 
 @Service
 public class ControllerImpl {
@@ -251,7 +255,7 @@ public class ControllerImpl {
 	
 	private void combineDuplicates(Collection<Node> nodes) {
 				
-		java.util.function.Predicate<Node> hasCurie = n -> n.getRepresents() != null || n.has("alias");
+		Predicate<Node> hasCurie = n -> n.getRepresents() != null || n.has("alias");
 		List<Node> nodesWithCuries = Util.filter(hasCurie, nodes);
 		
 		Map<String, Node> aliasing = new HashMap<>();
@@ -288,13 +292,11 @@ public class ControllerImpl {
 		
 	}
 	
-	private Collection<Node> filterSemanticGroup(Collection<Node> nodes, String semanticGroups) {
+	private Collection<Node> filterSemanticGroup(Collection<Node> nodes, List<String> types) {
 		
-		if (semanticGroups.isEmpty()) return nodes;
+		if (types.isEmpty()) return nodes;
 		
-		List<String> types = Arrays.asList(semanticGroups.split(" "));	
-		
-		java.util.function.Predicate<Node> hasType = n -> types.contains(translator.makeSemGroup(n));
+		Predicate<Node> hasType = n -> types.contains(translator.makeSemGroup(n));
 		nodes = Util.filter(hasType, nodes);
 		
 		return nodes;
@@ -325,25 +327,22 @@ public class ControllerImpl {
 
 	}
 	
-	private Collection<Edge> filterSemanticGroup( Collection<Edge> edges, Set<String> sourceAliases, String semanticGroups ) {
+	private Collection<Edge> filterSemanticGroup( Collection<Edge> edges, Set<String> sourceAliases, List<String> types) {
 		
-		if (semanticGroups.isEmpty()) return edges;
+		if (types.isEmpty()) return edges;
 		
-		List<String> types = Arrays.asList(semanticGroups.split(" "));	
-		
-		java.util.function.Predicate<Edge> hasTargetType = e -> testTargetSemanticGroup( e, sourceAliases, types );
+		Predicate<Edge> hasTargetType = e -> testTargetSemanticGroup( e, sourceAliases, types );
 		edges = Util.filter(hasTargetType, edges);
 		
 		return edges;
 	}
 	
-	private Collection<Edge> filterByText( Collection<Edge> edges, String keywords ) {
+	private Collection<Edge> filterByText( Collection<Edge> edges, List<String> keywords ) {
 		
 		if (keywords.isEmpty()) return edges;
-
-		List<String> words = Arrays.asList(keywords.split(" "));
 		
-		java.util.function.Predicate<Edge> matches = e -> containsAll(e.getName() + " " + e.getSubject().getName() + " " + e.getObject().getName(), words);
+		Predicate<Edge> matches =
+				e -> containsAll(e.getName() + " " + e.getSubject().getName() + " " + e.getObject().getName(), keywords);
 			
 		Collection<Edge> matching = Util.filter(matches, edges);
 		
@@ -366,7 +365,7 @@ public class ControllerImpl {
 		
 		if(relations.isEmpty()) return edges;
 		
-		java.util.function.Predicate<Edge> matches = e -> containsAll( e.getName(), relations );
+		Predicate<Edge> matches = e -> containsAll( e.getName(), relations );
 		Collection<Edge> matching = Util.filter(matches, edges);
 		
 		return matching;
@@ -394,19 +393,18 @@ public class ControllerImpl {
 
 	private Collection<Edge> filterByTarget( Collection<Edge> edges, Set<String> sourceAliases, Set<String> targetAliases ) {
 		
-		java.util.function.Predicate<Edge> hasTargetId = e -> testTargetId( e, sourceAliases, targetAliases );
+		Predicate<Edge> hasTargetId = e -> testTargetId( e, sourceAliases, targetAliases );
 		edges = Util.filter( hasTargetId, edges );
 		
 		return edges;
 	}
 	
 
-	private List<Citation> filterMatching(List<Citation> citations, String keywords) {
+	private List<Citation> filterMatching(List<Citation> citations, List<String> keywords) {
 		
 		if (keywords.isEmpty()) return citations;
 
-		List<String> words = Arrays.asList(keywords.split(" "));
-		java.util.function.Predicate<Citation> matches = c -> containsAll(c.getFullText(), words);
+		Predicate<Citation> matches = c -> containsAll(c.getFullText(), keywords);
 			
 		List<Citation> matching = Util.filter(matches, citations);
 		return matching;
@@ -429,38 +427,41 @@ public class ControllerImpl {
 		return items.subList(fromIndex, toIndex);
 	}
 	
-	public ResponseEntity<List<Concept>> getConcepts(String keywords, String semanticGroups, Integer pageNumber, Integer pageSize) {
+	public ResponseEntity<List<BeaconConcept>> getConcepts(List<String> keywords, List<String> types, Integer pageNumber, Integer pageSize) {
 		try {
 			
 			keywords = fix(keywords);
-			semanticGroups = fix(semanticGroups);
+			types = fix(types);
 			pageNumber = fix(pageNumber) - 1;
 			
 			//pageSize = DEFAULT_PAGE_SIZE; //fix(pageSize);
 			pageSize = fix(pageSize);
 			
-			List<Concept> concepts = null ;
+			List<BeaconConcept> concepts = null ;
+			
+			String joinedKeywords = String.join(" ", keywords);
+			String joinedTypes = String.join(" ", types);
 			
 			// I attempt caching of the whole retrieved set
 			CacheLocation cacheLocation = 
 					cache.searchForResultSet(
 							"Concept", 
-							keywords, 
+							joinedKeywords, 
 							new String[] { 
-									keywords, 
-									semanticGroups, 
+									joinedKeywords, 
+									joinedTypes, 
 									pageNumber.toString(), 
 									pageSize.toString() 
 							}
 					);
 
 			@SuppressWarnings("unchecked")
-			List<Concept> cachedResult = 
-					(List<Concept>)cacheLocation.getResultSet();
+			List<BeaconConcept> cachedResult = 
+					(List<BeaconConcept>)cacheLocation.getResultSet();
 			
 			if(cachedResult==null) {
 				
-				String luceneSearch = search.startsWith(keywords);
+				String luceneSearch = search.startsWith(joinedKeywords);
 				List<Graph> graphs = search(search::nodesBy, luceneSearch, pageNumber, pageSize);		
 				
 				Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
@@ -472,7 +473,7 @@ public class ControllerImpl {
 				 */
 				Util.map(translator::makeId, nodes);
 				
-				Collection<Node> ofType = filterSemanticGroup(nodes, semanticGroups);
+				Collection<Node> ofType = filterSemanticGroup(nodes, types);
 				
 				concepts = Util.map(translator::nodeToConcept, ofType);
 			
@@ -484,22 +485,22 @@ public class ControllerImpl {
 			
 			@SuppressWarnings("unchecked")
 			// Paging workaround since nDex paging doesn't seem to work as published?
-			List<Concept> page = (List<Concept>)getPage(concepts, pageNumber, pageSize);
+			List<BeaconConcept> page = (List<BeaconConcept>)getPage(concepts, pageNumber, pageSize);
 			
 			return ResponseEntity.ok(page);
 		
 		} catch (Exception e) {
 			log(e);
-			return ResponseEntity.ok(new ArrayList<Concept>());
+			return ResponseEntity.ok(new ArrayList<BeaconConcept>());
 		}
 	}
 	
-	public ResponseEntity<List<ConceptWithDetails>> getConceptDetails(String conceptId) {
+	public ResponseEntity<List<BeaconConceptWithDetails>> getConceptDetails(String conceptId) {
 
 		try {
 			conceptId = fix(conceptId);
 
-			List<ConceptWithDetails> conceptDetails = null ;
+			List<BeaconConceptWithDetails> conceptDetails = null ;
 			
 			// I attempt caching of the whole retrieved set
 			CacheLocation cacheLocation = 
@@ -510,14 +511,14 @@ public class ControllerImpl {
 							);
 
 			@SuppressWarnings("unchecked")
-			List<ConceptWithDetails> cachedResult = (List<ConceptWithDetails>)cacheLocation.getResultSet();
+			List<BeaconConceptWithDetails> cachedResult = (List<BeaconConceptWithDetails>)cacheLocation.getResultSet();
 
 			if(cachedResult==null) {
 
 				List<Graph> graphs = searchByIds(search::nodesBy, Util.list(conceptId), 1, 100);		
 				Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
 				combineDuplicates(nodes);
-
+				
 				conceptDetails= Util.map(translator::nodeToConceptDetails, nodes);
 				
 				cacheLocation.setResultSet(conceptDetails);
@@ -531,13 +532,13 @@ public class ControllerImpl {
 
 		} catch (Exception e) {
 			log(e);
-			return ResponseEntity.ok(new ArrayList<ConceptWithDetails>());
+			return ResponseEntity.ok(new ArrayList<BeaconConceptWithDetails>());
 		}
 	}
 
 
-	public ResponseEntity<List<Predicate>> getPredicates() {
-		List<Predicate> responses = new ArrayList<Predicate>(predicateRegistry.values());
+	public ResponseEntity<List<BeaconPredicate>> getPredicates() {
+		List<BeaconPredicate> responses = new ArrayList<BeaconPredicate>(predicateRegistry.values());
 		return ResponseEntity.ok(responses);		
 	}
 
@@ -579,31 +580,31 @@ public class ControllerImpl {
 	}
 	
 	
-	public ResponseEntity<List<Statement>> getStatements(
+	public ResponseEntity<List<BeaconStatement>> getStatements(
 			
-			List<String> sourceIds, 
+			List<String> s, 
 			String relations,
-			List<String> targetIds, 
-			String keywords, 
-			String semanticGroups,
+			List<String> t, 
+			List<String> keywords, 
+			List<String> types,
 			Integer pageNumber, 
 			Integer pageSize 
 	) {
 		try {
 			
-			sourceIds = fix(sourceIds);
+			s = fix(s);
 			relations = fix(relations);
-			targetIds = fix(targetIds);
+			t = fix(t);
 			
 			keywords = fix(keywords);
-			semanticGroups = fix(semanticGroups);
+			types = fix(types);
 			
 			_logger.debug("Entering ControllerImpl.getStatements():\n"
-					+ "\tsourceIds: '"+String.join(",",sourceIds)
+					+ "\tsourceIds: '"+String.join(",",s)
 					+ "',\n\trelations: '"+relations
-					+ "',\n\ttargetIds: '"+String.join(",",targetIds)
+					+ "',\n\ttargetIds: '"+String.join(",",t)
 					+ "',\n\tkeywords: '"+keywords
-					+ "',\n\tsemanticGroups: '"+semanticGroups
+					+ "',\n\tsemanticGroups: '"+types
 			);
 
 			pageNumber = fix(pageNumber) - 1;
@@ -611,17 +612,17 @@ public class ControllerImpl {
 			//pageSize = DEFAULT_PAGE_SIZE; //fix(pageSize);
 			pageSize = fix(pageSize);
 			
-			List<Statement> statements = null ;
+			List<BeaconStatement> statements = null ;
 			
 			// I attempt caching of the whole retrieved set
 			CacheLocation cacheLocation = 
 					cache.searchForResultSet(
 							"Statement", 
-							sourceIds.toString(), 
+							s.toString(), 
 							new String[] {
-									targetIds.toString(),
-									keywords, 
-									semanticGroups, 
+									t.toString(),
+									String.join(" ", keywords), 
+									String.join(" ", types), 
 									relations,
 									pageNumber.toString(), 
 									pageSize.toString() 
@@ -629,14 +630,14 @@ public class ControllerImpl {
 					);
 
 			@SuppressWarnings("unchecked")
-			List<Statement> cachedResult = 
-					(List<Statement>)cacheLocation.getResultSet();
+			List<BeaconStatement> cachedResult = 
+					(List<BeaconStatement>)cacheLocation.getResultSet();
 			
 			if(cachedResult==null) {			
 			
-				Set<String> sourceAliases = allAliases(sourceIds);
+				Set<String> sourceAliases = allAliases(s);
 				
-				_logger.debug("sourceAliases: '"+String.join(",",sourceIds)+"'");
+				_logger.debug("sourceAliases: '"+String.join(",",s)+"'");
 				
 				List<Graph> graphs = searchByIds(search::edgesBy, Util.list(sourceAliases), pageNumber, pageSize);
 				
@@ -650,10 +651,10 @@ public class ControllerImpl {
 				
 				Collection<Edge> edges = Util.flatmap(Node::getEdges, nodes);
 				
-				if( ! targetIds.isEmpty() ) {
+				if( ! t.isEmpty() ) {
 					
-					Set<String> targetAliases = getAliases(targetIds);
-					targetAliases.addAll(targetIds);
+					Set<String> targetAliases = getAliases(t);
+					targetAliases.addAll(t);
 					
 					// Filter for edges with specified targets opposite to source nodes
 					edges = filterByTarget( edges, sourceAliases, targetAliases );
@@ -670,8 +671,8 @@ public class ControllerImpl {
 				 * hence, we should do this on the smallest filtered 
 				 * edge list, after all other filters are applied.
 				 */
-				if( targetIds.isEmpty() )
-					 edges = filterSemanticGroup( edges, sourceAliases, semanticGroups );
+				if( t.isEmpty() )
+					 edges = filterSemanticGroup( edges, sourceAliases, types );
 				
 				statements = Util.map( translator::edgeToStatement, edges );
 				
@@ -684,7 +685,7 @@ public class ControllerImpl {
 			
 			@SuppressWarnings("unchecked")
 			// Paging workaround since nDex paging doesn't seem to work as published?
-			List<Statement> page = (List<Statement>)getPage(statements, pageNumber, pageSize);
+			List<BeaconStatement> page = (List<BeaconStatement>)getPage(statements, pageNumber, pageSize);
 			
 			return ResponseEntity.ok(page);
 		
@@ -695,7 +696,7 @@ public class ControllerImpl {
 		}
 	}
 
-	public ResponseEntity<List<Annotation>> getEvidence(String statementId, String keywords, Integer pageNumber, Integer pageSize) {
+	public ResponseEntity<List<BeaconAnnotation>> getEvidence(String statementId, List<String> keywords, Integer pageNumber, Integer pageSize) {
 		try {
 		
 			statementId = fix(statementId);
@@ -717,19 +718,19 @@ public class ControllerImpl {
 			
 			Collection<Edge> relatedEdges = Util.flatmap(Graph::getEdges, graphs);
 			
-			java.util.function.Predicate<Edge> wasRequested = e -> e.getId().equals(statement);
+			Predicate<Edge> wasRequested = e -> e.getId().equals(statement);
 			List<Edge> maybeEdge = Util.filter(wasRequested, relatedEdges);
 			
 			if (maybeEdge.size() == 1) {
 				
-				List<Annotation> evidence = new ArrayList<Annotation>();
+				List<BeaconAnnotation> evidence = new ArrayList<BeaconAnnotation>();
 
 				/*
 				 *  Insert the current Graph network identifier 
 				 *  as one piece of "evidence" alongside 
 				 *  any other discovered citation evidence
 				 */
-				Annotation networkEvidence = new Annotation();
+				BeaconAnnotation networkEvidence = new BeaconAnnotation();
 				String[] idPart = statementId.split(Translator.NETWORK_NODE_DELIMITER, 2);
 				networkEvidence.setId("ndex.network:"+idPart[0]);
 				networkEvidence.setLabel("nDex Network");
@@ -755,45 +756,54 @@ public class ControllerImpl {
 			return ResponseEntity.ok(new ArrayList<>());
 		}
 	}
+	
+	public ResponseEntity<List<BeaconConceptType>> getConceptTypes() {
+        throw new RuntimeException("Not yet implemented");
+    }
 
 
-	public ResponseEntity<List<Summary>> linkedTypes() {
-		
-		List<Summary> types = new ArrayList<Summary>();
-		
-		// Hard code some known types... See Translator.makeSemGroup()
-		Summary GENE_Type = new Summary();
-		GENE_Type.setId("GENE");
-		types.add(GENE_Type);
-		
-		Summary CHEM_Type = new Summary();
-		CHEM_Type.setId("CHEM");
-		types.add(CHEM_Type);
-		
-		Summary DISO_Type = new Summary();
-		DISO_Type.setId("DISO");
-		types.add(DISO_Type);
-		
-		Summary PHYS_Type = new Summary();
-		PHYS_Type.setId("PHYS");
-		types.add(PHYS_Type);
-		
-		Summary ANAT_Type = new Summary();
-		ANAT_Type.setId("ANAT");
-		types.add(ANAT_Type);
-		
-		Summary LIVB_Type = new Summary();
-		LIVB_Type.setId("LIVB");
-		types.add(LIVB_Type);
-		
-		Summary PROC_Type = new Summary();
-		PROC_Type.setId("PROC");
-		types.add(PROC_Type);
-		
-		Summary OBJC_Type = new Summary();
-		OBJC_Type.setId("OBJC");
-		types.add(OBJC_Type);
-		
-		return ResponseEntity.ok(types);
+	public ResponseEntity<List<BeaconKnowledgeMapStatement>> getKnowledgeMap() {
+		throw new RuntimeException("Not yet implemented");
 	}
+
+
+//	public ResponseEntity<List<Summary>> linkedTypes() {
+//		
+//		List<Summary> types = new ArrayList<Summary>();
+//		
+//		// Hard code some known types... See Translator.makeSemGroup()
+//		Summary GENE_Type = new Summary();
+//		GENE_Type.setId("GENE");
+//		types.add(GENE_Type);
+//		
+//		Summary CHEM_Type = new Summary();
+//		CHEM_Type.setId("CHEM");
+//		types.add(CHEM_Type);
+//		
+//		Summary DISO_Type = new Summary();
+//		DISO_Type.setId("DISO");
+//		types.add(DISO_Type);
+//		
+//		Summary PHYS_Type = new Summary();
+//		PHYS_Type.setId("PHYS");
+//		types.add(PHYS_Type);
+//		
+//		Summary ANAT_Type = new Summary();
+//		ANAT_Type.setId("ANAT");
+//		types.add(ANAT_Type);
+//		
+//		Summary LIVB_Type = new Summary();
+//		LIVB_Type.setId("LIVB");
+//		types.add(LIVB_Type);
+//		
+//		Summary PROC_Type = new Summary();
+//		PROC_Type.setId("PROC");
+//		types.add(PROC_Type);
+//		
+//		Summary OBJC_Type = new Summary();
+//		OBJC_Type.setId("OBJC");
+//		types.add(OBJC_Type);
+//		
+//		return ResponseEntity.ok(types);
+//	}
 }

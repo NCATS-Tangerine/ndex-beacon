@@ -30,7 +30,7 @@ import java.util.HashMap;
 
 import org.springframework.stereotype.Component;
 
-import bio.knowledge.server.model.Predicate;
+import bio.knowledge.server.model.BeaconPredicate;
 
 /**
  * This class serves as an in-memory cache for nDex predicate relationships
@@ -40,7 +40,7 @@ import bio.knowledge.server.model.Predicate;
  *
  */
 @Component
-public class PredicatesRegistry extends HashMap<String,Predicate> {
+public class PredicatesRegistry extends HashMap<String, BeaconPredicate> {
 	
 	private static final long serialVersionUID = -8061884198941425340L;
 
@@ -48,7 +48,7 @@ public class PredicatesRegistry extends HashMap<String,Predicate> {
 
 		if( Util.nullOrEmpty(id) || Util.nullOrEmpty(name) ) return ; 
 
-		Predicate p;
+		BeaconPredicate p;
 		
 		if(!containsKey(id)) {
 			
@@ -57,7 +57,7 @@ public class PredicatesRegistry extends HashMap<String,Predicate> {
 			 *  doesn't yet exist for this
 			 *  predicate, then create it!
 			 */
-			p = new Predicate();
+			p = new BeaconPredicate();
 			
 			// predicate resource CURIE
 			p.setId(id);  

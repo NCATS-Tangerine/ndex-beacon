@@ -1,16 +1,17 @@
 package bio.knowledge.server.model;
 
 import java.util.Objects;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import javax.validation.constraints.*;
 /**
- * Annotation
+ * BeaconAnnotation
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2017-11-05T07:12:50.191-08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-04-17T14:24:56.897-07:00")
 
-public class Annotation   {
+public class BeaconAnnotation   {
   @JsonProperty("id")
   private String id = null;
 
@@ -23,7 +24,7 @@ public class Annotation   {
   @JsonProperty("date")
   private String date = null;
 
-  public Annotation id(String id) {
+  public BeaconAnnotation id(String id) {
     this.id = id;
     return this;
   }
@@ -41,7 +42,7 @@ public class Annotation   {
     this.id = id;
   }
 
-  public Annotation label(String label) {
+  public BeaconAnnotation label(String label) {
     this.label = label;
     return this;
   }
@@ -59,7 +60,7 @@ public class Annotation   {
     this.label = label;
   }
 
-  public Annotation type(String type) {
+  public BeaconAnnotation type(String type) {
     this.type = type;
     return this;
   }
@@ -77,7 +78,7 @@ public class Annotation   {
     this.type = type;
   }
 
-  public Annotation date(String date) {
+  public BeaconAnnotation date(String date) {
     this.date = date;
     return this;
   }
@@ -104,11 +105,11 @@ public class Annotation   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    Annotation annotation = (Annotation) o;
-    return Objects.equals(this.id, annotation.id) &&
-        Objects.equals(this.label, annotation.label) &&
-        Objects.equals(this.type, annotation.type) &&
-        Objects.equals(this.date, annotation.date);
+    BeaconAnnotation beaconAnnotation = (BeaconAnnotation) o;
+    return Objects.equals(this.id, beaconAnnotation.id) &&
+        Objects.equals(this.label, beaconAnnotation.label) &&
+        Objects.equals(this.type, beaconAnnotation.type) &&
+        Objects.equals(this.date, beaconAnnotation.date);
   }
 
   @Override
@@ -119,7 +120,7 @@ public class Annotation   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class Annotation {\n");
+    sb.append("class BeaconAnnotation {\n");
     
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    label: ").append(toIndentedString(label)).append("\n");

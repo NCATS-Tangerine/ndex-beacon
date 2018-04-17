@@ -2,29 +2,34 @@ package bio.knowledge.server.model;
 
 import java.util.Objects;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import bio.knowledge.server.impl.CachedEntity;
+import bio.knowledge.server.model.BeaconStatementObject;
+import bio.knowledge.server.model.BeaconStatementPredicate;
+import bio.knowledge.server.model.BeaconStatementSubject;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import javax.validation.constraints.*;
 /**
- * Statement
+ * BeaconStatement
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2017-11-05T07:12:50.191-08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-04-17T14:24:56.897-07:00")
 
-public class Statement implements CachedEntity {
+public class BeaconStatement implements CachedEntity {
   @JsonProperty("id")
   private String id = null;
 
   @JsonProperty("subject")
-  private StatementSubject subject = null;
+  private BeaconStatementSubject subject = null;
 
   @JsonProperty("predicate")
-  private StatementPredicate predicate = null;
+  private BeaconStatementPredicate predicate = null;
 
   @JsonProperty("object")
-  private StatementObject object = null;
+  private BeaconStatementObject object = null;
 
-  public Statement id(String id) {
+  public BeaconStatement id(String id) {
     this.id = id;
     return this;
   }
@@ -42,7 +47,7 @@ public class Statement implements CachedEntity {
     this.id = id;
   }
 
-  public Statement subject(StatementSubject subject) {
+  public BeaconStatement subject(BeaconStatementSubject subject) {
     this.subject = subject;
     return this;
   }
@@ -52,15 +57,15 @@ public class Statement implements CachedEntity {
    * @return subject
   **/
   @ApiModelProperty(value = "")
-  public StatementSubject getSubject() {
+  public BeaconStatementSubject getSubject() {
     return subject;
   }
 
-  public void setSubject(StatementSubject subject) {
+  public void setSubject(BeaconStatementSubject subject) {
     this.subject = subject;
   }
 
-  public Statement predicate(StatementPredicate predicate) {
+  public BeaconStatement predicate(BeaconStatementPredicate predicate) {
     this.predicate = predicate;
     return this;
   }
@@ -70,15 +75,15 @@ public class Statement implements CachedEntity {
    * @return predicate
   **/
   @ApiModelProperty(value = "")
-  public StatementPredicate getPredicate() {
+  public BeaconStatementPredicate getPredicate() {
     return predicate;
   }
 
-  public void setPredicate(StatementPredicate predicate) {
+  public void setPredicate(BeaconStatementPredicate predicate) {
     this.predicate = predicate;
   }
 
-  public Statement object(StatementObject object) {
+  public BeaconStatement object(BeaconStatementObject object) {
     this.object = object;
     return this;
   }
@@ -88,11 +93,11 @@ public class Statement implements CachedEntity {
    * @return object
   **/
   @ApiModelProperty(value = "")
-  public StatementObject getObject() {
+  public BeaconStatementObject getObject() {
     return object;
   }
 
-  public void setObject(StatementObject object) {
+  public void setObject(BeaconStatementObject object) {
     this.object = object;
   }
 
@@ -105,11 +110,11 @@ public class Statement implements CachedEntity {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    Statement statement = (Statement) o;
-    return Objects.equals(this.id, statement.id) &&
-        Objects.equals(this.subject, statement.subject) &&
-        Objects.equals(this.predicate, statement.predicate) &&
-        Objects.equals(this.object, statement.object);
+    BeaconStatement beaconStatement = (BeaconStatement) o;
+    return Objects.equals(this.id, beaconStatement.id) &&
+        Objects.equals(this.subject, beaconStatement.subject) &&
+        Objects.equals(this.predicate, beaconStatement.predicate) &&
+        Objects.equals(this.object, beaconStatement.object);
   }
 
   @Override
@@ -120,7 +125,7 @@ public class Statement implements CachedEntity {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class Statement {\n");
+    sb.append("class BeaconStatement {\n");
     
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    subject: ").append(toIndentedString(subject)).append("\n");

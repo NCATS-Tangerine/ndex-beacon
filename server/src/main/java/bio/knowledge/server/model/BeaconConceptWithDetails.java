@@ -1,27 +1,30 @@
 package bio.knowledge.server.model;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import bio.knowledge.server.impl.CachedEntity;
+import bio.knowledge.server.model.BeaconConceptDetail;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.ArrayList;
+import java.util.List;
+import javax.validation.constraints.*;
 /**
- * Concept
+ * BeaconConceptWithDetails
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2017-11-05T07:12:50.191-08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-04-17T14:24:56.897-07:00")
 
-public class Concept implements CachedEntity {
+public class BeaconConceptWithDetails implements CachedEntity {
   @JsonProperty("id")
   private String id = null;
 
   @JsonProperty("name")
   private String name = null;
 
-  @JsonProperty("semanticGroup")
-  private String semanticGroup = null;
+  @JsonProperty("type")
+  private String type = null;
 
   @JsonProperty("synonyms")
   private List<String> synonyms = new ArrayList<String>();
@@ -29,7 +32,10 @@ public class Concept implements CachedEntity {
   @JsonProperty("definition")
   private String definition = null;
 
-  public Concept id(String id) {
+  @JsonProperty("details")
+  private List<BeaconConceptDetail> details = new ArrayList<BeaconConceptDetail>();
+
+  public BeaconConceptWithDetails id(String id) {
     this.id = id;
     return this;
   }
@@ -47,7 +53,7 @@ public class Concept implements CachedEntity {
     this.id = id;
   }
 
-  public Concept name(String name) {
+  public BeaconConceptWithDetails name(String name) {
     this.name = name;
     return this;
   }
@@ -65,30 +71,30 @@ public class Concept implements CachedEntity {
     this.name = name;
   }
 
-  public Concept semanticGroup(String semanticGroup) {
-    this.semanticGroup = semanticGroup;
+  public BeaconConceptWithDetails type(String type) {
+    this.type = type;
     return this;
   }
 
    /**
    * concept semantic type 
-   * @return semanticGroup
+   * @return type
   **/
   @ApiModelProperty(value = "concept semantic type ")
-  public String getSemanticGroup() {
-    return semanticGroup;
+  public String getType() {
+    return type;
   }
 
-  public void setSemanticGroup(String semanticGroup) {
-    this.semanticGroup = semanticGroup;
+  public void setType(String type) {
+    this.type = type;
   }
 
-  public Concept synonyms(List<String> synonyms) {
+  public BeaconConceptWithDetails synonyms(List<String> synonyms) {
     this.synonyms = synonyms;
     return this;
   }
 
-  public Concept addSynonymsItem(String synonymsItem) {
+  public BeaconConceptWithDetails addSynonymsItem(String synonymsItem) {
     this.synonyms.add(synonymsItem);
     return this;
   }
@@ -106,7 +112,7 @@ public class Concept implements CachedEntity {
     this.synonyms = synonyms;
   }
 
-  public Concept definition(String definition) {
+  public BeaconConceptWithDetails definition(String definition) {
     this.definition = definition;
     return this;
   }
@@ -124,6 +130,29 @@ public class Concept implements CachedEntity {
     this.definition = definition;
   }
 
+  public BeaconConceptWithDetails details(List<BeaconConceptDetail> details) {
+    this.details = details;
+    return this;
+  }
+
+  public BeaconConceptWithDetails addDetailsItem(BeaconConceptDetail detailsItem) {
+    this.details.add(detailsItem);
+    return this;
+  }
+
+   /**
+   * Get details
+   * @return details
+  **/
+  @ApiModelProperty(value = "")
+  public List<BeaconConceptDetail> getDetails() {
+    return details;
+  }
+
+  public void setDetails(List<BeaconConceptDetail> details) {
+    this.details = details;
+  }
+
 
   @Override
   public boolean equals(java.lang.Object o) {
@@ -133,29 +162,31 @@ public class Concept implements CachedEntity {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    Concept concept = (Concept) o;
-    return Objects.equals(this.id, concept.id) &&
-        Objects.equals(this.name, concept.name) &&
-        Objects.equals(this.semanticGroup, concept.semanticGroup) &&
-        Objects.equals(this.synonyms, concept.synonyms) &&
-        Objects.equals(this.definition, concept.definition);
+    BeaconConceptWithDetails beaconConceptWithDetails = (BeaconConceptWithDetails) o;
+    return Objects.equals(this.id, beaconConceptWithDetails.id) &&
+        Objects.equals(this.name, beaconConceptWithDetails.name) &&
+        Objects.equals(this.type, beaconConceptWithDetails.type) &&
+        Objects.equals(this.synonyms, beaconConceptWithDetails.synonyms) &&
+        Objects.equals(this.definition, beaconConceptWithDetails.definition) &&
+        Objects.equals(this.details, beaconConceptWithDetails.details);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, name, semanticGroup, synonyms, definition);
+    return Objects.hash(id, name, type, synonyms, definition, details);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class Concept {\n");
+    sb.append("class BeaconConceptWithDetails {\n");
     
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
-    sb.append("    semanticGroup: ").append(toIndentedString(semanticGroup)).append("\n");
+    sb.append("    type: ").append(toIndentedString(type)).append("\n");
     sb.append("    synonyms: ").append(toIndentedString(synonyms)).append("\n");
     sb.append("    definition: ").append(toIndentedString(definition)).append("\n");
+    sb.append("    details: ").append(toIndentedString(details)).append("\n");
     sb.append("}");
     return sb.toString();
   }

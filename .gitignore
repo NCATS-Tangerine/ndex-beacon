@@ -1,3 +1,6 @@
+# Ignore temporary files
+*~
+
 # don't save local Eclipse settings - problematic? Should be recreated?
 .project
 .classpath

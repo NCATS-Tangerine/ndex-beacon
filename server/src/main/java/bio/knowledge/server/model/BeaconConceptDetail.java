@@ -1,23 +1,24 @@
 package bio.knowledge.server.model;
 
 import java.util.Objects;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import javax.validation.constraints.*;
 /**
- * ConceptDetail
+ * BeaconConceptDetail
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2017-11-05T07:12:50.191-08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-04-17T14:24:56.897-07:00")
 
-public class ConceptDetail   {
+public class BeaconConceptDetail   {
   @JsonProperty("tag")
   private String tag = null;
 
   @JsonProperty("value")
   private String value = null;
 
-  public ConceptDetail tag(String tag) {
+  public BeaconConceptDetail tag(String tag) {
     this.tag = tag;
     return this;
   }
@@ -35,7 +36,7 @@ public class ConceptDetail   {
     this.tag = tag;
   }
 
-  public ConceptDetail value(String value) {
+  public BeaconConceptDetail value(String value) {
     this.value = value;
     return this;
   }
@@ -62,9 +63,9 @@ public class ConceptDetail   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ConceptDetail conceptDetail = (ConceptDetail) o;
-    return Objects.equals(this.tag, conceptDetail.tag) &&
-        Objects.equals(this.value, conceptDetail.value);
+    BeaconConceptDetail beaconConceptDetail = (BeaconConceptDetail) o;
+    return Objects.equals(this.tag, beaconConceptDetail.tag) &&
+        Objects.equals(this.value, beaconConceptDetail.value);
   }
 
   @Override
@@ -75,7 +76,7 @@ public class ConceptDetail   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ConceptDetail {\n");
+    sb.append("class BeaconConceptDetail {\n");
     
     sb.append("    tag: ").append(toIndentedString(tag)).append("\n");
     sb.append("    value: ").append(toIndentedString(value)).append("\n");

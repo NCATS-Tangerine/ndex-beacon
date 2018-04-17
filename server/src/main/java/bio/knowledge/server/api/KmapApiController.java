@@ -1,7 +1,7 @@
 package bio.knowledge.server.api;
 
 import bio.knowledge.server.impl.ControllerImpl;
-import bio.knowledge.server.model.BeaconPredicate;
+import bio.knowledge.server.model.BeaconKnowledgeMapStatement;
 
 import io.swagger.annotations.*;
 
@@ -22,12 +22,12 @@ import javax.validation.constraints.*;
 @javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-04-17T14:24:56.897-07:00")
 
 @Controller
-public class PredicatesApiController implements PredicatesApi {
+public class KmapApiController implements KmapApi {
 	
 	@Autowired ControllerImpl ctrl;
 
-    public ResponseEntity<List<BeaconPredicate>> getPredicates() {
-    	return ctrl.getPredicates();
+    public ResponseEntity<List<BeaconKnowledgeMapStatement>> getKnowledgeMap() {
+    	return ctrl.getKnowledgeMap();
     }
 
 }

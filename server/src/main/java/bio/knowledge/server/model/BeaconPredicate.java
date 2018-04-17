@@ -1,23 +1,27 @@
 package bio.knowledge.server.model;
 
 import java.util.Objects;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import javax.validation.constraints.*;
 /**
- * StatementPredicate
+ * BeaconPredicate
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2017-11-05T07:12:50.191-08:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-04-17T14:24:56.897-07:00")
 
-public class StatementPredicate   {
+public class BeaconPredicate   {
   @JsonProperty("id")
   private String id = null;
 
   @JsonProperty("name")
   private String name = null;
 
-  public StatementPredicate id(String id) {
+  @JsonProperty("definition")
+  private String definition = null;
+
+  public BeaconPredicate id(String id) {
     this.id = id;
     return this;
   }
@@ -35,22 +39,40 @@ public class StatementPredicate   {
     this.id = id;
   }
 
-  public StatementPredicate name(String name) {
+  public BeaconPredicate name(String name) {
     this.name = name;
     return this;
   }
 
    /**
-   * human readable label of concept
+   * human readable name of predicate relation 
    * @return name
   **/
-  @ApiModelProperty(value = "human readable label of concept")
+  @ApiModelProperty(value = "human readable name of predicate relation ")
   public String getName() {
     return name;
   }
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  public BeaconPredicate definition(String definition) {
+    this.definition = definition;
+    return this;
+  }
+
+   /**
+   * human readable definition of predicate relation provided by this beacon 
+   * @return definition
+  **/
+  @ApiModelProperty(value = "human readable definition of predicate relation provided by this beacon ")
+  public String getDefinition() {
+    return definition;
+  }
+
+  public void setDefinition(String definition) {
+    this.definition = definition;
   }
 
 
@@ -62,23 +84,25 @@ public class StatementPredicate   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    StatementPredicate statementPredicate = (StatementPredicate) o;
-    return Objects.equals(this.id, statementPredicate.id) &&
-        Objects.equals(this.name, statementPredicate.name);
+    BeaconPredicate beaconPredicate = (BeaconPredicate) o;
+    return Objects.equals(this.id, beaconPredicate.id) &&
+        Objects.equals(this.name, beaconPredicate.name) &&
+        Objects.equals(this.definition, beaconPredicate.definition);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, name);
+    return Objects.hash(id, name, definition);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class StatementPredicate {\n");
+    sb.append("class BeaconPredicate {\n");
     
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
+    sb.append("    definition: ").append(toIndentedString(definition)).append("\n");
     sb.append("}");
     return sb.toString();
   }

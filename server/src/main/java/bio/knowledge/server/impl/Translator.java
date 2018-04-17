@@ -13,14 +13,14 @@ import bio.knowledge.server.json.Attribute;
 import bio.knowledge.server.json.Citation;
 import bio.knowledge.server.json.Edge;
 import bio.knowledge.server.json.Node;
-import bio.knowledge.server.model.Annotation;
-import bio.knowledge.server.model.Concept;
-import bio.knowledge.server.model.ConceptDetail;
-import bio.knowledge.server.model.ConceptWithDetails;
-import bio.knowledge.server.model.Statement;
-import bio.knowledge.server.model.StatementObject;
-import bio.knowledge.server.model.StatementPredicate;
-import bio.knowledge.server.model.StatementSubject;
+import bio.knowledge.server.model.BeaconAnnotation;
+import bio.knowledge.server.model.BeaconConcept;
+import bio.knowledge.server.model.BeaconConceptDetail;
+import bio.knowledge.server.model.BeaconConceptWithDetails;
+import bio.knowledge.server.model.BeaconStatement;
+import bio.knowledge.server.model.BeaconStatementObject;
+import bio.knowledge.server.model.BeaconStatementPredicate;
+import bio.knowledge.server.model.BeaconStatementSubject;
 
 @Service
 public class Translator {
@@ -66,10 +66,10 @@ public class Translator {
 	 */
 	public String makeSemGroup(Node node) {
 		String nodeId = makeId(node) ;
-		return makeSemGroup(nodeId,node) ;
+		return makeType(nodeId,node) ;
 	}
 	
-	public String makeSemGroup( String conceptId, Node node ) { 
+	public String makeType( String conceptId, Node node ) { 
 		
 		// First heuristic: to match on recorded Node types?
 		List<String> types = node.getByRegex("(?i).+type");
@@ -103,38 +103,38 @@ public class Translator {
 	 * @param node
 	 * @return
 	 */
-	public Concept nodeToConcept(Node node) {
+	public BeaconConcept nodeToConcept(Node node) {
 		
-		Concept concept = new Concept();
+		BeaconConcept concept = new BeaconConcept();
 		
 		String conceptId = makeId(node) ; 
 		
 		concept.setId(conceptId);
 		concept.setName(makeName(node));
-		concept.setSemanticGroup(makeSemGroup(conceptId, node));
+		concept.setType(makeType(conceptId, node));
 		concept.setSynonyms(node.getSynonyms());
 		
 		return concept;
 	}
 
 	
-	private ConceptDetail makeDetail(String name, String value) {
-		ConceptDetail detail = new ConceptDetail();
+	private BeaconConceptDetail makeDetail(String name, String value) {
+		BeaconConceptDetail detail = new BeaconConceptDetail();
 		detail.setTag(name);
 		detail.setValue(value);
 		return detail;	
 	}
 	
-	private List<ConceptDetail> attributeToDetails(Attribute attribute) {
+	private List<BeaconConceptDetail> attributeToDetails(Attribute attribute) {
 		
-		Function<String, ConceptDetail> valueToDetail = Util.curry(this::makeDetail, attribute.getName());
-		List<ConceptDetail> details = Util.map(valueToDetail, attribute.getValues());
+		Function<String, BeaconConceptDetail> valueToDetail = Util.curry(this::makeDetail, attribute.getName());
+		List<BeaconConceptDetail> details = Util.map(valueToDetail, attribute.getValues());
 		return details;
 	}
 	
-	public ConceptWithDetails nodeToConceptDetails(Node node) {
+	public BeaconConceptWithDetails nodeToConceptDetails(Node node) {
 		
-		ConceptWithDetails conceptDetails = new ConceptWithDetails();
+		BeaconConceptWithDetails conceptDetails = new BeaconConceptWithDetails();
 		
 		String conceptId = makeId(node) ; 
 		
@@ -142,35 +142,35 @@ public class Translator {
 		
 		conceptDetails.setName(makeName(node));
 		
-		conceptDetails.setSemanticGroup(makeSemGroup(conceptId,node));
+		conceptDetails.setType(makeType(conceptId,node));
 		
 		Consumer<String> addSynonym = s -> conceptDetails.addSynonymsItem(s);
 		node.getSynonyms().forEach(addSynonym);
 
-		List<ConceptDetail> details = Util.flatmap(this::attributeToDetails, node.getAttributes());
+		List<BeaconConceptDetail> details = Util.flatmap(this::attributeToDetails, node.getAttributes());
 		conceptDetails.setDetails(details);
 		
 		return conceptDetails;
 	}
 	
 	
-	private StatementSubject nodeToSubject(Node node) {
+	private BeaconStatementSubject nodeToSubject(Node node) {
 		
-		StatementSubject subject = new StatementSubject();
+		BeaconStatementSubject subject = new BeaconStatementSubject();
 		
 		String conceptId = makeId(node);
 		subject.setId(conceptId);
 		
 		subject.setName(makeName(node));
 		
-		subject.setSemanticGroup(makeSemGroup(conceptId,node));
+		subject.setType(makeType(conceptId,node));
 		
 		return subject;
 	}
 	
-	private StatementPredicate edgeToPredicate(Edge edge) {
+	private BeaconStatementPredicate edgeToPredicate(Edge edge) {
 		
-		StatementPredicate predicate = new StatementPredicate();
+		BeaconStatementPredicate predicate = new BeaconStatementPredicate();
 		
 		/*
 		 * Harvest the Predicate here? 
@@ -197,23 +197,23 @@ public class Translator {
 		return predicate;
 	}
 	
-	private StatementObject nodeToObject(Node node) {
+	private BeaconStatementObject nodeToObject(Node node) {
 		
-		StatementObject object = new StatementObject();
+		BeaconStatementObject object = new BeaconStatementObject();
 		
 		String conceptId = makeId(node);
 		object.setId(conceptId);
 		
 		object.setName(makeName(node));
 		
-		object.setSemanticGroup(makeSemGroup(conceptId,node));
+		object.setType(makeType(conceptId,node));
 		
 		return object;
 	}
 	
-	public Statement edgeToStatement(Edge edge) {
+	public BeaconStatement edgeToStatement(Edge edge) {
 		
-		Statement statement = new Statement();
+		BeaconStatement statement = new BeaconStatement();
 		
 		statement.setId(makeId(edge));
 		statement.setSubject(nodeToSubject(edge.getSubject()));
@@ -224,9 +224,9 @@ public class Translator {
 	}
 
 	
-	public Annotation citationToEvidence(Citation citation) {
+	public BeaconAnnotation citationToEvidence(Citation citation) {
 		
-		Annotation evidence = new Annotation();
+		BeaconAnnotation evidence = new BeaconAnnotation();
 		evidence.setId(citation.getCitationId());
 		evidence.setLabel(citation.getFullText());
 		return evidence;
