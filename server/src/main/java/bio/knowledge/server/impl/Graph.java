@@ -32,12 +32,18 @@ public class Graph {
 	private Map<Long, Support> supports = new HashMap<>();
 
 	public Graph(Network network) {
+
+		// Add all nodes first, so that edges have something to connect to
+		for (Aspect a : network.getData()) {
+			if(a==null) continue;
+
+			addNodes(a.getNodes());
+		}
 	
 		for (Aspect a : network.getData()) {
 			
 			if(a==null) continue;
 			
-			addNodes(a.getNodes());
 			addCitations(a.getCitations());
 			
 			annotateNodesWithNetworkId(a.getNdexStatus());
