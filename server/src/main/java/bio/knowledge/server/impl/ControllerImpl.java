@@ -459,7 +459,7 @@ public class ControllerImpl {
 			List<BeaconConcept> cachedResult = 
 					(List<BeaconConcept>)cacheLocation.getResultSet();
 			
-			if(cachedResult==null) {
+			if(true) {
 				
 				String luceneSearch = search.startsWith(joinedKeywords);
 				List<Graph> graphs = search(search::nodesBy, luceneSearch, pageNumber, pageSize);		
@@ -758,7 +758,42 @@ public class ControllerImpl {
 	}
 	
 	public ResponseEntity<List<BeaconConceptType>> getConceptTypes() {
-        throw new RuntimeException("Not yet implemented");
+		List<BeaconConceptType> types = new ArrayList<BeaconConceptType>();
+		
+		// Hard code some known types... See Translator.makeSemGroup()
+		BeaconConceptType GENE_Type = new BeaconConceptType();
+		GENE_Type.setId("GENE");
+		types.add(GENE_Type);
+		
+		BeaconConceptType CHEM_Type = new BeaconConceptType();
+		CHEM_Type.setId("CHEM");
+		types.add(CHEM_Type);
+		
+		BeaconConceptType DISO_Type = new BeaconConceptType();
+		DISO_Type.setId("DISO");
+		types.add(DISO_Type);
+		
+		BeaconConceptType PHYS_Type = new BeaconConceptType();
+		PHYS_Type.setId("PHYS");
+		types.add(PHYS_Type);
+		
+		BeaconConceptType ANAT_Type = new BeaconConceptType();
+		ANAT_Type.setId("ANAT");
+		types.add(ANAT_Type);
+		
+		BeaconConceptType LIVB_Type = new BeaconConceptType();
+		LIVB_Type.setId("LIVB");
+		types.add(LIVB_Type);
+		
+		BeaconConceptType PROC_Type = new BeaconConceptType();
+		PROC_Type.setId("PROC");
+		types.add(PROC_Type);
+		
+		BeaconConceptType OBJC_Type = new BeaconConceptType();
+		OBJC_Type.setId("OBJC");
+		types.add(OBJC_Type);
+		
+		return ResponseEntity.ok(types);
     }
 
 
