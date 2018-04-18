@@ -1,5 +1,7 @@
 package bio.knowledge.server.impl;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.http.HttpEntity;
@@ -9,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import bio.knowledge.server.json.AdvancedQuery;
+import bio.knowledge.server.json.Aspect;
 import bio.knowledge.server.json.BasicQuery;
 import bio.knowledge.server.json.Network;
 import bio.knowledge.server.json.NetworkList;
@@ -64,7 +67,12 @@ public class NdexClient {
 		CompletableFuture<Network> future = CompletableFuture.supplyAsync(() -> {
 				
 			try {
-				return rest.postForObject(BASIC_QUERY, request, Network.class, networkId);
+				Aspect[] aspects = rest.postForObject(BASIC_QUERY, request, Aspect[].class, networkId);
+				
+				Network network = new Network();
+				network.setData(aspects);
+				
+				return network;
 				
 			} catch (Exception e) {
 				log(e);
