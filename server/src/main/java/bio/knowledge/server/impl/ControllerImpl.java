@@ -459,7 +459,7 @@ public class ControllerImpl {
 			List<BeaconConcept> cachedResult = 
 					(List<BeaconConcept>)cacheLocation.getResultSet();
 			
-			if(true) {
+			if(cachedResult==null) {
 				
 				String luceneSearch = search.startsWith(joinedKeywords);
 				List<Graph> graphs = search(search::nodesBy, luceneSearch, pageNumber, pageSize);		
