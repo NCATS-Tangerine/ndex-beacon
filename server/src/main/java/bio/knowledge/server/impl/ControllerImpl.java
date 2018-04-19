@@ -798,7 +798,10 @@ public class ControllerImpl {
 
 
 	public ResponseEntity<List<BeaconKnowledgeMapStatement>> getKnowledgeMap() {
-		throw new RuntimeException("Not yet implemented");
+		throw new UnsupportedOperationException(
+				"Knowledge map endpoint is not yet implemented: "+
+				"https://github.com/NCATS-Tangerine/ndex-beacon/issues/9"
+		);
 	}
 
 
