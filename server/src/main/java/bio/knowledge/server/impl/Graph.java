@@ -36,24 +36,23 @@ public class Graph {
 		// Add all nodes first, so that edges have something to connect to
 		for (Aspect a : network.getData()) {
 			if(a==null) continue;
-
+			
 			addNodes(a.getNodes());
 		}
 	
 		for (Aspect a : network.getData()) {
 			
 			if(a==null) continue;
-			
-			addCitations(a.getCitations());
+			//addCitations(a.getCitations());
 			
 			annotateNodesWithNetworkId(a.getNdexStatus());
 			connectAttributesToNodes(a.getNodeAttributes());
 			connectAttributesToEdges(a.getEdgeAttributes());
 
 			connectNodesAndEdges(a.getEdges());
-			connectEdgesToCitations(a.getEdgeCitations());
-			connectSupportsToCitations(a.getSupports());
-			interconnectEdgesSupportsAndCitations(a.getEdgeSupports());
+			//connectEdgesToCitations(a.getEdgeCitations());
+			//connectSupportsToCitations(a.getSupports());
+			//interconnectEdgesSupportsAndCitations(a.getEdgeSupports());
 		}
 	}
 
@@ -82,14 +81,18 @@ public class Graph {
 			citations.put(citation.getId(), citation);		
 	}
 	
-	private void annotateNodesWithNetworkId(NetworkId i[]) {
-		
-		if ( i==null || i.length == 0 ) return;
+	private void annotateNodesWithNetworkId(String i) {
+	
+		for (Node node : nodes.values()) {
+			node.setNetworkId(i);
+		}
+		//nodes.values().forEach(n -> n.setNetworkId(i));
+		/*if ( i==null || i.length == 0 ) return;
 		
 		for (NetworkId id : i) {
-			String networkId = id.getExternalId();
+			NetworkId networkId = id.getExternalId();
 			nodes.values().forEach(n -> n.setNetworkId(networkId));
-		}
+		}*/
 	}
 	
 
@@ -124,7 +127,11 @@ public class Graph {
 		
 		Long id = attribute.getId();
 		Edge edge = edges.get(id);
-		edge.addAttribute(attribute);
+		if (edge == null) {
+			System.out.println("edge does not exist: " + attribute.getId());
+		} else {
+			edge.addAttribute(attribute);
+		}
 	}
 
 	private void connectNodesAndEdges(Edge[] e) {

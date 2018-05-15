@@ -151,7 +151,6 @@ public class ControllerImpl {
 			} catch (InterruptedException | ExecutionException | TimeoutException e) {	
 			}
 		}
-		
 		List<Graph> graphs = Util.map(Graph::new, subnetworks);
 		
 		return graphs;
@@ -462,6 +461,7 @@ public class ControllerImpl {
 			if(cachedResult==null) {
 				
 				String luceneSearch = search.startsWith(joinedKeywords);
+
 				List<Graph> graphs = search(search::nodesBy, luceneSearch, pageNumber, pageSize);		
 				
 				Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
