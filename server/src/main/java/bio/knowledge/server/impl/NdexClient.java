@@ -76,29 +76,11 @@ public class NdexClient {
 		
 		CompletableFuture<Network> future = CompletableFuture.supplyAsync(() -> {
 		
-//		ObjectMapper mapper = new ObjectMapper();
 			try {
 				
 				
 				Aspect[] aspects = rest.postForObject(BASIC_QUERY, request, Aspect[].class, networkId);
-				
-				
-//				
-//				// TODO: update so not hardcoded in
-//
-//				Node[] nodes = mapper.convertValue(h[3].get("nodes"), Node[].class);
-//				Edge[] edges = mapper.convertValue(h[2].get("edges"), Edge[].class);
-//				Attribute[] nodeAttributes = mapper.convertValue(h[4].get("nodeAttributes"), Attribute[].class);
-//				Attribute[] edgeAttributes = mapper.convertValue(h[5].get("edgeAttributes"), Attribute[].class);
-//				
-//				// set ndexStatus to networkId
-//				Aspect[] aspects = new Aspect[1];
-//				aspects[0] = new Aspect();
-//				aspects[0].setNdexStatus(networkId);
-//				aspects[0].setNodes(nodes);
-//				aspects[0].setEdges(edges);
-//				aspects[0].setNodeAttributes(nodeAttributes);
-//				aspects[0].setEdgeAttributes(edgeAttributes);
+
 				HashMap[] h = rest.postForObject(BASIC_QUERY, request, HashMap[].class, networkId);
 				for (int i = 0; i < aspects.length; i++) {
 					aspects[i].setNdexStatus(networkId); 

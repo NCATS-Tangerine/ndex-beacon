@@ -101,13 +101,6 @@ public class Graph {
 		for (Node node : nodes.values()) {
 			node.setNetworkId(i);
 		}
-		//nodes.values().forEach(n -> n.setNetworkId(i));
-		/*if ( i==null || i.length == 0 ) return;
-		
-		for (NetworkId id : i) {
-			NetworkId networkId = id.getExternalId();
-			nodes.values().forEach(n -> n.setNetworkId(networkId));
-		}*/
 	}
 	
 
@@ -209,9 +202,6 @@ public class Graph {
 		List<Edge> relatedEdges = findRelatedIfExists(edgeIds, edges);
 		List<Citation> relatedCitations = findRelatedIfExists(citationIds, citations);
 		
-		//List<Edge> relatedEdges = Util.map(edges::get, edgeIds);
-		//List<Citation> relatedCitations = Util.map(citations::get, citationIds);
-		
 		relatedEdges.forEach(e -> e.setCitations(relatedCitations));
 	}
 	
@@ -256,9 +246,6 @@ public class Graph {
 		List<Edge> relatedEdges = findRelatedIfExists(edgeIds, edges);
 		List<Support> relatedSupports = findRelatedIfExists(supportIds, supports);
 		
-//		List<Edge> relatedEdges = Util.map(edges::get, edgeIds);
-//		List<Support> relatedSupports = Util.map(supports::get, supportIds);
-		
 		relatedEdges.forEach(e -> e.setSupports(relatedSupports));
 	}
 	
@@ -293,7 +280,6 @@ public class Graph {
 		Long[] edgeIds = edgeSupport.getId();
 
 		List<Edge> relatedEdges = findRelatedIfExists(edgeIds, edges);
-//		List<Edge> relatedEdges = Util.map(edges::get, edgeIds);
 
 		Predicate<Edge> hasImpliedCitation = e -> e.getCitations().size() == 1 && Util.filter(this::hasCitation, e.getSupports()).isEmpty();
 		

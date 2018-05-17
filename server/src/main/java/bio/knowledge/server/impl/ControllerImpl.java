@@ -3,7 +3,6 @@ package bio.knowledge.server.impl;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -21,7 +20,6 @@ import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -42,6 +40,7 @@ import bio.knowledge.server.model.BeaconConceptWithDetails;
 import bio.knowledge.server.model.BeaconKnowledgeMapStatement;
 import bio.knowledge.server.model.BeaconPredicate;
 import bio.knowledge.server.model.BeaconStatement;
+import bio.knowledge.server.model.ExactMatchResponse;
 
 @Service
 public class ControllerImpl {
@@ -161,7 +160,7 @@ public class ControllerImpl {
 		return graphs;
 	}
 	
-	private List<Graph> searchByIds(Function<String, BasicQuery> makeJson, List<String> c, int pageNumber, int pageSize) {
+	private List<Graph> searchByIds(Function<String, BasicQuery> makeJson, List<String> c, int pageSize) {
 		
 		_logger.debug("Entering searchByIds(c: '"+String.join(",", c)+"')");
 		
@@ -233,9 +232,46 @@ public class ControllerImpl {
 	 * This only returns the aliases of the members of the 'c' list of input identifiers
 	 * but not directly the 'c' identifiers themselves nor their locally cached related ids
 	 */
+	private List<ExactMatchResponse> getMatchingResponses( List<String> c ) {
+		
+		List<ExactMatchResponse> response = new ArrayList<>();
+		
+		for (String curie : c) {
+			ExactMatchResponse match = new ExactMatchResponse();
+			
+			match.setId(curie);
+			
+			List<Graph> graphs = searchByIds( search::nodesBy, c, DEFAULT_PAGE_SIZE );
+			Collection<Node> nodes = Util.flatmap( Graph::getNodes, graphs );
+			
+			if (nodes.size() == 0) {
+				match.setWithinDomain(false);
+			} else {
+				match.setWithinDomain(true);
+			}
+			
+			Function<Node, List<String>> getAliases = Util.curryRight(Node::get, "alias");
+			List<String> aliases = Util.flatmap(getAliases, nodes);
+			List<String> curies  = Util.filter(Node::isCurie, aliases);
+			Set<String> curiesSet = addCachedAliases(curies);
+			curiesSet.removeAll(c);
+			
+			List<String> exactMatches = new ArrayList<String>(curiesSet);
+			match.setHasExactMatches(exactMatches);
+			
+			response.add(match);
+		}
+		
+		return response;
+	}
+	
+	/*
+	 * This only returns the aliases of the members of the 'c' list of input identifiers
+	 * but not directly the 'c' identifiers themselves nor their locally cached related ids
+	 */
 	private Set<String> getAliases( List<String> c ) {
 		
-		List<Graph> graphs = searchByIds( search::nodesBy, c, 0, DEFAULT_PAGE_SIZE );
+		List<Graph> graphs = searchByIds( search::nodesBy, c, DEFAULT_PAGE_SIZE );
 		
 		Collection<Node> nodes = Util.flatmap( Graph::getNodes, graphs );
 		
@@ -246,6 +282,7 @@ public class ControllerImpl {
 		
 		return addCachedAliases(curies);
 	}
+
 	
 	/*
 	 *  Exhaustive list of aliases including the ids
@@ -353,16 +390,13 @@ public class ControllerImpl {
 		return matching;
 	}
 	
-	private Collection<Edge> filterByPredicate(Collection<Edge> edges, String predicateFilter) {
+	private Collection<Edge> filterByPredicate(Collection<Edge> edges, List<String> predicateFilter) {
 		
 		if (predicateFilter.isEmpty()) return edges;
 
-		// these are Predicate Ids from the client
-		List<String> predicateIds = Arrays.asList(predicateFilter.split(" "));
-		
 		// Translate predicate ids to their names
 		List<String> relations = new ArrayList<String>();
-		for(String pid : predicateIds) 
+		for(String pid : predicateFilter) 
 			if(predicateRegistry.containsKey(pid)) 
 				relations.add(predicateRegistry.get(pid).getEdgeLabel());
 			// else - ignore as unknown?
@@ -517,7 +551,7 @@ public class ControllerImpl {
 
 			if(cachedResult==null) {
 
-				List<Graph> graphs = searchByIds(search::nodesBy, Util.list(conceptId), 1, 100);		
+				List<Graph> graphs = searchByIds(search::nodesBy, Util.list(conceptId), 100);		
 				Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
 				combineDuplicates(nodes);
 				
@@ -545,14 +579,12 @@ public class ControllerImpl {
 	}
 
 	
-	public ResponseEntity<List<String>> getExactMatchesToConceptList(List<String> c) {
+	public ResponseEntity<List<ExactMatchResponse>> getExactMatchesToConceptList(List<String> c) {
 		try {
 			c = fix(c);
 			
-			Set<String> set = getAliases(c);
-			set.removeAll(c);
+			List<ExactMatchResponse> exactMatches = getMatchingResponses(c);
 			
-			List<String> exactMatches = Util.list(set);
 			return ResponseEntity.ok(exactMatches);
 			
 		} catch (Exception e) {
@@ -562,35 +594,14 @@ public class ControllerImpl {
 	}
 
 	
-	public ResponseEntity<List<String>> getExactMatchesToConcept(String conceptId) {
-		try {
-			conceptId = fix(conceptId);
-			
-			Set<String> set = getAliases(Util.list(conceptId));
-			
-			if (Node.isCurie(conceptId))
-				set.add(conceptId);
-			
-			List<String> exactMatches = Util.list(set);
-			
-			return ResponseEntity.ok(exactMatches);
-		
-		} catch (Exception e) {
-			log(e);
-			return ResponseEntity.ok(new ArrayList<>());
-		}
-	}
-	
-	
 	public ResponseEntity<List<BeaconStatement>> getStatements(
 			
 			List<String> s, 
-			String relations,
+			List<String> relations,
 			List<String> t, 
 			List<String> keywords, 
-			List<String> types,
-			Integer pageNumber, 
-			Integer pageSize 
+			List<String> categories,
+			Integer size 
 	) {
 		try {
 			
@@ -599,20 +610,18 @@ public class ControllerImpl {
 			t = fix(t);
 			
 			keywords = fix(keywords);
-			types = fix(types);
+			categories = fix(categories);
 			
 			_logger.debug("Entering ControllerImpl.getStatements():\n"
 					+ "\tsourceIds: '"+String.join(",",s)
-					+ "',\n\trelations: '"+relations
+					+ "',\n\trelations: '"+String.join("", relations)
 					+ "',\n\ttargetIds: '"+String.join(",",t)
 					+ "',\n\tkeywords: '"+keywords
-					+ "',\n\tsemanticGroups: '"+types
+					+ "',\n\tsemanticGroups: '"+categories
 			);
 
-			pageNumber = fix(pageNumber) - 1;
-			
 			//pageSize = DEFAULT_PAGE_SIZE; //fix(pageSize);
-			pageSize = fix(pageSize);
+			size = fixPageSize(size);
 			
 			List<BeaconStatement> statements = null ;
 			
@@ -624,10 +633,9 @@ public class ControllerImpl {
 							new String[] {
 									t.toString(),
 									String.join(" ", keywords), 
-									String.join(" ", types), 
-									relations,
-									pageNumber.toString(), 
-									pageSize.toString() 
+									String.join(" ", categories), 
+									String.join(" ", relations),
+									size.toString() 
 							}
 					);
 
@@ -641,7 +649,7 @@ public class ControllerImpl {
 				
 				_logger.debug("sourceAliases: '"+String.join(",",s)+"'");
 				
-				List<Graph> graphs = searchByIds(search::edgesBy, Util.list(sourceAliases), pageNumber, pageSize);
+				List<Graph> graphs = searchByIds(search::edgesBy, Util.list(sourceAliases), size);
 				
 				Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
 				
@@ -674,7 +682,7 @@ public class ControllerImpl {
 				 * edge list, after all other filters are applied.
 				 */
 				if( t.isEmpty() )
-					 edges = filterSemanticGroup( edges, sourceAliases, types );
+					 edges = filterSemanticGroup( edges, sourceAliases, categories );
 				
 				statements = Util.map( translator::edgeToStatement, edges );
 				
@@ -687,7 +695,7 @@ public class ControllerImpl {
 			
 			@SuppressWarnings("unchecked")
 			// Paging workaround since nDex paging doesn't seem to work as published?
-			List<BeaconStatement> page = (List<BeaconStatement>)getPage(statements, pageSize);
+			List<BeaconStatement> page = (List<BeaconStatement>)getPage(statements, size);
 			
 			return ResponseEntity.ok(page);
 		
@@ -698,15 +706,14 @@ public class ControllerImpl {
 		}
 	}
 
-	public ResponseEntity<List<BeaconAnnotation>> getEvidence(String statementId, List<String> keywords, Integer pageNumber, Integer pageSize) {
+	public ResponseEntity<List<BeaconAnnotation>> getEvidence(String statementId, List<String> keywords, Integer size) {
 		try {
 		
 			statementId = fix(statementId);
 			keywords = fix(keywords);
-			pageNumber = fix(pageNumber) - 1;
 			
 			//pageSize = DEFAULT_PAGE_SIZE; //fix(pageSize);
-			pageSize = fix(pageSize);
+			size = fixPageSize(size);
 			
 			if(statementId.startsWith(Translator.NDEX_NS)) {
 				statementId = statementId.replaceAll("^"+Translator.NDEX_NS, "");
@@ -716,7 +723,7 @@ public class ControllerImpl {
 			String conceptId = half[0];
 			Long statement = Long.valueOf(half[1]);
 
-			List<Graph> graphs = searchByIds(search::edgesBy, Util.list(conceptId), pageNumber, pageSize);
+			List<Graph> graphs = searchByIds(search::edgesBy, Util.list(conceptId), size);
 			
 			Collection<Edge> relatedEdges = Util.flatmap(Graph::getEdges, graphs);
 			
@@ -759,7 +766,7 @@ public class ControllerImpl {
 		}
 	}
 	
-	public ResponseEntity<List<BeaconConceptCategory>> getConceptTypes() {
+	public ResponseEntity<List<BeaconConceptCategory>> getCategories() {
 		List<BeaconConceptCategory> types = new ArrayList<BeaconConceptCategory>();
 		
 		// Hard code some known types... See Translator.makeSemGroup()
