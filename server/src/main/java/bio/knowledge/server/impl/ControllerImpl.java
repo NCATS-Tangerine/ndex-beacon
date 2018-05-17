@@ -415,9 +415,16 @@ public class ControllerImpl {
 	}
 
 	public List<? extends CachedEntity> getPage(List<? extends CachedEntity> items, Integer pageSize) {
-		Integer size = items.size();
-		if(size==0) {
+		if (items.isEmpty()) {
 			return new ArrayList<>();
+		}
+		
+		if (pageSize > items.size()) {
+			pageSize = items.size();
+		}
+		
+		if (pageSize < 0) {
+			pageSize = 0;
 		}
 		
 		return items.subList(0, pageSize);
