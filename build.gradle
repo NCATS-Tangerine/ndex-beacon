@@ -65,6 +65,8 @@ allprojects {
 		compile "ch.qos.logback:logback-core:$logbackCoreVersion"
 		compile "ch.qos.logback:logback-classic:$logbackCoreVersion"
 		compile "ch.qos.logback:logback-access:$logbackCoreVersion"
+		
+		compile "org.springframework.boot:spring-boot:$springBootVersion"
 	}
 
 }

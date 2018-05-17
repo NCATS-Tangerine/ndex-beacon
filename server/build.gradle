@@ -5,6 +5,7 @@ apply plugin: 'application'
 mainClassName = 'bio.knowledge.server.Swagger2SpringBoot'
 
 dependencies {
+	compile project(':beacon-ontology')
 
     compile("org.springframework:spring-context:4.2.6.RELEASE")
 
