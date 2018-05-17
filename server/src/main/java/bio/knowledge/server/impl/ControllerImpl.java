@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import bio.knowledge.ontology.mapping.umls.UMLSBiolinkMapping;
 import bio.knowledge.server.impl.Cache.CacheLocation;
 import bio.knowledge.server.json.Attribute;
 import bio.knowledge.server.json.BasicQuery;
@@ -41,11 +42,14 @@ import bio.knowledge.server.model.BeaconKnowledgeMapStatement;
 import bio.knowledge.server.model.BeaconPredicate;
 import bio.knowledge.server.model.BeaconStatement;
 import bio.knowledge.server.model.ExactMatchResponse;
+import bio.knowledge.server.ontology.OntologyService;
 
 @Service
 public class ControllerImpl {
 
-	private static Logger _logger = LoggerFactory.getLogger(ControllerImpl.class);	
+	private static Logger _logger = LoggerFactory.getLogger(ControllerImpl.class);
+	
+	@Autowired OntologyService ontology;
 
 	@Autowired
 	private Cache cache;
