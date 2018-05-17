@@ -111,7 +111,7 @@ public class Translator {
 		
 		concept.setId(conceptId);
 		concept.setName(makeName(node));
-		concept.setType(makeType(conceptId, node));
+		concept.setCategory(makeType(conceptId, node));
 		concept.setSynonyms(node.getSynonyms());
 		
 		return concept;
@@ -142,7 +142,7 @@ public class Translator {
 		
 		conceptDetails.setName(makeName(node));
 		
-		conceptDetails.setType(makeType(conceptId,node));
+		conceptDetails.setCategory(makeType(conceptId,node));
 		
 		Consumer<String> addSynonym = s -> conceptDetails.addSynonymsItem(s);
 		node.getSynonyms().forEach(addSynonym);
@@ -163,7 +163,7 @@ public class Translator {
 		
 		subject.setName(makeName(node));
 		
-		subject.setType(makeType(conceptId,node));
+		subject.setCategory(makeType(conceptId,node));
 		
 		return subject;
 	}
@@ -191,8 +191,8 @@ public class Translator {
 		
 		predicateRegistry.indexPredicate( pCurie, pName, "" );
 		
-		predicate.setId(pCurie);
-		predicate.setName(pName);
+		predicate.setRelation(pCurie);
+		predicate.setEdgeLabel(pName);
 		
 		return predicate;
 	}
@@ -206,7 +206,7 @@ public class Translator {
 		
 		object.setName(makeName(node));
 		
-		object.setType(makeType(conceptId,node));
+		object.setCategory(makeType(conceptId,node));
 		
 		return object;
 	}

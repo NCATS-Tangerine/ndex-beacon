@@ -14,9 +14,9 @@ import javax.validation.constraints.*;
 /**
  * BeaconStatement
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-04-17T14:24:56.897-07:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-05-17T12:46:02.920-07:00")
 
-public class BeaconStatement implements CachedEntity {
+public class BeaconStatement implements CachedEntity  {
   @JsonProperty("id")
   private String id = null;
 

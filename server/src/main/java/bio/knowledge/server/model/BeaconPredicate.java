@@ -9,17 +9,35 @@ import javax.validation.constraints.*;
 /**
  * BeaconPredicate
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-04-17T14:24:56.897-07:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-05-17T12:46:02.920-07:00")
 
 public class BeaconPredicate   {
   @JsonProperty("id")
   private String id = null;
 
-  @JsonProperty("name")
-  private String name = null;
+  @JsonProperty("uri")
+  private String uri = null;
 
-  @JsonProperty("definition")
-  private String definition = null;
+  @JsonProperty("edge_label")
+  private String edgeLabel = null;
+
+  @JsonProperty("relation")
+  private String relation = null;
+
+  @JsonProperty("local_id")
+  private String localId = null;
+
+  @JsonProperty("local_uri")
+  private String localUri = null;
+
+  @JsonProperty("local_relation")
+  private String localRelation = null;
+
+  @JsonProperty("description")
+  private String description = null;
+
+  @JsonProperty("frequency")
+  private Integer frequency = null;
 
   public BeaconPredicate id(String id) {
     this.id = id;
@@ -27,10 +45,10 @@ public class BeaconPredicate   {
   }
 
    /**
-   * CURIE-encoded identifier of predicate resource 
+   * CURIE-encoded identifier of predicate relation 
    * @return id
   **/
-  @ApiModelProperty(value = "CURIE-encoded identifier of predicate resource ")
+  @ApiModelProperty(value = "CURIE-encoded identifier of predicate relation ")
   public String getId() {
     return id;
   }
@@ -39,40 +57,148 @@ public class BeaconPredicate   {
     this.id = id;
   }
 
-  public BeaconPredicate name(String name) {
-    this.name = name;
+  public BeaconPredicate uri(String uri) {
+    this.uri = uri;
     return this;
   }
 
    /**
-   * human readable name of predicate relation 
-   * @return name
+   * The predicate URI which should generally resolves to the  full semantic description of the predicate relation
+   * @return uri
   **/
-  @ApiModelProperty(value = "human readable name of predicate relation ")
-  public String getName() {
-    return name;
+  @ApiModelProperty(value = "The predicate URI which should generally resolves to the  full semantic description of the predicate relation")
+  public String getUri() {
+    return uri;
   }
 
-  public void setName(String name) {
-    this.name = name;
+  public void setUri(String uri) {
+    this.uri = uri;
   }
 
-  public BeaconPredicate definition(String definition) {
-    this.definition = definition;
+  public BeaconPredicate edgeLabel(String edgeLabel) {
+    this.edgeLabel = edgeLabel;
     return this;
   }
 
    /**
-   * human readable definition of predicate relation provided by this beacon 
-   * @return definition
+   * human readable name of a 'minimal' Biolink model predicate relation terms (see [Biolink Model](https://biolink.github.io/biolink-model) for the full list of terms) 
+   * @return edgeLabel
   **/
-  @ApiModelProperty(value = "human readable definition of predicate relation provided by this beacon ")
-  public String getDefinition() {
-    return definition;
+  @ApiModelProperty(value = "human readable name of a 'minimal' Biolink model predicate relation terms (see [Biolink Model](https://biolink.github.io/biolink-model) for the full list of terms) ")
+  public String getEdgeLabel() {
+    return edgeLabel;
   }
 
-  public void setDefinition(String definition) {
-    this.definition = definition;
+  public void setEdgeLabel(String edgeLabel) {
+    this.edgeLabel = edgeLabel;
+  }
+
+  public BeaconPredicate relation(String relation) {
+    this.relation = relation;
+    return this;
+  }
+
+   /**
+   * human readable name of a 'maximal' Biolink model predicate relation terms (see [Biolink Model](https://biolink.github.io/biolink-model) for the full list of terms) 
+   * @return relation
+  **/
+  @ApiModelProperty(value = "human readable name of a 'maximal' Biolink model predicate relation terms (see [Biolink Model](https://biolink.github.io/biolink-model) for the full list of terms) ")
+  public String getRelation() {
+    return relation;
+  }
+
+  public void setRelation(String relation) {
+    this.relation = relation;
+  }
+
+  public BeaconPredicate localId(String localId) {
+    this.localId = localId;
+    return this;
+  }
+
+   /**
+   * CURIE-encoded identifier of the locally defined predicate relation. Such terms should be formally documented as mappings in the  [Biolink Model](https://biolink.github.io/biolink-model) 
+   * @return localId
+  **/
+  @ApiModelProperty(value = "CURIE-encoded identifier of the locally defined predicate relation. Such terms should be formally documented as mappings in the  [Biolink Model](https://biolink.github.io/biolink-model) ")
+  public String getLocalId() {
+    return localId;
+  }
+
+  public void setLocalId(String localId) {
+    this.localId = localId;
+  }
+
+  public BeaconPredicate localUri(String localUri) {
+    this.localUri = localUri;
+    return this;
+  }
+
+   /**
+   * The predicate URI which should generally resolves  to the local predicate relation
+   * @return localUri
+  **/
+  @ApiModelProperty(value = "The predicate URI which should generally resolves  to the local predicate relation")
+  public String getLocalUri() {
+    return localUri;
+  }
+
+  public void setLocalUri(String localUri) {
+    this.localUri = localUri;
+  }
+
+  public BeaconPredicate localRelation(String localRelation) {
+    this.localRelation = localRelation;
+    return this;
+  }
+
+   /**
+   * human readable name of the locally defined predicate relation 
+   * @return localRelation
+  **/
+  @ApiModelProperty(value = "human readable name of the locally defined predicate relation ")
+  public String getLocalRelation() {
+    return localRelation;
+  }
+
+  public void setLocalRelation(String localRelation) {
+    this.localRelation = localRelation;
+  }
+
+  public BeaconPredicate description(String description) {
+    this.description = description;
+    return this;
+  }
+
+   /**
+   * human readable definition of predicate relation  provided by this beacon 
+   * @return description
+  **/
+  @ApiModelProperty(value = "human readable definition of predicate relation  provided by this beacon ")
+  public String getDescription() {
+    return description;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
+  public BeaconPredicate frequency(Integer frequency) {
+    this.frequency = frequency;
+    return this;
+  }
+
+   /**
+   * the number of statement entries using the specified predicate in the given beacon knowledge base
+   * @return frequency
+  **/
+  @ApiModelProperty(value = "the number of statement entries using the specified predicate in the given beacon knowledge base")
+  public Integer getFrequency() {
+    return frequency;
+  }
+
+  public void setFrequency(Integer frequency) {
+    this.frequency = frequency;
   }
 
 
@@ -86,13 +212,19 @@ public class BeaconPredicate   {
     }
     BeaconPredicate beaconPredicate = (BeaconPredicate) o;
     return Objects.equals(this.id, beaconPredicate.id) &&
-        Objects.equals(this.name, beaconPredicate.name) &&
-        Objects.equals(this.definition, beaconPredicate.definition);
+        Objects.equals(this.uri, beaconPredicate.uri) &&
+        Objects.equals(this.edgeLabel, beaconPredicate.edgeLabel) &&
+        Objects.equals(this.relation, beaconPredicate.relation) &&
+        Objects.equals(this.localId, beaconPredicate.localId) &&
+        Objects.equals(this.localUri, beaconPredicate.localUri) &&
+        Objects.equals(this.localRelation, beaconPredicate.localRelation) &&
+        Objects.equals(this.description, beaconPredicate.description) &&
+        Objects.equals(this.frequency, beaconPredicate.frequency);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, name, definition);
+    return Objects.hash(id, uri, edgeLabel, relation, localId, localUri, localRelation, description, frequency);
   }
 
   @Override
@@ -101,8 +233,14 @@ public class BeaconPredicate   {
     sb.append("class BeaconPredicate {\n");
     
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
-    sb.append("    name: ").append(toIndentedString(name)).append("\n");
-    sb.append("    definition: ").append(toIndentedString(definition)).append("\n");
+    sb.append("    uri: ").append(toIndentedString(uri)).append("\n");
+    sb.append("    edgeLabel: ").append(toIndentedString(edgeLabel)).append("\n");
+    sb.append("    relation: ").append(toIndentedString(relation)).append("\n");
+    sb.append("    localId: ").append(toIndentedString(localId)).append("\n");
+    sb.append("    localUri: ").append(toIndentedString(localUri)).append("\n");
+    sb.append("    localRelation: ").append(toIndentedString(localRelation)).append("\n");
+    sb.append("    description: ").append(toIndentedString(description)).append("\n");
+    sb.append("    frequency: ").append(toIndentedString(frequency)).append("\n");
     sb.append("}");
     return sb.toString();
   }

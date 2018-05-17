@@ -37,7 +37,7 @@ import bio.knowledge.server.json.Node;
 import bio.knowledge.server.json.SearchString;
 import bio.knowledge.server.model.BeaconAnnotation;
 import bio.knowledge.server.model.BeaconConcept;
-import bio.knowledge.server.model.BeaconConceptType;
+import bio.knowledge.server.model.BeaconConceptCategory;
 import bio.knowledge.server.model.BeaconConceptWithDetails;
 import bio.knowledge.server.model.BeaconKnowledgeMapStatement;
 import bio.knowledge.server.model.BeaconPredicate;
@@ -133,12 +133,12 @@ public class ControllerImpl {
 		return search.and(query, search.edgeCount(1, 100000));
 	}
 	
-	private List<Graph> search(Function<String, BasicQuery> makeJson, String luceneSearch, int pageNumber, int pageSize) {
+	private List<Graph> search(Function<String, BasicQuery> makeJson, String luceneSearch, int pageSize) {
 		
 		SearchString networkSearch = search.networksBy(restrictQuery(luceneSearch));
 		BasicQuery subnetQuery = makeJson.apply(luceneSearch);
 		
-		NetworkList networks = ndex.searchNetworks(networkSearch, pageNumber, pageSize);
+		NetworkList networks = ndex.searchNetworks(networkSearch, pageSize);
 		
 		List<String> networkIds = Util.map(NetworkId::getExternalId, networks.getNetworks());
 		
@@ -197,7 +197,7 @@ public class ControllerImpl {
 			List<String> phrases = Util.map(search::phrase, realCuries);
 			String luceneSearch = search.or(phrases);
 			
-			List<Graph> results = search(makeJson, luceneSearch, pageNumber, pageSize);
+			List<Graph> results = search(makeJson, luceneSearch, pageSize);
 			
 			graphs.addAll(results);
 		}
@@ -364,7 +364,7 @@ public class ControllerImpl {
 		List<String> relations = new ArrayList<String>();
 		for(String pid : predicateIds) 
 			if(predicateRegistry.containsKey(pid)) 
-				relations.add(predicateRegistry.get(pid).getName());
+				relations.add(predicateRegistry.get(pid).getEdgeLabel());
 			// else - ignore as unknown?
 		
 		if(relations.isEmpty()) return edges;
@@ -414,37 +414,28 @@ public class ControllerImpl {
 		return matching;
 	}
 
-	public List<? extends CachedEntity> getPage(List<? extends CachedEntity> items, Integer pageNumber, Integer pageSize) {
+	public List<? extends CachedEntity> getPage(List<? extends CachedEntity> items, Integer pageSize) {
 		Integer size = items.size();
 		if(size==0) {
 			return new ArrayList<>();
 		}
-		if(pageNumber<0) pageNumber = 0;
-		if(pageSize<1)   pageSize   = size;  // default to full size of list
-		Integer fromIndex = pageNumber*pageSize;
-		if(fromIndex>size) {
-			return new ArrayList<>();
-		}
-		Integer toIndex = fromIndex+pageSize;
-		toIndex = toIndex>size?size:toIndex; // coerce upper bound
 		
-		return items.subList(fromIndex, toIndex);
+		return items.subList(0, pageSize);
 	}
 	
-	public ResponseEntity<List<BeaconConcept>> getConcepts(List<String> keywords, List<String> types, Integer pageNumber, Integer pageSize) {
+	public ResponseEntity<List<BeaconConcept>> getConcepts(List<String> keywords, List<String> categories, Integer size) {
 		try {
 			
 			keywords = fix(keywords);
-			types = fix(types);
-			pageNumber = fix(pageNumber) - 1;
+			categories = fix(categories);
 			
 			//pageSize = DEFAULT_PAGE_SIZE; //fix(pageSize);
-			pageSize = fixPageSize(pageSize);
+			size = fixPageSize(size);
 			
 			List<BeaconConcept> concepts = null ;
 			
 			String joinedKeywords = String.join(" ", keywords);
-			String joinedTypes = String.join(" ", types);
+			String joinedTypes = String.join(" ", categories);
 			
 			// I attempt caching of the whole retrieved set
 			CacheLocation cacheLocation = 
@@ -454,8 +445,7 @@ public class ControllerImpl {
 							new String[] { 
 									joinedKeywords, 
 									joinedTypes, 
-									pageNumber.toString(), 
-									pageSize.toString() 
+									size.toString() 
 							}
 					);
 
@@ -467,7 +457,7 @@ public class ControllerImpl {
 				
 				String luceneSearch = search.startsWith(joinedKeywords);
 
-				List<Graph> graphs = search(search::nodesBy, luceneSearch, pageNumber, pageSize);		
+				List<Graph> graphs = search(search::nodesBy, luceneSearch, size);		
 				
 				Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
 				combineDuplicates(nodes);
@@ -478,7 +468,7 @@ public class ControllerImpl {
 				 */
 				Util.map(translator::makeId, nodes);
 				
-				Collection<Node> ofType = filterSemanticGroup(nodes, types);
+				Collection<Node> ofType = filterSemanticGroup(nodes, categories);
 				
 				concepts = Util.map(translator::nodeToConcept, ofType);
 			
@@ -490,7 +480,7 @@ public class ControllerImpl {
 			
 			@SuppressWarnings("unchecked")
 			// Paging workaround since nDex paging doesn't seem to work as published?
-			List<BeaconConcept> page = (List<BeaconConcept>)getPage(concepts, pageNumber, pageSize);
+			List<BeaconConcept> page = (List<BeaconConcept>)getPage(concepts, size);
 			
 			return ResponseEntity.ok(page);
 		
@@ -690,7 +680,7 @@ public class ControllerImpl {
 			
 			@SuppressWarnings("unchecked")
 			// Paging workaround since nDex paging doesn't seem to work as published?
-			List<BeaconStatement> page = (List<BeaconStatement>)getPage(statements, pageNumber, pageSize);
+			List<BeaconStatement> page = (List<BeaconStatement>)getPage(statements, pageSize);
 			
 			return ResponseEntity.ok(page);
 		
@@ -762,39 +752,39 @@ public class ControllerImpl {
 		}
 	}
 	
-	public ResponseEntity<List<BeaconConceptType>> getConceptTypes() {
-		List<BeaconConceptType> types = new ArrayList<BeaconConceptType>();
+	public ResponseEntity<List<BeaconConceptCategory>> getConceptTypes() {
+		List<BeaconConceptCategory> types = new ArrayList<BeaconConceptCategory>();
 		
 		// Hard code some known types... See Translator.makeSemGroup()
-		BeaconConceptType GENE_Type = new BeaconConceptType();
+		BeaconConceptCategory GENE_Type = new BeaconConceptCategory();
 		GENE_Type.setId("GENE");
 		types.add(GENE_Type);
 		
-		BeaconConceptType CHEM_Type = new BeaconConceptType();
+		BeaconConceptCategory CHEM_Type = new BeaconConceptCategory();
 		CHEM_Type.setId("CHEM");
 		types.add(CHEM_Type);
 		
-		BeaconConceptType DISO_Type = new BeaconConceptType();
+		BeaconConceptCategory DISO_Type = new BeaconConceptCategory();
 		DISO_Type.setId("DISO");
 		types.add(DISO_Type);
 		
-		BeaconConceptType PHYS_Type = new BeaconConceptType();
+		BeaconConceptCategory PHYS_Type = new BeaconConceptCategory();
 		PHYS_Type.setId("PHYS");
 		types.add(PHYS_Type);
 		
-		BeaconConceptType ANAT_Type = new BeaconConceptType();
+		BeaconConceptCategory ANAT_Type = new BeaconConceptCategory();
 		ANAT_Type.setId("ANAT");
 		types.add(ANAT_Type);
 		
-		BeaconConceptType LIVB_Type = new BeaconConceptType();
+		BeaconConceptCategory LIVB_Type = new BeaconConceptCategory();
 		LIVB_Type.setId("LIVB");
 		types.add(LIVB_Type);
 		
-		BeaconConceptType PROC_Type = new BeaconConceptType();
+		BeaconConceptCategory PROC_Type = new BeaconConceptCategory();
 		PROC_Type.setId("PROC");
 		types.add(PROC_Type);
 		
-		BeaconConceptType OBJC_Type = new BeaconConceptType();
+		BeaconConceptCategory OBJC_Type = new BeaconConceptCategory();
 		OBJC_Type.setId("OBJC");
 		types.add(OBJC_Type);
 		

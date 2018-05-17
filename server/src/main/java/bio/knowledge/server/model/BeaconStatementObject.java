@@ -9,7 +9,7 @@ import javax.validation.constraints.*;
 /**
  * BeaconStatementObject
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-04-17T14:24:56.897-07:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-05-17T12:46:02.920-07:00")
 
 public class BeaconStatementObject   {
   @JsonProperty("id")
@@ -18,8 +18,8 @@ public class BeaconStatementObject   {
   @JsonProperty("name")
   private String name = null;
 
-  @JsonProperty("type")
-  private String type = null;
+  @JsonProperty("category")
+  private String category = null;
 
   public BeaconStatementObject id(String id) {
     this.id = id;
@@ -57,22 +57,22 @@ public class BeaconStatementObject   {
     this.name = name;
   }
 
-  public BeaconStatementObject type(String type) {
-    this.type = type;
+  public BeaconStatementObject category(String category) {
+    this.category = category;
     return this;
   }
 
    /**
-   * a semantic group for the object concept (specified as a code gene, pathway, disease, etc. - see [Biolink Model](https://biolink.github.io/biolink-model) for the full list of codes) 
-   * @return type
+   * a semantic group for the object concept (specified as a code gene, pathway, disease, etc. - see [Biolink Model](https://biolink.github.io/biolink-model) for the full list of categories) 
+   * @return category
   **/
-  @ApiModelProperty(value = "a semantic group for the object concept (specified as a code gene, pathway, disease, etc. - see [Biolink Model](https://biolink.github.io/biolink-model) for the full list of codes) ")
-  public String getType() {
-    return type;
+  @ApiModelProperty(value = "a semantic group for the object concept (specified as a code gene, pathway, disease, etc. - see [Biolink Model](https://biolink.github.io/biolink-model) for the full list of categories) ")
+  public String getCategory() {
+    return category;
   }
 
-  public void setType(String type) {
-    this.type = type;
+  public void setCategory(String category) {
+    this.category = category;
   }
 
 
@@ -87,12 +87,12 @@ public class BeaconStatementObject   {
     BeaconStatementObject beaconStatementObject = (BeaconStatementObject) o;
     return Objects.equals(this.id, beaconStatementObject.id) &&
         Objects.equals(this.name, beaconStatementObject.name) &&
-        Objects.equals(this.type, beaconStatementObject.type);
+        Objects.equals(this.category, beaconStatementObject.category);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, name, type);
+    return Objects.hash(id, name, category);
   }
 
   @Override
@@ -102,7 +102,7 @@ public class BeaconStatementObject   {
     
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
-    sb.append("    type: ").append(toIndentedString(type)).append("\n");
+    sb.append("    category: ").append(toIndentedString(category)).append("\n");
     sb.append("}");
     return sb.toString();
   }

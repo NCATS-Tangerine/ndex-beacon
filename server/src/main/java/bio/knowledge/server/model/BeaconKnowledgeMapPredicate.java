@@ -9,49 +9,28 @@ import javax.validation.constraints.*;
 /**
  * BeaconKnowledgeMapPredicate
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-04-17T14:24:56.897-07:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-05-17T12:46:02.920-07:00")
 
 public class BeaconKnowledgeMapPredicate   {
-  @JsonProperty("id")
-  private String id = null;
+  @JsonProperty("relation")
+  private String relation = null;
 
-  @JsonProperty("name")
-  private String name = null;
-
-  public BeaconKnowledgeMapPredicate id(String id) {
-    this.id = id;
+  public BeaconKnowledgeMapPredicate relation(String relation) {
+    this.relation = relation;
     return this;
   }
 
    /**
-   * CURIE of the predicate of the given relationship
-   * @return id
+   * Human readable name of the maximal given predicate relation. This should be specified as Biolink predicate names like  gene_associated_with_condition. See [Biolink Model](https://biolink.github.io/biolink-model) for the full list of terms 
+   * @return relation
   **/
-  @ApiModelProperty(value = "CURIE of the predicate of the given relationship")
-  public String getId() {
-    return id;
+  @ApiModelProperty(value = "Human readable name of the maximal given predicate relation. This should be specified as Biolink predicate names like  gene_associated_with_condition. See [Biolink Model](https://biolink.github.io/biolink-model) for the full list of terms ")
+  public String getRelation() {
+    return relation;
   }
 
-  public void setId(String id) {
-    this.id = id;
-  }
-
-  public BeaconKnowledgeMapPredicate name(String name) {
-    this.name = name;
-    return this;
-  }
-
-   /**
-   * human readable name of the given relationship predicate
-   * @return name
-  **/
-  @ApiModelProperty(value = "human readable name of the given relationship predicate")
-  public String getName() {
-    return name;
-  }
-
-  public void setName(String name) {
-    this.name = name;
+  public void setRelation(String relation) {
+    this.relation = relation;
   }
 
 
@@ -64,13 +43,12 @@ public class BeaconKnowledgeMapPredicate   {
       return false;
     }
     BeaconKnowledgeMapPredicate beaconKnowledgeMapPredicate = (BeaconKnowledgeMapPredicate) o;
-    return Objects.equals(this.id, beaconKnowledgeMapPredicate.id) &&
-        Objects.equals(this.name, beaconKnowledgeMapPredicate.name);
+    return Objects.equals(this.relation, beaconKnowledgeMapPredicate.relation);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, name);
+    return Objects.hash(relation);
   }
 
   @Override
@@ -78,8 +56,7 @@ public class BeaconKnowledgeMapPredicate   {
     StringBuilder sb = new StringBuilder();
     sb.append("class BeaconKnowledgeMapPredicate {\n");
     
-    sb.append("    id: ").append(toIndentedString(id)).append("\n");
-    sb.append("    name: ").append(toIndentedString(name)).append("\n");
+    sb.append("    relation: ").append(toIndentedString(relation)).append("\n");
     sb.append("}");
     return sb.toString();
   }

@@ -9,7 +9,7 @@ import javax.validation.constraints.*;
 /**
  * BeaconAnnotation
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-04-17T14:24:56.897-07:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-05-17T12:46:02.920-07:00")
 
 public class BeaconAnnotation   {
   @JsonProperty("id")

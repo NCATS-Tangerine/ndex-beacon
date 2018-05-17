@@ -11,31 +11,31 @@ import javax.validation.constraints.*;
 /**
  * BeaconKnowledgeMapObject
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-04-17T14:24:56.897-07:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-05-17T12:46:02.920-07:00")
 
 public class BeaconKnowledgeMapObject   {
-  @JsonProperty("type")
-  private String type = null;
+  @JsonProperty("category")
+  private String category = null;
 
   @JsonProperty("prefixes")
   private List<String> prefixes = new ArrayList<String>();
 
-  public BeaconKnowledgeMapObject type(String type) {
-    this.type = type;
+  public BeaconKnowledgeMapObject category(String category) {
+    this.category = category;
     return this;
   }
 
    /**
-   * the concept semantic type of a statement object 
-   * @return type
+   * the concept semantic type of a statement object. This  should be specified as Biolink concept semantic type names like gene, pathway, etc. (see [Biolink Model](https://biolink.github.io/biolink-model) for the full list of terms) 
+   * @return category
   **/
-  @ApiModelProperty(value = "the concept semantic type of a statement object ")
-  public String getType() {
-    return type;
+  @ApiModelProperty(value = "the concept semantic type of a statement object. This  should be specified as Biolink concept semantic type names like gene, pathway, etc. (see [Biolink Model](https://biolink.github.io/biolink-model) for the full list of terms) ")
+  public String getCategory() {
+    return category;
   }
 
-  public void setType(String type) {
-    this.type = type;
+  public void setCategory(String category) {
+    this.category = category;
   }
 
   public BeaconKnowledgeMapObject prefixes(List<String> prefixes) {
@@ -71,13 +71,13 @@ public class BeaconKnowledgeMapObject   {
       return false;
     }
     BeaconKnowledgeMapObject beaconKnowledgeMapObject = (BeaconKnowledgeMapObject) o;
-    return Objects.equals(this.type, beaconKnowledgeMapObject.type) &&
+    return Objects.equals(this.category, beaconKnowledgeMapObject.category) &&
         Objects.equals(this.prefixes, beaconKnowledgeMapObject.prefixes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(type, prefixes);
+    return Objects.hash(category, prefixes);
   }
 
   @Override
@@ -85,7 +85,7 @@ public class BeaconKnowledgeMapObject   {
     StringBuilder sb = new StringBuilder();
     sb.append("class BeaconKnowledgeMapObject {\n");
     
-    sb.append("    type: ").append(toIndentedString(type)).append("\n");
+    sb.append("    category: ").append(toIndentedString(category)).append("\n");
     sb.append("    prefixes: ").append(toIndentedString(prefixes)).append("\n");
     sb.append("}");
     return sb.toString();

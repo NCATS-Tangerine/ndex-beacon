@@ -9,49 +9,49 @@ import javax.validation.constraints.*;
 /**
  * BeaconStatementPredicate
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-04-17T14:24:56.897-07:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-05-17T12:46:02.920-07:00")
 
 public class BeaconStatementPredicate   {
-  @JsonProperty("id")
-  private String id = null;
+  @JsonProperty("edge_label")
+  private String edgeLabel = null;
 
-  @JsonProperty("name")
-  private String name = null;
+  @JsonProperty("relation")
+  private String relation = null;
 
-  public BeaconStatementPredicate id(String id) {
-    this.id = id;
+  public BeaconStatementPredicate edgeLabel(String edgeLabel) {
+    this.edgeLabel = edgeLabel;
     return this;
   }
 
    /**
-   * CURIE-encoded identifier of predicate resource 
-   * @return id
+   * minimal Biolink model predicate term
+   * @return edgeLabel
   **/
-  @ApiModelProperty(value = "CURIE-encoded identifier of predicate resource ")
-  public String getId() {
-    return id;
+  @ApiModelProperty(value = "minimal Biolink model predicate term")
+  public String getEdgeLabel() {
+    return edgeLabel;
   }
 
-  public void setId(String id) {
-    this.id = id;
+  public void setEdgeLabel(String edgeLabel) {
+    this.edgeLabel = edgeLabel;
   }
 
-  public BeaconStatementPredicate name(String name) {
-    this.name = name;
+  public BeaconStatementPredicate relation(String relation) {
+    this.relation = relation;
     return this;
   }
 
    /**
-   * human readable label of concept
-   * @return name
+   * SHOULD be from maximal Biolink model predicate list, but beacon-specific extensions allowed. Preferred format is a CURIE, where one exists, but strings/labels acceptable. May be empty.
+   * @return relation
   **/
-  @ApiModelProperty(value = "human readable label of concept")
-  public String getName() {
-    return name;
+  @ApiModelProperty(value = "SHOULD be from maximal Biolink model predicate list, but beacon-specific extensions allowed. Preferred format is a CURIE, where one exists, but strings/labels acceptable. May be empty.")
+  public String getRelation() {
+    return relation;
   }
 
-  public void setName(String name) {
-    this.name = name;
+  public void setRelation(String relation) {
+    this.relation = relation;
   }
 
 
@@ -64,13 +64,13 @@ public class BeaconStatementPredicate   {
       return false;
     }
     BeaconStatementPredicate beaconStatementPredicate = (BeaconStatementPredicate) o;
-    return Objects.equals(this.id, beaconStatementPredicate.id) &&
-        Objects.equals(this.name, beaconStatementPredicate.name);
+    return Objects.equals(this.edgeLabel, beaconStatementPredicate.edgeLabel) &&
+        Objects.equals(this.relation, beaconStatementPredicate.relation);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, name);
+    return Objects.hash(edgeLabel, relation);
   }
 
   @Override
@@ -78,8 +78,8 @@ public class BeaconStatementPredicate   {
     StringBuilder sb = new StringBuilder();
     sb.append("class BeaconStatementPredicate {\n");
     
-    sb.append("    id: ").append(toIndentedString(id)).append("\n");
-    sb.append("    name: ").append(toIndentedString(name)).append("\n");
+    sb.append("    edgeLabel: ").append(toIndentedString(edgeLabel)).append("\n");
+    sb.append("    relation: ").append(toIndentedString(relation)).append("\n");
     sb.append("}");
     return sb.toString();
   }

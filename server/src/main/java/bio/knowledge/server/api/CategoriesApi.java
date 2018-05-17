@@ -1,6 +1,6 @@
 package bio.knowledge.server.api;
 
-import bio.knowledge.server.model.BeaconKnowledgeMapStatement;
+import bio.knowledge.server.model.BeaconConceptCategory;
 
 import io.swagger.annotations.*;
 import org.springframework.http.ResponseEntity;
@@ -17,15 +17,15 @@ import java.util.List;
 import javax.validation.constraints.*;
 @javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-05-17T12:46:02.920-07:00")
 
-@Api(value = "kmap", description = "the kmap API")
-public interface KmapApi {
+@Api(value = "categories", description = "the categories API")
+public interface CategoriesApi {
 
-    @ApiOperation(value = "", notes = "Get a high level knowledge map of the all the beacons by subject semantic type, predicate and semantic object type ", response = BeaconKnowledgeMapStatement.class, responseContainer = "List", tags={ "metadata", })
+    @ApiOperation(value = "", notes = "Get a list of concept categories and number of their concept instances documented by the knowledge source. These types should be mapped onto the Translator-endorsed Biolink Model concept type classes with local types, explicitly added as mappings to the Biolink Model YAML file.  ", response = BeaconConceptCategory.class, responseContainer = "List", tags={ "metadata", })
     @ApiResponses(value = { 
-        @ApiResponse(code = 200, message = "Successful response with categories and frequency returned ", response = BeaconKnowledgeMapStatement.class) })
-    @RequestMapping(value = "/kmap",
+        @ApiResponse(code = 200, message = "Successful response with categories and frequency returned ", response = BeaconConceptCategory.class) })
+    @RequestMapping(value = "/categories",
         produces = { "application/json" }, 
         method = RequestMethod.GET)
-    ResponseEntity<List<BeaconKnowledgeMapStatement>> getKnowledgeMap();
+    ResponseEntity<List<BeaconConceptCategory>> getConceptCategories();
 
 }

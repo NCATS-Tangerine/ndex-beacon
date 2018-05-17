@@ -36,6 +36,8 @@ public class NdexClient {
 	private RestTemplate rest;
 	private HttpHeaders headers;
 	
+	private static final Integer PAGE_NUMBER = 0;
+	
 	private static final String NDEX = "http://www.ndexbio.org/v2";
 	private static final String NETWORK_SEARCH = NDEX + "/search/network?start={start}&size={size}";
 	private static final String BASIC_QUERY = NDEX + "/search/network/{networkId}/query";
@@ -54,11 +56,11 @@ public class NdexClient {
 		System.err.println(e.getClass() + ": " + e.getMessage());
 	}
 	
-	public NetworkList searchNetworks(SearchString searchString, int pageNumber, int pageSize) {	
+	public NetworkList searchNetworks(SearchString searchString, int pageSize) {	
 		
 		try {
 			HttpEntity<SearchString> request = new HttpEntity<>(searchString, headers);
-			NetworkList networks = rest.postForObject(NETWORK_SEARCH, request, NetworkList.class, pageNumber, pageSize);
+			NetworkList networks = rest.postForObject(NETWORK_SEARCH, request, NetworkList.class, PAGE_NUMBER, pageSize);
 			
 			return networks;
 		

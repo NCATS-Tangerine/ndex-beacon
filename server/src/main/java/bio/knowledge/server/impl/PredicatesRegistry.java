@@ -61,8 +61,7 @@ public class PredicatesRegistry extends HashMap<String, BeaconPredicate> {
 			
 			// predicate resource CURIE
 			p.setId(id);  
-			p.setName(name);
-			p.setDefinition(definition);
+			p.setEdgeLabel(name);
 			
 			put(id, p);
 			
