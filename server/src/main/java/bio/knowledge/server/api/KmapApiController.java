@@ -1,9 +1,11 @@
 package bio.knowledge.server.api;
 
+import bio.knowledge.server.impl.ControllerImpl;
 import bio.knowledge.server.model.BeaconKnowledgeMapStatement;
 
 import io.swagger.annotations.*;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -22,11 +24,11 @@ import javax.validation.constraints.*;
 @Controller
 public class KmapApiController implements KmapApi {
 
-
+	@Autowired ControllerImpl ctrl; 
 
     public ResponseEntity<List<BeaconKnowledgeMapStatement>> getKnowledgeMap() {
         // do some magic!
-        return new ResponseEntity<List<BeaconKnowledgeMapStatement>>(HttpStatus.OK);
+        return ctrl.getKnowledgeMap();
     }
 
 }
