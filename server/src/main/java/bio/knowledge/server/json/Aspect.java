@@ -22,10 +22,10 @@ public class Aspect {
 	private Edge[] edges = new Edge[0];
 	private Attribute[] nodeAttributes = new Attribute[0];
 	private Attribute[] edgeAttributes = new Attribute[0];
-//	private Citation[] citations = new Citation[0];
-//	private EdgeCitation[] edgeCitations = new EdgeCitation[0];
-//	private Support[] supports = new Support[0];
-//	private EdgeSupport[] edgeSupports = new EdgeSupport[0];
+	private Citation[] citations = new Citation[0];
+	private EdgeCitation[] edgeCitations = new EdgeCitation[0];
+	private Support[] supports = new Support[0];
+	private EdgeSupport[] edgeSupports = new EdgeSupport[0];
 	
 	
 	
@@ -79,36 +79,36 @@ public class Aspect {
 		this.edgeAttributes = edgeAttributes;
 	}
 
-//	public Citation[] getCitations() {
-//		return citations;
-//	}
-//
-//	public void setCitations(Citation[] citations) {
-//		this.citations = citations;
-//	}
-//
-//	public EdgeCitation[] getEdgeCitations() {
-//		return edgeCitations;
-//	}
-//
-//	public void setEdgeCitations(EdgeCitation[] edgeCitations) {
-//		this.edgeCitations = edgeCitations;
-//	}
-//
-//	public Support[] getSupports() {
-//		return supports;
-//	}
-//
-//	public void setSupports(Support[] supports) {
-//		this.supports = supports;
-//	}
-//
-//	public EdgeSupport[] getEdgeSupports() {
-//		return edgeSupports;
-//	}
-//
-//	public void setEdgeSupports(EdgeSupport[] edgeSupports) {
-//		this.edgeSupports = edgeSupports;
-//	}
-//	
+	public Citation[] getCitations() {
+		return citations;
+	}
+
+	public void setCitations(Citation[] citations) {
+		this.citations = citations;
+	}
+
+	public EdgeCitation[] getEdgeCitations() {
+		return edgeCitations;
+	}
+
+	public void setEdgeCitations(EdgeCitation[] edgeCitations) {
+		this.edgeCitations = edgeCitations;
+	}
+
+	public Support[] getSupports() {
+		return supports;
+	}
+
+	public void setSupports(Support[] supports) {
+		this.supports = supports;
+	}
+
+	public EdgeSupport[] getEdgeSupports() {
+		return edgeSupports;
+	}
+
+	public void setEdgeSupports(EdgeSupport[] edgeSupports) {
+		this.edgeSupports = edgeSupports;
+	}
+	
 }

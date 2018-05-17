@@ -1,11 +1,15 @@
 package bio.knowledge.server.impl;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import bio.knowledge.server.json.Aspect;
 import bio.knowledge.server.json.Attribute;
@@ -25,6 +29,9 @@ import bio.knowledge.server.json.Support;
  *
  */
 public class Graph {
+	
+	private static Logger _logger = LoggerFactory.getLogger(Graph.class);	
+	
 		
 	private Map<Long, Node> nodes = new HashMap<>();
 	private Map<Long, Edge> edges = new HashMap<>();
@@ -33,6 +40,7 @@ public class Graph {
 
 	public Graph(Network network) {
 
+		network.getClass();
 		// Add all nodes first, so that edges have something to connect to
 		for (Aspect a : network.getData()) {
 			if(a==null) continue;
@@ -43,17 +51,24 @@ public class Graph {
 		for (Aspect a : network.getData()) {
 			
 			if(a==null) continue;
-			//addCitations(a.getCitations());
+			addCitations(a.getCitations());
 			
 			annotateNodesWithNetworkId(a.getNdexStatus());
 			connectAttributesToNodes(a.getNodeAttributes());
 			connectAttributesToEdges(a.getEdgeAttributes());
 
 			connectNodesAndEdges(a.getEdges());
-			//connectEdgesToCitations(a.getEdgeCitations());
-			//connectSupportsToCitations(a.getSupports());
-			//interconnectEdgesSupportsAndCitations(a.getEdgeSupports());
+			connectEdgesToCitations(a.getEdgeCitations());
+			connectSupportsToCitations(a.getSupports());
+			interconnectEdgesSupportsAndCitations(a.getEdgeSupports());
 		}
+		
+		this.getClass();
+		
+	}
+	
+	private void logWarningMessage(String message) {
+		_logger.warn("Building graph - " + message);
 	}
 
 
@@ -110,7 +125,13 @@ public class Graph {
 		
 		Long id = attribute.getId();
 		Node node = nodes.get(id);
-		node.addAttribute(attribute);
+		
+		if (node == null) {
+			logWarningMessage("AttributeToNode: node does not exist: " + attribute.getId());
+		} else {
+			node.addAttribute(attribute);
+		}
+		
 	}
 	
 	private void connectAttributesToEdges(Attribute[] a) {
@@ -127,8 +148,9 @@ public class Graph {
 		
 		Long id = attribute.getId();
 		Edge edge = edges.get(id);
+		
 		if (edge == null) {
-			System.out.println("edge does not exist: " + attribute.getId());
+			logWarningMessage("AttributeToEdge: edge does not exist: " + attribute.getId());
 		} else {
 			edge.addAttribute(attribute);
 		}
@@ -155,9 +177,14 @@ public class Graph {
 		
 		if(subject!=null)
 			subject.addEdge(edge);
+		else
+			logWarningMessage("EdgeToSource: node does not exist: " + source);
 		
 		if(object!=null)
 			object.addEdge(edge);
+		else
+			logWarningMessage("EdgeToTarget: node does not exist: " + target);
+		
 		
 		edges.put(edge.getId(), edge);		
 	}
@@ -179,12 +206,14 @@ public class Graph {
 		Long[] edgeIds = edgeCitation.getId();
 		Long[] citationIds = edgeCitation.getCitations();
 		
-		List<Edge> relatedEdges = Util.map(edges::get, edgeIds);
-		List<Citation> relatedCitations = Util.map(citations::get, citationIds);
+		List<Edge> relatedEdges = findRelatedIfExists(edgeIds, edges);
+		List<Citation> relatedCitations = findRelatedIfExists(citationIds, citations);
+		
+		//List<Edge> relatedEdges = Util.map(edges::get, edgeIds);
+		//List<Citation> relatedCitations = Util.map(citations::get, citationIds);
 		
 		relatedEdges.forEach(e -> e.setCitations(relatedCitations));
 	}
-	
 	
 	private void connectSupportsToCitations(Support[] s) {
 		
@@ -224,19 +253,47 @@ public class Graph {
 		Long[] edgeIds = edgeSupport.getId();
 		Long[] supportIds = edgeSupport.getSupports();
 		
-		List<Edge> relatedEdges = Util.map(edges::get, edgeIds);
-		List<Support> relatedSupports = Util.map(supports::get, supportIds);
+		List<Edge> relatedEdges = findRelatedIfExists(edgeIds, edges);
+		List<Support> relatedSupports = findRelatedIfExists(supportIds, supports);
+		
+//		List<Edge> relatedEdges = Util.map(edges::get, edgeIds);
+//		List<Support> relatedSupports = Util.map(supports::get, supportIds);
 		
 		relatedEdges.forEach(e -> e.setSupports(relatedSupports));
 	}
 	
+	
+	/**
+	 * Produces list of related items from map using ids
+	 * Logs warning message if id does not already exist in map
+	 * @param ids 
+	 * @param map - likely will be one of nodes, edges, citations, or supports
+	 * @return list of related items of type T
+	 */
+	private <T> List<T> findRelatedIfExists(Long[] ids, Map<Long, T> map) {
+		List<T> related = new ArrayList<>();
+		
+		for (Long id : ids) {
+			T item = map.get(id);
+			if (item == null) 
+				logWarningMessage("trying to connect to graph, but id does not exist: " + id);
+			else 
+				related.add(item); 
+		}
+		
+		return related;
+	}
+	
+
+
 	private void inferCitationForSupports(EdgeSupport edgeSupport) {
 
 		if(edgeSupport==null) return;
 		
 		Long[] edgeIds = edgeSupport.getId();
-		
-		List<Edge> relatedEdges = Util.map(edges::get, edgeIds);
+
+		List<Edge> relatedEdges = findRelatedIfExists(edgeIds, edges);
+//		List<Edge> relatedEdges = Util.map(edges::get, edgeIds);
 
 		Predicate<Edge> hasImpliedCitation = e -> e.getCitations().size() == 1 && Util.filter(this::hasCitation, e.getSupports()).isEmpty();
 		
@@ -253,7 +310,8 @@ public class Graph {
 		if(edgeSupport==null) return;
 		
 		Long[] supportIds = edgeSupport.getSupports();
-		List<Support> relatedSupports = Util.map(supports::get, supportIds);
+		List<Support> relatedSupports = findRelatedIfExists(supportIds, supports);
+//		List<Support> relatedSupports = Util.map(supports::get, supportIds);
 		
 		Consumer<Support> addSupport = s -> {
 			if (hasCitation(s))

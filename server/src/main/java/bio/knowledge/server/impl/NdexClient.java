@@ -41,6 +41,8 @@ public class NdexClient {
 	private static final String BASIC_QUERY = NDEX + "/search/network/{networkId}/query";
 	private static final String ADVANCED_QUERY = NDEX + "/search/network/{networkId}/advancedquery";
 	
+	private static final int NETWORK_SEARCH_SIZE = 1;
+	
 	
 	public NdexClient() {
 		rest = new RestTemplate();
@@ -78,7 +80,7 @@ public class NdexClient {
 				
 				Aspect[] aspects = rest.postForObject(BASIC_QUERY, request, Aspect[].class, networkId);
 				
-//				HashMap[] h = rest.postForObject(BASIC_QUERY, request, HashMap[].class, networkId);
+				
 //				
 //				// TODO: update so not hardcoded in
 //
@@ -95,7 +97,7 @@ public class NdexClient {
 //				aspects[0].setEdges(edges);
 //				aspects[0].setNodeAttributes(nodeAttributes);
 //				aspects[0].setEdgeAttributes(edgeAttributes);
-				
+				HashMap[] h = rest.postForObject(BASIC_QUERY, request, HashMap[].class, networkId);
 				for (int i = 0; i < aspects.length; i++) {
 					aspects[i].setNdexStatus(networkId); 
 				}

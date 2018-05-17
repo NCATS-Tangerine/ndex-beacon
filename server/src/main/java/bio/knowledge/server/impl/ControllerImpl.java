@@ -66,7 +66,7 @@ public class ControllerImpl {
 	@Autowired 
 	PredicatesRegistry predicateRegistry;
 
-	private static final int DEFAULT_PAGE_SIZE = 3;
+	private static final int DEFAULT_PAGE_SIZE = 10;
 	private static final long TIMEOUT = 8;
 	private static final TimeUnit TIMEUNIT = TimeUnit.SECONDS;
 		
@@ -78,6 +78,10 @@ public class ControllerImpl {
 	
 	private static Integer fix(Integer integer) {
 		return integer == null || integer < 1 ? 1 : integer;
+	}
+	
+	private static Integer fixPageSize(Integer integer) {
+		return integer == null || integer < 1 ? DEFAULT_PAGE_SIZE : integer;
 	}
 	
 	private static String fix(String string) {
@@ -148,7 +152,8 @@ public class ControllerImpl {
 		for (CompletableFuture<Network> future : futures) {
 			try {
 				subnetworks.add(future.get(TIMEOUT, TIMEUNIT));
-			} catch (InterruptedException | ExecutionException | TimeoutException e) {	
+			} catch (InterruptedException | ExecutionException | TimeoutException e) {
+				log(e);
 			}
 		}
 		List<Graph> graphs = Util.map(Graph::new, subnetworks);
@@ -434,7 +439,7 @@ public class ControllerImpl {
 			pageNumber = fix(pageNumber) - 1;
 			
 			//pageSize = DEFAULT_PAGE_SIZE; //fix(pageSize);
-			pageSize = fix(pageSize);
+			pageSize = fixPageSize(pageSize);
 			
 			List<BeaconConcept> concepts = null ;
 			
