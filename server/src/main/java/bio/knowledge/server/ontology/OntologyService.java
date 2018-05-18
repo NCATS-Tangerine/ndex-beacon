@@ -1,10 +1,10 @@
 package bio.knowledge.server.ontology;
 
 import java.util.Optional;
+import java.util.Set;
 
 import javax.annotation.PostConstruct;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import bio.knowledge.ontology.BeaconBiolinkModel;
@@ -17,6 +17,8 @@ import bio.knowledge.ontology.mapping.ModelLookup;
 public class OntologyService {
 	
 	private final static String UMLSSG_PREFIX = "UMLSSG:";
+	private final static String DEFAULT_SLOT = "owl:topObjectProperty";
+	private final static String DEFAULT_CLASS = (UMLSSG_PREFIX + "OBJC");
 	
 	BeaconBiolinkModel biolinkModel;
 	ModelLookup<BiolinkClass> classLookup;
@@ -49,7 +51,7 @@ public class OntologyService {
 		BiolinkClass biolinkClass = classLookup.lookup(umlsCategory);
 		
 		if (biolinkClass == null) {
-			biolinkClass = classLookup.lookup(UMLSSG_PREFIX + "OBJC");
+			biolinkClass = classLookup.lookup(DEFAULT_CLASS);
 		}
 		
 		return biolinkClass.getName();
@@ -57,6 +59,34 @@ public class OntologyService {
 	
 	public String umlsToBiolinkPredicate(String predicateLabel) {
 		return null;
+	}
+
+	/**
+	 * Simple heuristic for creating Biolink edge label from simple string
+	 * @param pName
+	 * @return
+	 */
+	public String predToBiolinkEdgeLabel(String pName) {
+		Set<String> curies = slotLookup.reverseLookup(pName);
+		
+		BiolinkSlot biolinkSlot = null;
+		//take first one
+		if (!(curies.isEmpty())) {
+			String[] curiesList = curies.toArray(new String[curies.size()]); 
+			biolinkSlot = slotLookup.lookup(curiesList[0]);
+		}
+		
+		if (biolinkSlot == null) {
+			biolinkSlot = slotLookup.lookup(DEFAULT_SLOT);
+		}
+		
+		return convertToSnakeCase(biolinkSlot.getName());
+		
+	
+	}
+
+	private String convertToSnakeCase(String name) {
+		return name.trim().replaceAll("\\s", "_");
 	}
 
 }

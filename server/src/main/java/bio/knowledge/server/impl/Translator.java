@@ -79,7 +79,6 @@ public class Translator {
 		List<String> types = node.getByRegex("(?i).+type");
 		String nodeName = node.getName();
 		String umlsType = SemanticGroup.makeSemGroup( conceptId, nodeName, types );
-		String result = ontology.umlsToBiolinkCategory(umlsType);
 		return ontology.umlsToBiolinkCategory(umlsType);
 	}
 	
@@ -182,7 +181,8 @@ public class Translator {
 		 * Until you have a better solution, just
 		 * convert the name into a synthetic CURIE
 		 */
-		String pName  = edge.getName();
+		String pName  = edge.getName().toLowerCase();
+		String biolinkName = ontology.predToBiolinkEdgeLabel(pName);
 		String pCurie = "";
 		if(NameSpace.isCurie(pName))
 			/*
@@ -194,10 +194,11 @@ public class Translator {
 			// Treat as an nDex defined CURIE
 			pCurie = NDEX_NS+edge.getName().trim().replaceAll("\\s", "_");
 		
-		predicateRegistry.indexPredicate( pCurie, pName, "" );
+		predicateRegistry.indexPredicate( pCurie, biolinkName, "" );
 		
 		predicate.setRelation(pCurie);
-		predicate.setEdgeLabel(pName);
+		//predicate.setEdgeLabel(pName);
+		predicate.setEdgeLabel(biolinkName);
 		
 		return predicate;
 	}

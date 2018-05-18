@@ -787,6 +787,8 @@ public class ControllerImpl {
 		String biolinkName = ontology.umlsToBiolinkCategory(umls);
 		category.setId(biolinkName);
 		category.setCategory(biolinkName);
+		category.setLocalId(umls);
+		category.setLocalCategory("UMLSSG:" + umls);
 		return category;
 	}
 
