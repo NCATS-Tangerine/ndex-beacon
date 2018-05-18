@@ -48,6 +48,10 @@ public class OntologyService {
 		
 		BiolinkClass biolinkClass = classLookup.lookup(umlsCategory);
 		
+		if (biolinkClass == null) {
+			biolinkClass = classLookup.lookup(UMLSSG_PREFIX + "OBJC");
+		}
+		
 		return biolinkClass.getName();
 	}
 	

@@ -50,24 +50,12 @@ public class ControllerImpl {
 	private static Logger _logger = LoggerFactory.getLogger(ControllerImpl.class);
 	
 	@Autowired OntologyService ontology;
-
-	@Autowired
-	private Cache cache;
-
-	@Autowired
-	private SearchBuilder search;
-	
-	@Autowired
-	private NdexClient ndex;
-	
-	@Autowired
-	private Translator translator;
-
-	@Autowired 
-	AliasNamesRegistry aliasRegistry;
-
-	@Autowired 
-	PredicatesRegistry predicateRegistry;
+	@Autowired private Cache cache;
+	@Autowired private SearchBuilder search;
+	@Autowired private NdexClient ndex;
+	@Autowired private Translator translator;
+	@Autowired AliasNamesRegistry aliasRegistry;
+	@Autowired PredicatesRegistry predicateRegistry;
 
 	private static final int DEFAULT_PAGE_SIZE = 10;
 	private static final long TIMEOUT = 8;
@@ -513,6 +501,8 @@ public class ControllerImpl {
 				 */
 				Util.map(translator::makeId, nodes);
 				
+				
+				
 				Collection<Node> ofType = filterSemanticGroup(nodes, categories);
 				
 				concepts = Util.map(translator::nodeToConcept, ofType);
@@ -774,40 +764,31 @@ public class ControllerImpl {
 		List<BeaconConceptCategory> types = new ArrayList<BeaconConceptCategory>();
 		
 		// Hard code some known types... See Translator.makeSemGroup()
-		BeaconConceptCategory GENE_Type = new BeaconConceptCategory();
-		GENE_Type.setId("GENE");
-		types.add(GENE_Type);
+		types.add(createBeaconConceptCategoryFromUMLS("GENE"));
+		types.add(createBeaconConceptCategoryFromUMLS("CHEM"));
+		types.add(createBeaconConceptCategoryFromUMLS("DISO"));
+		types.add(createBeaconConceptCategoryFromUMLS("PHYS"));
+		types.add(createBeaconConceptCategoryFromUMLS("ANAT"));
+		types.add(createBeaconConceptCategoryFromUMLS("PROC"));
+		types.add(createBeaconConceptCategoryFromUMLS("OBJC"));
 		
-		BeaconConceptCategory CHEM_Type = new BeaconConceptCategory();
-		CHEM_Type.setId("CHEM");
-		types.add(CHEM_Type);
 		
-		BeaconConceptCategory DISO_Type = new BeaconConceptCategory();
-		DISO_Type.setId("DISO");
-		types.add(DISO_Type);
-		
-		BeaconConceptCategory PHYS_Type = new BeaconConceptCategory();
-		PHYS_Type.setId("PHYS");
-		types.add(PHYS_Type);
-		
-		BeaconConceptCategory ANAT_Type = new BeaconConceptCategory();
-		ANAT_Type.setId("ANAT");
-		types.add(ANAT_Type);
-		
-		BeaconConceptCategory LIVB_Type = new BeaconConceptCategory();
-		LIVB_Type.setId("LIVB");
-		types.add(LIVB_Type);
-		
-		BeaconConceptCategory PROC_Type = new BeaconConceptCategory();
-		PROC_Type.setId("PROC");
-		types.add(PROC_Type);
-		
-		BeaconConceptCategory OBJC_Type = new BeaconConceptCategory();
-		OBJC_Type.setId("OBJC");
-		types.add(OBJC_Type);
+		// doesn't seem to exist in Biolink
+//		BeaconConceptCategory LIVB_Type = new BeaconConceptCategory();
+//		LIVB_Type.setId(ontology.umlsToBiolinkCategory("LIVB"));
+//		types.add(LIVB_Type);
+//		
 		
 		return ResponseEntity.ok(types);
     }
+	
+	private BeaconConceptCategory createBeaconConceptCategoryFromUMLS(String umls) {
+		BeaconConceptCategory category = new BeaconConceptCategory();
+		String biolinkName = ontology.umlsToBiolinkCategory(umls);
+		category.setId(biolinkName);
+		category.setCategory(biolinkName);
+		return category;
+	}
 
 
 	public ResponseEntity<List<BeaconKnowledgeMapStatement>> getKnowledgeMap() {

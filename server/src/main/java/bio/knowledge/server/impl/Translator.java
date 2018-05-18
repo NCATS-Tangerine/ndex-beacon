@@ -21,6 +21,7 @@ import bio.knowledge.server.model.BeaconStatement;
 import bio.knowledge.server.model.BeaconStatementObject;
 import bio.knowledge.server.model.BeaconStatementPredicate;
 import bio.knowledge.server.model.BeaconStatementSubject;
+import bio.knowledge.server.ontology.OntologyService;
 
 @Service
 public class Translator {
@@ -28,6 +29,9 @@ public class Translator {
 	@Autowired AliasNamesRegistry aliasRegistry;
 
 	@Autowired PredicatesRegistry predicateRegistry;
+	
+	@Autowired OntologyService ontology;
+
 
 	/*
 	 *  Not sure if this is the best choice but better than a colon, 
@@ -74,8 +78,9 @@ public class Translator {
 		// First heuristic: to match on recorded Node types?
 		List<String> types = node.getByRegex("(?i).+type");
 		String nodeName = node.getName();
-		
-		return SemanticGroup.makeSemGroup( conceptId, nodeName, types );
+		String umlsType = SemanticGroup.makeSemGroup( conceptId, nodeName, types );
+		String result = ontology.umlsToBiolinkCategory(umlsType);
+		return ontology.umlsToBiolinkCategory(umlsType);
 	}
 	
 	/**
