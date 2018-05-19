@@ -32,7 +32,6 @@ public class Translator {
 	
 	@Autowired OntologyService ontology;
 
-
 	/*
 	 *  Not sure if this is the best choice but better than a colon, 
 	 *  which is a CURIE namespace delimiter whereas the hash is 

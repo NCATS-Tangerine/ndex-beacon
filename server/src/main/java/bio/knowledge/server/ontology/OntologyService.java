@@ -1,10 +1,13 @@
 package bio.knowledge.server.ontology;
 
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.PostConstruct;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import bio.knowledge.ontology.BeaconBiolinkModel;
@@ -12,19 +15,26 @@ import bio.knowledge.ontology.BiolinkClass;
 import bio.knowledge.ontology.BiolinkSlot;
 import bio.knowledge.ontology.mapping.InheritanceLookup;
 import bio.knowledge.ontology.mapping.ModelLookup;
+import bio.knowledge.server.impl.ControllerImpl;
 
 @Service
 public class OntologyService {
 	
 	private final static String UMLSSG_PREFIX = "UMLSSG:";
-	private final static String DEFAULT_SLOT = "owl:topObjectProperty";
+	private final static String DEFAULT_SLOT_NAME= "related to";
 	private final static String DEFAULT_CLASS = (UMLSSG_PREFIX + "OBJC");
+	
+	private static Logger _logger = LoggerFactory.getLogger(OntologyService.class);
 	
 	BeaconBiolinkModel biolinkModel;
 	ModelLookup<BiolinkClass> classLookup;
 	ModelLookup<BiolinkSlot> slotLookup;
 	InheritanceLookup<BiolinkClass> classInheritance;
 	InheritanceLookup<BiolinkSlot> slotInheritance;
+	
+	HashSet<String> mappedBiolinkCategories;
+	HashSet<String> unmappedBiolinkCategories;
+	
 	
 	@PostConstruct
 	private void init() {
@@ -41,6 +51,9 @@ public class OntologyService {
 		
 		slotLookup = new ModelLookup<BiolinkSlot>(biolinkModel.getSlots(), slotInheritance);
 		classLookup = new ModelLookup<BiolinkClass>(biolinkModel.getClasses(), classInheritance);
+		
+		mappedBiolinkCategories = new HashSet<String>();
+		unmappedBiolinkCategories = new HashSet<String>();
 	}
 	
 	public String umlsToBiolinkCategory(String umlsCategory) {
@@ -67,22 +80,28 @@ public class OntologyService {
 	 * @return
 	 */
 	public String predToBiolinkEdgeLabel(String pName) {
-		Set<String> curies = slotLookup.reverseLookup(pName);
 		
-		BiolinkSlot biolinkSlot = null;
-		//take first one
-		if (!(curies.isEmpty())) {
-			String[] curiesList = curies.toArray(new String[curies.size()]); 
-			biolinkSlot = slotLookup.lookup(curiesList[0]);
+		String edgeLabel;
+		
+		if (exactlyMatchesBiolink(pName)) {
+			mappedBiolinkCategories.add(pName);
+			edgeLabel = convertToSnakeCase(pName);
+		} else {
+			if (unmappedBiolinkCategories.add(pName)) {
+				_logger.info("new unknown category added: " + pName);
+				_logger.info("Known Predicates: " + String.join(", ", mappedBiolinkCategories));
+				_logger.info("Unknown Predicates: " + String.join(", ", unmappedBiolinkCategories));
+			}
+			
+			edgeLabel = convertToSnakeCase(DEFAULT_SLOT_NAME);
 		}
 		
-		if (biolinkSlot == null) {
-			biolinkSlot = slotLookup.lookup(DEFAULT_SLOT);
-		}
+		return edgeLabel;
 		
-		return convertToSnakeCase(biolinkSlot.getName());
-		
+	}
 	
+	private Boolean exactlyMatchesBiolink(String pName) {
+		return (!(slotLookup.reverseLookup(pName).isEmpty()));
 	}
 
 	private String convertToSnakeCase(String name) {
