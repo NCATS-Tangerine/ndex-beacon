@@ -2,7 +2,6 @@ package bio.knowledge.server.ontology;
 
 import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 
 import javax.annotation.PostConstruct;
 
@@ -15,7 +14,6 @@ import bio.knowledge.ontology.BiolinkClass;
 import bio.knowledge.ontology.BiolinkSlot;
 import bio.knowledge.ontology.mapping.InheritanceLookup;
 import bio.knowledge.ontology.mapping.ModelLookup;
-import bio.knowledge.server.impl.ControllerImpl;
 
 @Service
 public class OntologyService {

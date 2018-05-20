@@ -1,7 +1,6 @@
 package bio.knowledge.server.impl;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,7 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import bio.knowledge.ontology.mapping.umls.UMLSBiolinkMapping;
 import bio.knowledge.server.impl.Cache.CacheLocation;
 import bio.knowledge.server.json.Attribute;
 import bio.knowledge.server.json.BasicQuery;
@@ -66,10 +64,9 @@ public class ControllerImpl {
 		_logger.error(e.getClass() + ": " + e.getMessage());
 	}
 	
-	
-	private static Integer fix(Integer integer) {
-		return integer == null || integer < 1 ? 1 : integer;
-	}
+	//private static Integer fix(Integer integer) {
+	//	return integer == null || integer < 1 ? 1 : integer;
+	//}
 	
 	private static Integer fixPageSize(Integer integer) {
 		return integer == null || integer < 1 ? DEFAULT_PAGE_SIZE : integer;
@@ -329,7 +326,7 @@ public class ControllerImpl {
 		
 		if (types.isEmpty()) return nodes;
 		
-		Predicate<Node> hasType = n -> types.contains(translator.makeSemGroup(n));
+		Predicate<Node> hasType = n -> types.contains(translator.inferConceptCategory(n));
 		nodes = Util.filter(hasType, nodes);
 		
 		return nodes;
@@ -348,10 +345,10 @@ public class ControllerImpl {
 		String objectId = translator.makeId( object );
 		
 		if( sourceAliases.contains(subjectId) ) 
-			return types.contains(translator.makeSemGroup(object));
+			return types.contains(translator.inferConceptCategory(object));
 			
 		 else if( sourceAliases.contains(objectId) )
-			return types.contains(translator.makeSemGroup(subject));
+			return types.contains(translator.inferConceptCategory(subject));
  
 		// Strange situation... one of the two id's should match a source alias!
 		_logger.warn("ControllerImpl.testTargetSemanticGroup(): strange!... neither subject id '"+subjectId+

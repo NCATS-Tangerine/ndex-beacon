@@ -8,8 +8,8 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import bio.knowledge.server.json.Aspect;
 import bio.knowledge.server.json.Attribute;
@@ -18,7 +18,6 @@ import bio.knowledge.server.json.Edge;
 import bio.knowledge.server.json.EdgeCitation;
 import bio.knowledge.server.json.EdgeSupport;
 import bio.knowledge.server.json.Network;
-import bio.knowledge.server.json.NetworkId;
 import bio.knowledge.server.json.Node;
 import bio.knowledge.server.json.Support;
 

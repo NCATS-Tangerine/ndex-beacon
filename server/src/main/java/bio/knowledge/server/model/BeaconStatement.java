@@ -2,15 +2,10 @@ package bio.knowledge.server.model;
 
 import java.util.Objects;
 
-import bio.knowledge.server.impl.CachedEntity;
-import bio.knowledge.server.model.BeaconStatementObject;
-import bio.knowledge.server.model.BeaconStatementPredicate;
-import bio.knowledge.server.model.BeaconStatementSubject;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import io.swagger.annotations.ApiModel;
+
+import bio.knowledge.server.impl.CachedEntity;
 import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.*;
 /**
  * BeaconStatement
  */

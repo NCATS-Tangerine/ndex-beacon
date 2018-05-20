@@ -1,31 +1,48 @@
-ext.logbackCoreVersion       = '1.1.7'
+ext {
+	gradleVersion            = '4.6'
+	apacheHTTPClientVersion  = '4.5.2'
+	springVersion            = '5.0.4.RELEASE'
+	jacksonXmlVersion        = '2.9.5'
+	logbackCoreVersion       = '1.2.3'
+	springBootVersion        = '2.0.0.RC1'
+	springDataVersion        = 'Kay-SR3'
+	springDataNeo4jVersion   = '5.0.4.RELEASE'
+	springNeo4jVersion       = '3.3.4'
+	springNeo4jOGMVersion    = '3.0.3'
+	springfoxSwaggerVersion  = '2.5.0'
+	jodaTimeVersion          = '2.9.9'
+	ioSwaggerJaxrsVersion    = '1.5.19'
+}
 
 buildscript {
     ext {
-        springBootVersion = '1.3.5.RELEASE'
+        springBootVersion = '2.0.0.RC1'
+        springDependencyMgmtVersion = '1.0.4.RELEASE'
     }
     repositories {
         mavenCentral()
         maven { url "https://repo.spring.io/libs-release" }
+		maven { url 'https://repo.spring.io/libs-milestone' }
         maven { url "https://plugins.gradle.org/m2/" }
     }
     dependencies {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:$springBootVersion") 
-        classpath("io.spring.gradle:dependency-management-plugin:0.6.0.RELEASE")
-        classpath("com.eriwen:gradle-css-plugin:2.12.0")
+        classpath("io.spring.gradle:dependency-management-plugin:$springDependencyMgmtVersion")
+        classpath("com.eriwen:gradle-css-plugin:2.14.0")
     }
 }
 
 allprojects {
 
-    version = '1.0.12'  
+    version = '1.0.18'  
     
     apply plugin: 'maven'
     apply plugin: 'java'
-    //apply plugin: 'war'
     apply plugin: 'eclipse-wtp'
-    apply plugin: 'spring-boot'
+    apply plugin: 'org.springframework.boot'
     apply plugin: 'io.spring.dependency-management'
+
+	group = 'bio.knowledge'
 	
 	sourceCompatibility = 1.8
 	targetCompatibility = 1.8
@@ -38,12 +55,12 @@ allprojects {
 	    mavenCentral()
 	    mavenLocal()
 	    maven { url "https://repo.spring.io/libs-release" }
-	    maven { url 'http://repo.spring.io/milestone' }
-	    maven { url 'http://repo.spring.io/libs-snapshot' }
+	    maven { url 'https://repo.spring.io/libs-milestone' }
+	    maven { url 'https://repo.spring.io/libs-snapshot' }
 	    maven { url "https://m2.neo4j.org" }
 	    maven { url 'http://maven.vaadin.com/vaadin-addons' }
 	    maven { url "http://mvnrepository.com/" }
-    }
+   }
     
     uploadArchives {
 	    repositories {
@@ -67,8 +84,27 @@ allprojects {
 		compile "ch.qos.logback:logback-access:$logbackCoreVersion"
 		
 		compile "org.springframework.boot:spring-boot:$springBootVersion"
+		
+		testCompile 'junit:junit:4.12'
 	}
 
+}
+
+dependencies {
+    compile project(':server')
+}
+
+configurations {
+    providedRuntime
+    all*.exclude group: '', module: 'servlet-api'
+}
+
+project(':ontology') {
+
+    dependencies {
+ 		// https://mvnrepository.com/artifact/org.apache.commons/commons-text
+		compile "org.apache.commons:commons-text:1.2"
+	}
 }
 
 eclipse {
@@ -79,16 +115,50 @@ eclipse {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '3.5'
+    gradleVersion = "$gradleVersion"
 }
 
+project(':server') {
 
-jar {
-    manifest {
-        attributes("Main-Class": "bio.knowledge.server.Swagger2SpringBoot")
-    }
+	archivesBaseName  = 'ndex-beacon'
+	description       = 'nDex Knowledge Beacon Server'
+	
+	apply plugin: 'application'
+	
+	mainClassName = 'bio.knowledge.server.Swagger2SpringBoot'
+	
+	dependencies {
+	
+		compile project(':ontology')
+
+	    compile 'commons-cli:commons-cli:1.1'
+	    compile 'javax.validation:validation-api:1.1.0.Final'
+	    compile 'org.hibernate:hibernate-validator:5.2.2.Final'
+	    	
+		compile "org.springframework:spring-context:$springVersion"
+		compile "org.springframework:spring-context-support:$springVersion"
+		compile "org.springframework:spring-web:$springVersion"
+		compile "org.springframework.boot:spring-boot-starter-tomcat:$springBootVersion"
+		compile "org.springframework.boot:spring-boot-starter-test:$springBootVersion" 
+		compile "org.springframework:spring-webmvc:$springVersion"
+		    	
+	    compile "io.springfox:springfox-swagger2:$springfoxSwaggerVersion"
+	    compile "io.springfox:springfox-swagger-ui:$springfoxSwaggerVersion"
+	
+		compile "com.fasterxml.jackson.datatype:jackson-datatype-joda:$jacksonXmlVersion"
+	
+	    compile "joda-time:joda-time:$jodaTimeVersion"
+
+		compile "io.swagger:swagger-jaxrs:$ioSwaggerJaxrsVersion"
+	}
+	
+	jar {
+	    manifest {
+	        attributes("Main-Class": "bio.knowledge.server.Swagger2SpringBoot")
+	    }
+	}
+	
+	springBoot {
+		mainClassName = "bio.knowledge.server.Swagger2SpringBoot"
+	}
 }
-
-//war {
-//	from 'src/main/webapp'
-//}

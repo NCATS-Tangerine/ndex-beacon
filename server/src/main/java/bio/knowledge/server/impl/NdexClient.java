@@ -1,7 +1,5 @@
 package bio.knowledge.server.impl;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.http.HttpEntity;
@@ -10,16 +8,11 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import bio.knowledge.server.json.AdvancedQuery;
 import bio.knowledge.server.json.Aspect;
-import bio.knowledge.server.json.Attribute;
 import bio.knowledge.server.json.BasicQuery;
-import bio.knowledge.server.json.Edge;
 import bio.knowledge.server.json.Network;
 import bio.knowledge.server.json.NetworkList;
-import bio.knowledge.server.json.Node;
 import bio.knowledge.server.json.SearchString;
 
 
@@ -43,9 +36,8 @@ public class NdexClient {
 	private static final String BASIC_QUERY = NDEX + "/search/network/{networkId}/query";
 	private static final String ADVANCED_QUERY = NDEX + "/search/network/{networkId}/advancedquery";
 	
-	private static final int NETWORK_SEARCH_SIZE = 1;
-	
-	
+	//private static final int NETWORK_SEARCH_SIZE = 1;
+
 	public NdexClient() {
 		rest = new RestTemplate();
 		headers = new HttpHeaders();
@@ -81,7 +73,7 @@ public class NdexClient {
 				
 				Aspect[] aspects = rest.postForObject(BASIC_QUERY, request, Aspect[].class, networkId);
 
-				HashMap[] h = rest.postForObject(BASIC_QUERY, request, HashMap[].class, networkId);
+				//HashMap[] h = rest.postForObject(BASIC_QUERY, request, HashMap[].class, networkId);
 				for (int i = 0; i < aspects.length; i++) {
 					aspects[i].setNdexStatus(networkId); 
 				}

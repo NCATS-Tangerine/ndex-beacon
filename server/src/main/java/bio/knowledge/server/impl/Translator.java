@@ -8,7 +8,6 @@ import java.util.function.Function;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import bio.knowledge.server.impl.SemanticGroup.NameSpace;
 import bio.knowledge.server.json.Attribute;
 import bio.knowledge.server.json.Citation;
 import bio.knowledge.server.json.Edge;
@@ -22,6 +21,8 @@ import bio.knowledge.server.model.BeaconStatementObject;
 import bio.knowledge.server.model.BeaconStatementPredicate;
 import bio.knowledge.server.model.BeaconStatementSubject;
 import bio.knowledge.server.ontology.OntologyService;
+import bio.knowledge.server.ontology.NdexConceptCategoryService;
+import bio.knowledge.server.ontology.NdexConceptCategoryService.NameSpace;
 
 @Service
 public class Translator {
@@ -67,18 +68,18 @@ public class Translator {
 	 * @param node
 	 * @return
 	 */
-	public String makeSemGroup(Node node) {
+	public String inferConceptCategory(Node node) {
 		String nodeId = makeId(node) ;
-		return makeType(nodeId,node) ;
+		return inferConceptCategory(nodeId,node) ;
 	}
 	
-	public String makeType( String conceptId, Node node ) { 
-		
+	public String inferConceptCategory( String conceptId, Node node ) { 
 		// First heuristic: to match on recorded Node types?
 		List<String> types = node.getByRegex("(?i).+type");
 		String nodeName = node.getName();
-		String umlsType = SemanticGroup.makeSemGroup( conceptId, nodeName, types );
-		return ontology.umlsToBiolinkCategory(umlsType);
+		String category = NdexConceptCategoryService.inferConceptCategory( conceptId, nodeName, types );
+		//return ontology.umlsToBiolinkCategory(category);
+		return category; //  Biolink Model categories now directly inferred
 	}
 	
 	/**
@@ -114,7 +115,7 @@ public class Translator {
 		
 		concept.setId(conceptId);
 		concept.setName(makeName(node));
-		concept.setCategory(makeType(conceptId, node));
+		concept.setCategory(inferConceptCategory(conceptId, node));
 		concept.setSynonyms(node.getSynonyms());
 		
 		return concept;
@@ -145,7 +146,7 @@ public class Translator {
 		
 		conceptDetails.setName(makeName(node));
 		
-		conceptDetails.setCategory(makeType(conceptId,node));
+		conceptDetails.setCategory(inferConceptCategory(conceptId,node));
 		
 		Consumer<String> addSynonym = s -> conceptDetails.addSynonymsItem(s);
 		node.getSynonyms().forEach(addSynonym);
@@ -166,7 +167,7 @@ public class Translator {
 		
 		subject.setName(makeName(node));
 		
-		subject.setCategory(makeType(conceptId,node));
+		subject.setCategory(inferConceptCategory(conceptId,node));
 		
 		return subject;
 	}
@@ -211,7 +212,7 @@ public class Translator {
 		
 		object.setName(makeName(node));
 		
-		object.setCategory(makeType(conceptId,node));
+		object.setCategory(inferConceptCategory(conceptId,node));
 		
 		return object;
 	}

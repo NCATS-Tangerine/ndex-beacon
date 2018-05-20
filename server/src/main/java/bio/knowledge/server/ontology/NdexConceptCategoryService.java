@@ -1,7 +1,7 @@
 /**
  * 
  */
-package bio.knowledge.server.impl;
+package bio.knowledge.server.ontology;
 
 import java.util.HashMap;
 import java.util.List;
@@ -9,6 +9,11 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.regex.*;
+
+import bio.knowledge.ontology.BiolinkTerm;
+import bio.knowledge.server.impl.Util;
 
 /**
  * This class, segregated from the main nDex beacon code
@@ -18,70 +23,72 @@ import org.slf4j.LoggerFactory;
  * @author Richard
  *
  */
-public class SemanticGroup {
+public class NdexConceptCategoryService {
 	
-	private static Logger _logger = LoggerFactory.getLogger(SemanticGroup.class);	
+	private static Logger _logger = LoggerFactory.getLogger(NdexConceptCategoryService.class);	
 	
 	public enum NameSpace {
 		
-		NCBIGENE( "GENE", new String[]{
+		NCBIGENE( "gene", new String[]{
 				"http://identifiers.org/ncbigene",
 				"https://www.ncbi.nlm.nih.gov/gene"
 		} ),
-		GENECARDS("GENE", new String[] {"http://www.genecards.org/"} ),
-		UNIPROT("CHEM", new String[] {
+		HGNC_SYMBOL("gene", new String[] {}),
+		GENECARDS("gene", new String[] {"http://www.genecards.org/"} ),
+		UNIPROT("protein", new String[] {
 				"http://identifiers.org/uniprot",
 				"http://www.uniprot.org/"
 		} ),
-		CHEBI("CHEM", new String[] { "http://identifiers.org/chebi" } ),
-		DRUGBANK("CHEM", new String[] {
+		CHEBI("chemical substance", new String[] { "http://identifiers.org/chebi" } ),
+		DRUGBANK("drug", new String[] {
 				"http://identifiers.org/drugbank/",
 				"http://bio2rdf.org/drugbank"
 		} ),
-		KEGG("PHYS", 
+		KEGG("pathway", 
 				new String[] {
 					"http://identifiers.org/kegg",
 					"http://www.genome.jp/kegg/"
 		} ), // Kyoto Encyclopedia of Genes and Genomes
-		KEGG_PATHWAY("PHYS", 
+		KEGG_PATHWAY("pathway", 
 				new String[] {
 					"http://identifiers.org/kegg",
 					"http://www.genome.jp/kegg/"
 		} ), // Kyoto Encyclopedia of Genes and Genomes
-		PMID("CONC", // could also be "PROC"? 
+		PMID("information content entity", 
 				new String[] {
 					"http://identifiers.org/pubmed",
 					"https://www.ncbi.nlm.nih.gov/pubmed"
 				} ), // PubMed
-		REACT("PHYS", new String[] {"https://reactome.org/"} ),    // REACTome == pathways?
-		REACTOME("PHYS", new String[] {"https://reactome.org/"} ), // REACTOME == pathways?
-		BP("PHYS", new String[] {"http://www.biopax.org/"} ), // BioPAX
+		REACT("pathway", new String[] {"https://reactome.org/"} ),    // REACTome == pathways?
+		REACTOME("pathway", new String[] {"https://reactome.org/"} ), // REACTOME == pathways?
+		BP("pathway", new String[] {"http://www.biopax.org/"} ), // BioPAX
 		PATHWAYCOMMONS("PHYS", 
 				new String[] {
 						"http://purl.org/pc2/7",
 						"http://www.pathwaycommons.org/pc2"
 				} ),  // Pathway Commons
 		
-		MIR("CHEM", 
+		MIR("transcript", 
 				new String[] {
 						"http://identifiers.org/mirtarbase",
 						"http://mirtarbase.mbc.nctu.edu.tw/#"
 				}), // mirtarbase - micro RNA targets
 		
-		SMPDB("PHYS", new String[] {"http://smpdb.ca/"} )   // Small Molecular Pathway Database
+		SMPDB("pathway", new String[] {"http://smpdb.ca/"} ),   // Small Molecular Pathway Database
+		SIGNOR("pathway",new String[] {"https://signor.uniroma2.it/relation_result.php?id="}),  // signaling network open resource
 		;
 		
 		static private Logger _logger = LoggerFactory.getLogger(NameSpace.class);	
 		
 		private  String[] uris;
-		private String semanticGroup;
+		private String category;
 		
-		private NameSpace( String semanticGroup, String[] uris ) {
-			this.semanticGroup = semanticGroup;
+		private NameSpace( String category, String[] uris ) {
+			this.category = category;
 			this.uris = uris ;
 		}
 		
-		static public String getSemanticGroupByCurie(String id) {
+		static public String getConceptCategoryByCurie(String id) {
 			
 			if(Util.nullOrEmpty(id)) return "";
 			
@@ -93,7 +100,7 @@ public class SemanticGroup {
 			try {
 				
 				NameSpace bns = NameSpace.valueOf(prefix);
-				return bns.semanticGroup;
+				return bns.category;
 				
 			} catch( IllegalArgumentException e) {
 				/*
@@ -102,7 +109,7 @@ public class SemanticGroup {
 				 */
 				if( ! prefix.toString().equals("NDEX"))
 					_logger.debug("nDexBio node id prefix '"+prefix.toString()+
-							      "' encountered is not yet mapped to a semantic group?");
+							      "' encountered is not yet mapped to a concept category?");
 				
 				return "";
 			}
@@ -144,18 +151,12 @@ public class SemanticGroup {
 		static public String getBaseUri(String uri) {
 			return getBaseUri(uri,"/");
 		}
-		
 
 		/**
-
 		 * 
-
 		 * @param accessionId
-
 		 * @return
-
 		 */
-
 		static public String resolveUri(String id) {
 
 			String baseuri = getBaseUri(id);
@@ -190,7 +191,7 @@ public class SemanticGroup {
 			return getObjectId(uri,"/");
 		}
 		
-		static public String getSemanticGroupByUri(String id) {
+		static public String getConceptCategoryByUri(String id) {
 			
 			if(Util.nullOrEmpty(id)) return "";
 			
@@ -204,11 +205,11 @@ public class SemanticGroup {
 			for( NameSpace ns : NameSpace.values()) {
 				for( String uri : ns.uris )
 					if( uri.equals( baseuri.toLowerCase() ) )
-						return ns.semanticGroup;
+						return ns.category;
 			}
 			
 			// no URI mapping found?
-			_logger.warn("SemanticGroup.NameSpace.getSemanticGroupByUri(): URI  '"+id+"' not recognized?");
+			_logger.warn("NdexConceptCategoryService.NameSpace.getConceptCategoryByUri(): URI  '"+id+"' not recognized?");
 			return "";
 		}
 
@@ -261,26 +262,31 @@ public class SemanticGroup {
 	 * in particular, for the /statements endpoint. It is therefore
 	 * wasteful to run this computation more than once for a given id.
 	 */
-	private static Map<String,String> semanticGroupCache = new HashMap<String,String>();
+	private static Map<String,String> conceptCategoryCache = new HashMap<String,String>();
 	
 	/*
 	 * functions to cache newly discovered semantic groups,
 	 * indexed against id (and possibly name) on the fly...
 	 */
-	private static String assignedGroup(String id, String group) {
-		semanticGroupCache.put(id, group);
+	private static String assignedCategory(String id, String group) {
+		conceptCategoryCache.put(id, group);
 		return group;
 	}
 
-	private static String assignedGroup(String id, String name, String group) {
-		assignedGroup(id, group);
-		semanticGroupCache.put(name, group);
+	private static String assignedCategory(String id, String name, String group) {
+		assignedCategory(id, group);
+		conceptCategoryCache.put(name, group);
 		return group;
 	}
 	
-	static public String makeSemGroup(String id, String name, List<String> properties ) {
+	/*
+	 * Stock Regular Expression for Clinical Variance name detection
+	 */
+	static private Pattern variantNamePattern = Pattern.compile("c\\.(\\d+\\_)?\\d+(([ATCGatcg]{1,2}\\>[ATCGatcg]{1,2})|(del[ATCGatcg]+))");
+	
+	static public String inferConceptCategory(String id, String name, List<String> properties ) {
 		
-		String group;
+		String category;
 		
 		/*
 		 *  Check the cache first...
@@ -289,17 +295,18 @@ public class SemanticGroup {
 		 *  of semantic group to a given 
 		 *  "concept" identifier.
 		 */
-		if(semanticGroupCache.containsKey(id)) {
-			group = semanticGroupCache.get(id);
-			if(! Util.nullOrEmpty(group) ) 
-				return group; // return if found in cache
+		if(conceptCategoryCache.containsKey(id)) {
+			category = conceptCategoryCache.get(id);
+			if(! Util.nullOrEmpty(category) ) 
+				return category; // return if found in cache
 		} 
 		
 		/*
 		 *  Otherwise, currently unknown semantic group: 
 		 *  attempt to assign by various heuristics
-		 */  
+		 */
 		
+		// Pre-process the node name here for uniform treatment
 		String lcName = "";
 		if(! ( name==null || name.isEmpty() ) )
 			lcName = name.toLowerCase();
@@ -307,13 +314,81 @@ public class SemanticGroup {
 			// What other option do I have here?
 			lcName = NameSpace.makeName(id);
 
+		
+		// Special heuristics based on special node name patterns
+		
+		/* 
+		 * Pattern #1 - Post-translational modified proteins of identified gene loci.
+		 * 
+		 * These node names have the pattern of a (HGNC?) gene symbol 
+		 * followed by a space, then a specific code then followed by 
+		 * another space then the single letter code for the 
+		 * post-translationally conjugated amino acid residue which is
+		 * immediately followed by its numeric position.
+		 * 
+		 * For example:
+		 * 
+		 *               SMCR8 p S498
+		 * 
+		 * designates the SMCR8 ("Smith-Magenis syndrome chromosomal region candidate gene 8 protein),
+		 * where the 'p' code in between designates the phosphorylation, in this case,
+		 * at the serine ('S') amino acid residue, at primary peptide sequence position 498
+		 * (note that phosphorylation commonly occurs at S = serine or Y = tyrosine residues)
+		 * 
+		 * Another example:
+		 * 
+		 *               SLC25A5 ack K33
+		 * 
+		 * designates the SLC25A5 ("Solute Carrier Family 25 Member 5") where the 'ack' code in between
+		 * designates the acetylation of a lysine (K) amino acid residue at peptide position 33.
+		 * 
+		 * Similarly
+		 * 
+		 *            ZC3H18 rme R239  // methylated arginine
+		 * 
+		 *            NUP98 kme K1128  // methylated lysine
+		 * 
+		 * nDex has networks encoding these kinds of post-translational modified proteins (ptmp)
+		 */
+		
+		String[] ptmp = name.split("\\s");
+		
+		if(ptmp.length==3) {
+			
+			String modification = ptmp[1].toLowerCase();
+			
+			switch (modification) {	
+				case "p":    // phosophylated protein
+				case "ack":  // acetylated lysine
+				case "rme":  // methylated arginine
+				case "kme":  // methylated lysine
+					return assignedCategory( id, lcName, BiolinkTerm.PROTEIN.getLabel() );
+			}
+		}
+		
+		/*
+		 * Pattern # 2 - Genetic Variants
+		 * 
+		 * The node names of genetic variants ("ClinVar") also have a predictable format, namely:
+		 * 
+		 *                c.1415C>T
+		 * 
+		 * Where the 1415 nucleotide position has a Single Nucleotide Polymorphism, 
+		 * in this case, a cytosine (C) to thymine (T) transition.
+		 */
+		Matcher isVariantName = variantNamePattern.matcher(name); 
+		
+		if(isVariantName.matches()) {
+			return assignedCategory( id, lcName, BiolinkTerm.SEQUENCE_VARIANT.getLabel());
+		}
+		
 		// Some nodes are unnamed but have URI's?
 		if( NameSpace.isURI(id) ) {
 			
-			group = NameSpace.getSemanticGroupByUri(id);
+			category = NameSpace.getConceptCategoryByUri(id);
 			
-			if( !group.isEmpty() ) {
-				return assignedGroup( id, lcName, group );
+			if( !category.isEmpty() ) {
+				return assignedCategory( id, lcName, category );
 			}
 		}
 		
@@ -324,10 +399,10 @@ public class SemanticGroup {
 		 */
 		if(NameSpace.isCurie(id)) {
 			
-			group = NameSpace.getSemanticGroupByCurie(id);
+			category = NameSpace.getConceptCategoryByCurie(id);
 			
-			if(!group.isEmpty()) 
-				return assignedGroup( id, lcName, group );
+			if(!category.isEmpty()) 
+				return assignedCategory( id, lcName, category );
 			
 		}
 
@@ -337,30 +412,41 @@ public class SemanticGroup {
 		 */
 		for (String tag : properties) {
 			
+			if(tag.equals("undefined")) continue; // ignore 'undefined' tags.. likely empty properties
+			
 			String lcTag = tag.toLowerCase();
 			
-			if(lcTag.endsWith(" gene")) return assignedGroup(id, lcName, "GENE");
+			if(lcTag.endsWith(" gene")) return assignedCategory(id, lcName, BiolinkTerm.GENE.getLabel() );
 			
-			if(lcTag.endsWith(" target")) return assignedGroup(id, lcName, "CHEM");
+			if(lcTag.endsWith(" protein")) return assignedCategory(id, lcName, BiolinkTerm.PROTEIN.getLabel());
+			
+			if(lcTag.endsWith(" target")) return assignedCategory(id, lcName, BiolinkTerm.CHEMICAL_SUBSTANCE.getLabel());
 			
 			lcTag = lcTag.replace(" ", "");
 			
 			switch (lcTag) {	
 				case "disease": 
-					return assignedGroup(id, lcName, "DISO");
-				case "gene": 
-					return assignedGroup(id, lcName, "GENE");
+					return assignedCategory(id, lcName, BiolinkTerm.DISEASE.getLabel());
+				case "gene":
+				case "methyltransferase":
+					return assignedCategory(id, lcName, BiolinkTerm.GENE.getLabel());
 				case "pathway": 
-					return assignedGroup(id, lcName, "PHYS");
+					return assignedCategory(id, lcName, BiolinkTerm.PATHWAY.getLabel());
 				case "protein": 
-				case "proteinreference": 
+				case "proteinreference":
+				case "transcriptionfactor":
+					return assignedCategory(id, lcName, BiolinkTerm.PROTEIN.getLabel());
 				case "rna": 
 				case "mirna": 
+					return assignedCategory(id, lcName, BiolinkTerm.TRANSCRIPT.getLabel());
 				case "smallmolecule": 
+					return assignedCategory(id, lcName, BiolinkTerm.MOLECULAR_ENTITY.getLabel());
 				case "smallmoleculedrug": 
-					return assignedGroup(id, lcName, "CHEM");
+					return assignedCategory(id, lcName, BiolinkTerm.DRUG.getLabel());
+				case "transcriptionregulator":
+					return assignedCategory(id, lcName, BiolinkTerm.GENE_OR_GENE_PRODUCT.getLabel() );
 				default:
-					_logger.debug("SemanticGroup.makeSemGroup(): encountered unrecognized tag: '"+
+					_logger.debug("NdexConceptCategoryService.makeSemGroup(): encountered unrecognized tag: '"+
 									tag+"' in item '"+id+"' called '"+name+"'");
 			}
 		}
@@ -378,10 +464,14 @@ public class SemanticGroup {
 				lcName.contains("agent") ||
 				lcName.contains("transplant")
 				
-		) return assignedGroup(id, lcName, "PROC");
+		) return assignedCategory(id, lcName, BiolinkTerm.PROCEDURE.getLabel());
 		
 		if( 
-				lcName.contains("pathway") ||
+				lcName.contains("pathway") 
+				
+		)  return assignedCategory(id, lcName, BiolinkTerm.PATHWAY.getLabel());
+		
+		if( 
 				lcName.contains("network") ||
 				lcName.contains("signaling") ||
 				lcName.contains("regulation") ||
@@ -392,15 +482,27 @@ public class SemanticGroup {
 				lcName.contains("translation") ||
 				lcName.contains("secretion")
 				
-		)  return assignedGroup(id, lcName, "PHYS");
+		)  return assignedCategory(id, lcName, BiolinkTerm.PHYSIOLOGICAL_PROCESS.getLabel());
 		
 		if( 
+				lcName.contains("microrna")
+				
+		) return assignedCategory(id, lcName, BiolinkTerm.TRANSCRIPT.getLabel());
+
+		if( 
 				lcName.contains("receptor") ||
+				lcName.contains("peptide")  ||
+				lcName.contains("protein")
+			
+		) return assignedCategory(id, lcName, BiolinkTerm.PROTEIN.getLabel());
+
+		if( 
+				lcName.contains("vaccine")
+				
+		) return assignedCategory(id, lcName, BiolinkTerm.DRUG.getLabel());
+
+		if( 
 				lcName.contains("ligand") ||
-				lcName.contains("vaccine") ||
-				lcName.contains("peptide") ||
-				lcName.contains("protein") ||
-				lcName.contains("microrna") ||
 				
 				// Common subgroups in names - are there others?
 				lcName.contains("hydroxy") ||
@@ -414,10 +516,13 @@ public class SemanticGroup {
 				 *  maybe API to look up of names somewhere?
 				 *  e.g. https://open.fda.gov/drug/label/reference/??
 				 */
+				lcName.endsWith("mab") ||
+				lcName.endsWith("platin") ||
 				lcName.endsWith("inib") ||
-				lcName.endsWith("mab")
+				lcName.endsWith("arib") ||
+				lcName.endsWith("ane")
 				
-		) return assignedGroup(id, lcName, "CHEM");
+		) return assignedCategory(id, lcName, BiolinkTerm.CHEMICAL_SUBSTANCE.getLabel());
 
 		if( 
 				lcName.contains("cancer") ||
@@ -440,7 +545,7 @@ public class SemanticGroup {
 				// Are there other common disease suffixes?
 				lcName.endsWith("itis")
 				
-		) return assignedGroup(id, lcName, "DISO");
+		) return assignedCategory(id, lcName, BiolinkTerm.DISEASE.getLabel());
 		
 		if( 
 				lcName.contains("cell") ||
@@ -451,13 +556,13 @@ public class SemanticGroup {
 				lcName.contains("skin") ||
 				lcName.contains("brain")
 				
-		)  return assignedGroup(id, lcName, "ANAT");
+		)  return assignedCategory(id, lcName, BiolinkTerm.ANATOMICAL_ENTITY.getLabel());
 		
 		if( 
 				lcName.contains("homo sapiens") ||
 				lcName.contains("mus") 
 				
-		)  return assignedGroup(id, lcName, "LIVB");
+		)  return assignedCategory(id, lcName, BiolinkTerm.INDIVIDUAL_ORGANISM.getLabel());
 		
 		/*
 		 *  Check the cache for indexing by exact name.
@@ -471,14 +576,14 @@ public class SemanticGroup {
 		 *  and (some) concept names may be universal.
 		 * 
 		 */ 
-		if(semanticGroupCache.containsKey(lcName)) {
-			group = semanticGroupCache.get(lcName);
-			if(! Util.nullOrEmpty(group) ) { 
+		if(conceptCategoryCache.containsKey(lcName)) {
+			category = conceptCategoryCache.get(lcName);
+			if(! Util.nullOrEmpty(category) ) { 
 				/*  
 				 * Return if found by name in the cache.
 				 * Also index it against the current id
 				 */
-				return assignedGroup( id, group );
+				return assignedCategory( id, category );
 			}
 		}
 		
@@ -491,16 +596,16 @@ public class SemanticGroup {
 		if( 
 				id.toLowerCase().contains("biosource")
 				
-		)  return assignedGroup(id, lcName, "LIVB");
+		)  return assignedCategory(id, lcName, BiolinkTerm.BIOLOGICAL_ENTITY.getLabel());
 		
 		if( 
 				id.toLowerCase().contains("pathway") ||
 				id.toLowerCase().contains("reactome")
 				
-		)  return assignedGroup(id, lcName, "PHYS");
+		)  return assignedCategory(id, lcName, BiolinkTerm.PATHWAY.getLabel());
 
 		// Give up for now...
-		_logger.debug("SemanticGroup.makeSemGroup(): encountered semantically "
+		_logger.debug("NdexConceptCategoryService.makeSemGroup(): encountered semantically "
 				    + "unclassified item '"+id+"'called '"+name+"'");			
 
 		/*
@@ -509,6 +614,6 @@ public class SemanticGroup {
 		 *  mapping (i.e. to the concept name) by some
 		 *  other means, in the future...
 		 */
-		return "OBJC";
+		return BiolinkTerm.NAMED_THING.getLabel();
 	}
 }
