@@ -1,5 +1,5 @@
 ext {
-	gradleVersion            = '4.6'
+	gradleVersion            = '4.7'
 	apacheHTTPClientVersion  = '4.5.2'
 	springVersion            = '5.0.4.RELEASE'
 	jacksonXmlVersion        = '2.9.5'
@@ -39,9 +39,7 @@ allprojects {
     apply plugin: 'maven'
     apply plugin: 'java'
     apply plugin: 'eclipse-wtp'
-    apply plugin: 'org.springframework.boot'
-    apply plugin: 'io.spring.dependency-management'
-
+ 
 	group = 'bio.knowledge'
 	
 	sourceCompatibility = 1.8
@@ -61,29 +59,11 @@ allprojects {
 	    maven { url 'http://maven.vaadin.com/vaadin-addons' }
 	    maven { url "http://mvnrepository.com/" }
    }
-    
-    uploadArchives {
-	    repositories {
-	        mavenDeployer {
-	            pom {
-	                project {
-	                    parent {
-	                        groupId "org.springframework.boot"
-	                        artifactId "spring-boot-starter-parent"
-	                        version "$springBootVersion"
-	                    }
-	                }
-	            }
-	        }
-	    }
-	}
 
 	dependencies {
 		compile "ch.qos.logback:logback-core:$logbackCoreVersion"
 		compile "ch.qos.logback:logback-classic:$logbackCoreVersion"
 		compile "ch.qos.logback:logback-access:$logbackCoreVersion"
-		
-		compile "org.springframework.boot:spring-boot:$springBootVersion"
 		
 		testCompile 'junit:junit:4.12'
 	}
@@ -124,6 +104,8 @@ project(':server') {
 	description       = 'nDex Knowledge Beacon Server'
 	
 	apply plugin: 'application'
+	apply plugin: 'io.spring.dependency-management'
+    apply plugin: 'org.springframework.boot'
 	
 	mainClassName = 'bio.knowledge.server.Swagger2SpringBoot'
 	
@@ -138,6 +120,7 @@ project(':server') {
 		compile "org.springframework:spring-context:$springVersion"
 		compile "org.springframework:spring-context-support:$springVersion"
 		compile "org.springframework:spring-web:$springVersion"
+		compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
 		compile "org.springframework.boot:spring-boot-starter-tomcat:$springBootVersion"
 		compile "org.springframework.boot:spring-boot-starter-test:$springBootVersion" 
 		compile "org.springframework:spring-webmvc:$springVersion"
@@ -151,14 +134,38 @@ project(':server') {
 
 		compile "io.swagger:swagger-jaxrs:$ioSwaggerJaxrsVersion"
 	}
-	
-	jar {
-	    manifest {
-	        attributes("Main-Class": "bio.knowledge.server.Swagger2SpringBoot")
+	    
+    uploadArchives {
+	    repositories {
+	        mavenDeployer {
+	            pom {
+	                project {
+	                    parent {
+	                        groupId "org.springframework.boot"
+	                        artifactId "spring-boot-starter-parent"
+	                        version "$springBootVersion"
+	                    }
+	                }
+	            }
+	        }
 	    }
 	}
 	
 	springBoot {
 		mainClassName = "bio.knowledge.server.Swagger2SpringBoot"
+		buildInfo {
+			properties {
+				artifact = 'bio.knowledge.translator'
+				version = '1.0.18'
+				group = 'bio.knowledge.ndex'
+				name = 'nDex Bio Knowledge Beacon Wrapper'
+			}
+		}
+	}
+	
+	jar {
+	    manifest {
+	       attributes("Main-Class": "bio.knowledge.server.Swagger2SpringBoot")
+	    }
 	}
 }
