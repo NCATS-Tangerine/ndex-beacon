@@ -282,7 +282,7 @@ public class NdexConceptCategoryService {
 	/*
 	 * Stock Regular Expression for Clinical Variance name detection
 	 */
-	static private Pattern variantNamePattern = Pattern.compile("c\\.(\\d+\\_)?\\d+(([ATCGatcg]{1,2}\\>[ATCGatcg]{1,2})|(del[ATCGatcg]+))");
+	static private Pattern variantNamePattern = Pattern.compile("c\\.(\\d+\\_)?\\d+(([atcg]{1,2}\\>[atcg]{1,2})|(del[atcg]+))");
 	
 	static public String inferConceptCategory(String id, String name, List<String> properties ) {
 		
@@ -308,7 +308,7 @@ public class NdexConceptCategoryService {
 		
 		// Pre-process the node name here for uniform treatment
 		String lcName = "";
-		if(! ( name==null || name.isEmpty() ) )
+		if(! Util.nullOrEmpty(name) )
 			lcName = name.toLowerCase();
 		else
 			// What other option do I have here?
@@ -351,7 +351,7 @@ public class NdexConceptCategoryService {
 		 * nDex has networks encoding these kinds of post-translational modified proteins (ptmp)
 		 */
 		
-		String[] ptmp = name.split("\\s");
+		String[] ptmp = lcName.split("\\s");
 		
 		if(ptmp.length==3) {
 			
@@ -376,7 +376,7 @@ public class NdexConceptCategoryService {
 		 * Where the 1415 nucleotide position has a Single Nucleotide Polymorphism, 
 		 * in this case, a cytosine (C) to thymine (T) transition.
 		 */
-		Matcher isVariantName = variantNamePattern.matcher(name); 
+		Matcher isVariantName = variantNamePattern.matcher(lcName); 
 		
 		if(isVariantName.matches()) {
 			return assignedCategory( id, lcName, BiolinkTerm.SEQUENCE_VARIANT.getLabel());

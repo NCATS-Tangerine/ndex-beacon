@@ -1,13 +1,13 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "Translator Knowledge Beacon API",
+    "title": "nDex Bio Translator Knowledge Beacon API",
     "version": "1.0.18",
     "contact": {
       "url": "http://starinformatics.com",
       "email": "richard@starinformatics.com"
     },
-    "description": "This is the Translator Knowledge Beacon web service application programming interface (API).\n",
+    "description": "This is the Translator Knowledge Beacon web service application programming interface (API) wrapping the nDex Bio (ndexbio.org) bioinformatics graph data archive.",
     "license": {
       "name": "MIT License",
       "url": "http://opensource.org/licenses/MIT"

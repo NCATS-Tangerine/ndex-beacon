@@ -17,8 +17,9 @@ public class SwaggerDocumentationConfig {
 
     ApiInfo apiInfo() {
         return new ApiInfoBuilder()
-            .title("Translator Knowledge Beacon API")
-            .description("This is the Translator Knowledge Beacon web service application programming interface (API). ")
+            .title("nDex Bio Translator Knowledge Beacon API")
+            .description("This is the Translator Knowledge Beacon web service application programming interface (API) . "
+            		  + " wrapping the nDex Bio (ndexbio.org) bioinformatics graph data archive.")
             .license("MIT License")
             .licenseUrl("http://opensource.org/licenses/MIT")
             .termsOfServiceUrl("http://starinformatics.com")
