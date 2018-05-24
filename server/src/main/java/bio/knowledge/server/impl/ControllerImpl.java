@@ -36,7 +36,10 @@ import bio.knowledge.server.model.BeaconAnnotation;
 import bio.knowledge.server.model.BeaconConcept;
 import bio.knowledge.server.model.BeaconConceptCategory;
 import bio.knowledge.server.model.BeaconConceptWithDetails;
+import bio.knowledge.server.model.BeaconKnowledgeMapObject;
+import bio.knowledge.server.model.BeaconKnowledgeMapPredicate;
 import bio.knowledge.server.model.BeaconKnowledgeMapStatement;
+import bio.knowledge.server.model.BeaconKnowledgeMapSubject;
 import bio.knowledge.server.model.BeaconPredicate;
 import bio.knowledge.server.model.BeaconStatement;
 import bio.knowledge.server.model.ExactMatchResponse;
@@ -688,7 +691,7 @@ public class ControllerImpl {
 			// Paging workaround since nDex paging doesn't seem to work as published?
 			List<BeaconStatement> page = (List<BeaconStatement>)getPage(statements, size);
 			
-			_logger.info("Finished finding statements. Current known subject to object pairs:\n {} ", translator.subjectObjectRegistry); 
+			_logger.info("\nFinished finding statements. Current known subject to object pairs:\n {} ", translator.subjectObjectRegistry); 
 			
 			return ResponseEntity.ok(page);
 		
@@ -793,10 +796,61 @@ public class ControllerImpl {
 
 
 	public ResponseEntity<List<BeaconKnowledgeMapStatement>> getKnowledgeMap() {
-		throw new UnsupportedOperationException(
-				"Knowledge map endpoint is not yet implemented: "+
-				"https://github.com/NCATS-Tangerine/ndex-beacon/issues/9"
-		);
+		List<BeaconKnowledgeMapStatement> knowledgeMapStatements = new ArrayList<BeaconKnowledgeMapStatement>();
+		
+		for (Map.Entry<StatementTriple, Integer> entry : translator.subjectObjectRegistry.entrySet()) {
+			StatementTriple triple = entry.getKey();
+			BeaconKnowledgeMapStatement statement = new BeaconKnowledgeMapStatement();
+			
+			BeaconKnowledgeMapSubject subject = new BeaconKnowledgeMapSubject();
+			subject.setCategory(triple.getSubject());
+			statement.setSubject(subject);
+			
+			BeaconKnowledgeMapPredicate predicate = new BeaconKnowledgeMapPredicate();
+			//TODO: needs updating once biolink predicates are being generated more appropriately
+			// Predicate in the triple are currently being stored as NDEX:ndex_relation_name for extra logging information
+			// Here we need to convert it to a biolink label for public kmap reporting purposes
+			String predicateRelationship = ontology.removeSnakeCase(triple.getPredicate());
+			if (predicateRelationship.startsWith(Translator.NDEX_NS)) {
+				predicateRelationship = predicateRelationship.substring(Translator.NDEX_NS.length());
+			}
+			String biolinkName = ontology.predToBiolinkEdgeLabel(predicateRelationship);
+			predicate.setRelation(biolinkName);
+			statement.setPredicate(predicate);
+
+			BeaconKnowledgeMapObject object = new BeaconKnowledgeMapObject();
+			object.setCategory(triple.getObject());
+			statement.setObject(object);
+			
+			
+			statement.setSubject(subject);
+			statement.setPredicate(predicate);
+			statement.setObject(object);
+			statement.setFrequency(entry.getValue());
+			statement.setDescription(triple.getSubject() + " - " + predicateRelationship + " - " + triple.getObject());
+			
+			knowledgeMapStatements.add(statement);
+		}
+		
+		return ResponseEntity.ok(knowledgeMapStatements);
+		
+//		throw new UnsupportedOperationException(
+//				"Knowledge map endpoint is not yet implemented: "+
+//				"https://github.com/NCATS-Tangerine/ndex-beacon/issues/9"
+//		);
+	}
+
+	/**
+	 * Removes NDEX label in the predicate relation if present, and reverses use of snake case by removing "_"
+	 * @param triple
+	 * @return description generated from combining subject, predicate, object together
+	 */
+	private String createStatementDescriptionForKnowledgeMap(StatementTriple triple) {
+		String predicate = triple.getPredicate().replaceAll("_", " ");
+		if (predicate.startsWith(translator.NDEX_NS)) {
+			predicate = predicate.substring(translator.NDEX_NS.length());
+		}
+		return triple.getSubject() + " " + predicate + " " + triple.getObject();
 	}
 
 

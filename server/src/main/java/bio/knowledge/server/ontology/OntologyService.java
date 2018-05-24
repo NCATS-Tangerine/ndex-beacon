@@ -34,6 +34,7 @@ public class OntologyService {
 	HashSet<String> unmappedBiolinkCategories;
 	
 	
+	
 	@PostConstruct
 	private void init() {
 		Optional<BeaconBiolinkModel> optional = BeaconBiolinkModel.load();
@@ -102,8 +103,12 @@ public class OntologyService {
 		return (!(slotLookup.reverseLookup(pName).isEmpty()));
 	}
 
-	private String convertToSnakeCase(String name) {
+	public String convertToSnakeCase(String name) {
 		return name.trim().replaceAll("\\s", "_");
+	}
+	
+	public String removeSnakeCase(String name) {
+		return name.trim().replaceAll("_", " "); 
 	}
 
 }

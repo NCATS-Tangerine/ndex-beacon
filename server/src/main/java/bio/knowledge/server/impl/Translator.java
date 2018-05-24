@@ -49,8 +49,8 @@ public class Translator {
 	public static final Character NETWORK_NODE_DELIMITER_CHAR = '#';
 	
 	public static final String NDEX_NS = "NDEX:";
-	
-	Map<String, Map<String, Integer>> subjectObjectRegistry = new HashMap<String, Map<String, Integer>>();
+
+	Map<StatementTriple, Integer> subjectObjectRegistry = new HashMap<StatementTriple, Integer>();
 
 	private String makeNdexId(Node node) {
 		return NDEX_NS + node.getNetworkId() + NETWORK_NODE_DELIMITER + node.getId();
@@ -200,7 +200,7 @@ public class Translator {
 			pCurie = pName;
 		else
 			// Treat as an nDex defined CURIE
-			pCurie = NDEX_NS+edge.getName().trim().replaceAll("\\s", "_");
+			pCurie = ontology.convertToSnakeCase(NDEX_NS+edge.getName());
 		
 		predicateRegistry.indexPredicate( pCurie, biolinkName, "" );
 		
@@ -245,23 +245,17 @@ public class Translator {
 		
 		String subj = statement.getSubject().getCategory();
 		String obj = statement.getObject().getCategory();
+		String pred = statement.getPredicate().getRelation();
 		
-		if (subjectObjectRegistry.containsKey(subj)) {
-			Map<String, Integer> objCountMap = subjectObjectRegistry.get(subj);
-			if (objCountMap.containsKey(obj)) {
-				objCountMap.put(obj, objCountMap.get(obj)+1);
-			} else {
-				objCountMap.put(obj, 1);
-			}
+		StatementTriple lookup = new StatementTriple(subj, pred, obj);
+		
+		
+		if (subjectObjectRegistry.containsKey(lookup)) {
+			subjectObjectRegistry.put(lookup, subjectObjectRegistry.get(lookup)+1);
 		} else {
-			Map<String, Integer> objCountMap = new HashMap<>();
-			objCountMap.put(obj, 1);
-			subjectObjectRegistry.put(subj, objCountMap);
-			_logger.info("New subject encountered - Subject: " + subj + "; Object: " + obj);
-			
+			subjectObjectRegistry.put(lookup, 1);
+			_logger.info("New subj-pred-obj encounted - Subject: " + subj + "; Relation: " + pred + "; Object: " + obj);
 		}
-		
-		
 		
 	}
 
