@@ -1,10 +1,14 @@
 package bio.knowledge.server.impl;
 
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +36,8 @@ public class Translator {
 	@Autowired PredicatesRegistry predicateRegistry;
 	
 	@Autowired OntologyService ontology;
+	
+	private static Logger _logger = LoggerFactory.getLogger(Translator.class);
 
 	/*
 	 *  Not sure if this is the best choice but better than a colon, 
@@ -43,6 +49,8 @@ public class Translator {
 	public static final Character NETWORK_NODE_DELIMITER_CHAR = '#';
 	
 	public static final String NDEX_NS = "NDEX:";
+	
+	Map<String, Map<String, Integer>> subjectObjectRegistry = new HashMap<String, Map<String, Integer>>();
 
 	private String makeNdexId(Node node) {
 		return NDEX_NS + node.getNetworkId() + NETWORK_NODE_DELIMITER + node.getId();
@@ -226,10 +234,37 @@ public class Translator {
 		statement.setPredicate(edgeToPredicate(edge));
 		statement.setObject(nodeToObject(edge.getObject()));
 		
+		logSubjectObjectCount(statement);
+		
+		
 		return statement;
 	}
 
 	
+	private void logSubjectObjectCount(BeaconStatement statement) {
+		
+		String subj = statement.getSubject().getCategory();
+		String obj = statement.getObject().getCategory();
+		
+		if (subjectObjectRegistry.containsKey(subj)) {
+			Map<String, Integer> objCountMap = subjectObjectRegistry.get(subj);
+			if (objCountMap.containsKey(obj)) {
+				objCountMap.put(obj, objCountMap.get(obj)+1);
+			} else {
+				objCountMap.put(obj, 1);
+			}
+		} else {
+			Map<String, Integer> objCountMap = new HashMap<>();
+			objCountMap.put(obj, 1);
+			subjectObjectRegistry.put(subj, objCountMap);
+			_logger.info("New subject encountered - Subject: " + subj + "; Object: " + obj);
+			
+		}
+		
+		
+		
+	}
+
 	public BeaconAnnotation citationToEvidence(Citation citation) {
 		
 		BeaconAnnotation evidence = new BeaconAnnotation();

@@ -688,6 +688,8 @@ public class ControllerImpl {
 			// Paging workaround since nDex paging doesn't seem to work as published?
 			List<BeaconStatement> page = (List<BeaconStatement>)getPage(statements, size);
 			
+			_logger.info("Finished finding statements. Current known subject to object pairs:\n {} ", translator.subjectObjectRegistry); 
+			
 			return ResponseEntity.ok(page);
 		
 		} catch (Exception e) {
