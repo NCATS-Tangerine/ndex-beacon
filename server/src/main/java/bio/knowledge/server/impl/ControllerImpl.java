@@ -595,6 +595,9 @@ public class ControllerImpl {
 				
 				conceptDetails= Util.map(translator::nodeToConceptDetails, nodes);
 				
+				final String id = conceptId;
+				conceptDetails.removeIf(d -> !d.getId().equalsIgnoreCase(id));
+				
 				cacheLocation.setResultSet(conceptDetails);
 
 			} else {
@@ -605,6 +608,7 @@ public class ControllerImpl {
 			return ResponseEntity.ok(conceptDetails);
 
 		} catch (Exception e) {
+			e.printStackTrace();
 			log(e);
 			return ResponseEntity.ok(new ArrayList<BeaconConceptWithDetails>());
 		}
