@@ -804,6 +804,7 @@ public class ControllerImpl {
 			
 			BeaconKnowledgeMapSubject subject = new BeaconKnowledgeMapSubject();
 			subject.setCategory(triple.getSubject());
+			subject.setPrefixes(ontology.getBiolinkCategoryIdPrefixes(triple.getSubject()));
 			statement.setSubject(subject);
 			
 			BeaconKnowledgeMapPredicate predicate = new BeaconKnowledgeMapPredicate();
@@ -820,6 +821,7 @@ public class ControllerImpl {
 
 			BeaconKnowledgeMapObject object = new BeaconKnowledgeMapObject();
 			object.setCategory(triple.getObject());
+			object.setPrefixes(ontology.getBiolinkCategoryIdPrefixes(triple.getObject()));
 			statement.setObject(object);
 			
 			
