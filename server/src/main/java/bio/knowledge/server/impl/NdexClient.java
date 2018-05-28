@@ -1,5 +1,6 @@
 package bio.knowledge.server.impl;
 
+import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.http.HttpEntity;
@@ -36,7 +37,7 @@ public class NdexClient {
 	private static final String BASIC_QUERY = NDEX + "/search/network/{networkId}/query";
 	private static final String ADVANCED_QUERY = NDEX + "/search/network/{networkId}/advancedquery";
 	
-	//private static final int NETWORK_SEARCH_SIZE = 1;
+	private static final int NETWORK_SEARCH_SIZE = 100;
 
 	public NdexClient() {
 		rest = new RestTemplate();
@@ -52,7 +53,9 @@ public class NdexClient {
 		
 		try {
 			HttpEntity<SearchString> request = new HttpEntity<>(searchString, headers);
-			NetworkList networks = rest.postForObject(NETWORK_SEARCH, request, NetworkList.class, PAGE_NUMBER, pageSize);
+			//@SuppressWarnings("unused")
+			//HashMap networkHash = rest.postForObject(NETWORK_SEARCH, request, HashMap.class, PAGE_NUMBER, NETWORK_SEARCH_SIZE);
+			NetworkList networks = rest.postForObject(NETWORK_SEARCH, request, NetworkList.class, PAGE_NUMBER, NETWORK_SEARCH_SIZE);
 			
 			return networks;
 		

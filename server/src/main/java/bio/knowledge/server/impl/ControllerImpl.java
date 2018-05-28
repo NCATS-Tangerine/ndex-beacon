@@ -67,10 +67,6 @@ public class ControllerImpl {
 		_logger.error(e.getClass() + ": " + e.getMessage());
 	}
 	
-	//private static Integer fix(Integer integer) {
-	//	return integer == null || integer < 1 ? 1 : integer;
-	//}
-	
 	private static Integer fixPageSize(Integer integer) {
 		return integer == null || integer < 1 ? DEFAULT_PAGE_SIZE : integer;
 	}
@@ -124,12 +120,12 @@ public class ControllerImpl {
 		return search.and(query, search.edgeCount(1, 100000));
 	}
 	
-	private List<Graph> search(Function<String, BasicQuery> makeJson, String luceneSearch, int pageSize) {
+	private List<Graph> search(Function<String, BasicQuery> makeJson, String luceneSearch, int size) {
 		
 		SearchString networkSearch = search.networksBy(restrictQuery(luceneSearch));
 		BasicQuery subnetQuery = makeJson.apply(luceneSearch);
 		
-		NetworkList networks = ndex.searchNetworks(networkSearch, pageSize);
+		NetworkList networks = ndex.searchNetworks(networkSearch, size);
 		
 		List<String> networkIds = Util.map(NetworkId::getExternalId, networks.getNetworks());
 		
@@ -152,7 +148,7 @@ public class ControllerImpl {
 		return graphs;
 	}
 	
-	private List<Graph> searchByIds(Function<String, BasicQuery> makeJson, List<String> c, int pageSize) {
+	private List<Graph> searchByIds(Function<String, BasicQuery> makeJson, List<String> c, int size) {
 		
 		_logger.debug("Entering searchByIds(c: '"+String.join(",", c)+"')");
 		
@@ -188,7 +184,7 @@ public class ControllerImpl {
 			List<String> phrases = Util.map(search::phrase, realCuries);
 			String luceneSearch = search.or(phrases);
 			
-			List<Graph> results = search(makeJson, luceneSearch, pageSize);
+			List<Graph> results = search(makeJson, luceneSearch, size);
 			
 			graphs.addAll(results);
 		}
@@ -440,20 +436,20 @@ public class ControllerImpl {
 		return matching;
 	}
 
-	public List<? extends CachedEntity> getPage(List<? extends CachedEntity> items, Integer pageSize) {
+	public List<? extends CachedEntity> getPage(List<? extends CachedEntity> items, Integer size) {
 		if (items.isEmpty()) {
 			return new ArrayList<>();
 		}
 		
-		if (pageSize > items.size()) {
-			pageSize = items.size();
+		if (size > items.size()) {
+			size = items.size();
 		}
 		
-		if (pageSize < 0) {
-			pageSize = 0;
+		if (size < 0) {
+			size = 0;
 		}
 		
-		return items.subList(0, pageSize);
+		return items.subList(0, size);
 	}
 	
 	public ResponseEntity<List<BeaconConcept>> getConcepts(List<String> keywords, List<String> categories, Integer size) {
@@ -461,8 +457,6 @@ public class ControllerImpl {
 			
 			keywords = fix(keywords);
 			categories = fix(categories);
-			
-			//pageSize = DEFAULT_PAGE_SIZE; //fix(pageSize);
 			size = fixPageSize(size);
 			
 			List<BeaconConcept> concepts = null ;
@@ -613,8 +607,7 @@ public class ControllerImpl {
 					+ "',\n\tkeywords: '"+keywords
 					+ "',\n\tsemanticGroups: '"+categories
 			);
-
-			//pageSize = DEFAULT_PAGE_SIZE; //fix(pageSize);
+			
 			size = fixPageSize(size);
 			
 			List<BeaconStatement> statements = null ;
@@ -707,8 +700,6 @@ public class ControllerImpl {
 		
 			statementId = fix(statementId);
 			keywords = fix(keywords);
-			
-			//pageSize = DEFAULT_PAGE_SIZE; //fix(pageSize);
 			size = fixPageSize(size);
 			
 			if(statementId.startsWith(Translator.NDEX_NS)) {
