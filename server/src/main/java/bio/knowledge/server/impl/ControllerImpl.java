@@ -368,14 +368,20 @@ public class ControllerImpl {
 		
 	}
 	
-	private Collection<Node> filterSemanticGroup(Collection<Node> nodes, List<String> types) {
+	/**
+	 * Removes BeaconConcept from list if does not have a (Biolink) category that matches types 
+	 * @param concepts
+	 * @param types
+	 * @return filtered list
+	 */
+	private List<BeaconConcept> filterSemanticGroup(List<BeaconConcept> concepts, List<String> types) {
 		
-		if (types.isEmpty()) return nodes;
+		if (types.isEmpty()) return concepts;
 		
-		Predicate<Node> hasType = n -> types.contains(translator.inferConceptCategory(n));
-		nodes = Util.filter(hasType, nodes);
+		Predicate<BeaconConcept> hasType = n -> types.contains(n.getCategory());
+		concepts = Util.filter(hasType, concepts);
 		
-		return nodes;
+		return concepts;
 	}
 
 	/*
@@ -518,8 +524,7 @@ public class ControllerImpl {
 							joinedKeywords, 
 							new String[] { 
 									joinedKeywords, 
-									joinedTypes, 
-									size.toString() 
+									joinedTypes
 							}
 					);
 
@@ -542,26 +547,23 @@ public class ControllerImpl {
 				 */
 				Util.map(translator::makeId, nodes);
 				
-				
-				
-				Collection<Node> ofType = filterSemanticGroup(nodes, categories);
-				
-				concepts = Util.map(translator::nodeToConcept, ofType);
-			
+				concepts = Util.map(translator::nodeToConcept, nodes);
 				cacheLocation.setResultSet(concepts);
 				
 			} else {
 				concepts = cachedResult;
 			}
 			
+			List<BeaconConcept> ofType = filterSemanticGroup(concepts, categories);
+			
 			@SuppressWarnings("unchecked")
 			// Paging workaround since nDex paging doesn't seem to work as published?
-			List<BeaconConcept> page = (List<BeaconConcept>)getPage(concepts, size);
-			
+			List<BeaconConcept> page = (List<BeaconConcept>)getPage(ofType, size);
 			return ResponseEntity.ok(page);
 		
 		} catch (Exception e) {
 			log(e);
+			// TODO: remove cache if there was an error? Perhaps something different if was timeout error?
 			return ResponseEntity.ok(new ArrayList<BeaconConcept>());
 		}
 	}
