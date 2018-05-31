@@ -61,6 +61,8 @@ public class ControllerImpl {
 	private static final int DEFAULT_PAGE_SIZE = 10;
 	private static final long TIMEOUT = 30;
 	private static final TimeUnit TIMEUNIT = TimeUnit.SECONDS;
+	
+	private static final int NETWORK_SEARCH_SIZE = 100;
 		
 	
 	private void log(Exception e) {
@@ -76,8 +78,13 @@ public class ControllerImpl {
 		return string == null? "" : string;
 	}
 	
-	private static List<String> fix(List<String> stringList ) {
-		return  stringList == null? new ArrayList<String>() : Util.map(ControllerImpl::fix, stringList );
+	private static List<String> makeNonNull(List<String> stringList ) {
+		if (stringList != null) {
+			stringList.removeIf(s -> s == null || s.isEmpty());
+			return stringList;
+		} else {
+			return new ArrayList<String>();
+		}
 	}
 	
 	
@@ -488,6 +495,10 @@ public class ControllerImpl {
 			return new ArrayList<>();
 		}
 		
+		if (size == null || size < 1) {
+			return items;
+		}
+		
 		if (size > items.size()) {
 			size = items.size();
 		}
@@ -498,42 +509,29 @@ public class ControllerImpl {
 		
 		return items.subList(0, size);
 	}
-	
+
 	public ResponseEntity<List<BeaconConcept>> getConcepts(List<String> keywords, List<String> categories, Integer size) {
 		try {
 			
-			keywords = fix(keywords);
-			categories = fix(categories);
-			size = fixPageSize(size);
+			keywords = makeNonNull(keywords);
+			categories = makeNonNull(categories);
 			
 			List<BeaconConcept> concepts = null ;
 			
 			String joinedKeywords = String.join(" ", keywords);
-			String joinedTypes = String.join(" ", categories);
 			
-			// I attempt caching of the whole retrieved set
-			CacheLocation cacheLocation = 
-					cache.searchForResultSet(
-							"Concept", 
-							joinedKeywords, 
-							new String[] { 
-									joinedKeywords, 
-									joinedTypes, 
-									size.toString() 
-							}
-					);
+			CacheLocation cacheLocation = cache.searchForResultSet("Concept", joinedKeywords, new String[] {joinedKeywords});
 
 			@SuppressWarnings("unchecked")
-			List<BeaconConcept> cachedResult = 
-					(List<BeaconConcept>)cacheLocation.getResultSet();
+			List<Node> nodes = (List<Node>) cacheLocation.getResultSet();
 			
-			if(cachedResult==null) {
+			if(nodes==null) {
 				
 				String luceneSearch = search.startsWith(joinedKeywords);
 
-				List<Graph> graphs = search(search::nodesBy, luceneSearch, size);		
+				List<Graph> graphs = search(search::nodesBy, luceneSearch, NETWORK_SEARCH_SIZE);		
 				
-				Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
+				nodes = Util.flatmap(Graph::getNodes, graphs);
 				combineDuplicates(nodes);
 				
 				/* 
@@ -542,17 +540,12 @@ public class ControllerImpl {
 				 */
 				Util.map(translator::makeId, nodes);
 				
-				
-				
-				Collection<Node> ofType = filterSemanticGroup(nodes, categories);
-				
-				concepts = Util.map(translator::nodeToConcept, ofType);
-			
-				cacheLocation.setResultSet(concepts);
-				
-			} else {
-				concepts = cachedResult;
+				cacheLocation.setResultSet(nodes);
 			}
+			
+			Collection<Node> ofType = filterSemanticGroup(nodes, categories);
+			
+			concepts = Util.map(translator::nodeToConcept, ofType);
 			
 			@SuppressWarnings("unchecked")
 			// Paging workaround since nDex paging doesn't seem to work as published?
@@ -620,7 +613,7 @@ public class ControllerImpl {
 	
 	public ResponseEntity<List<ExactMatchResponse>> getExactMatchesToConceptList(List<String> c) {
 		try {
-			c = fix(c);
+			c = makeNonNull(c);
 			
 			List<ExactMatchResponse> exactMatches = getMatchingResponses(c);
 			
@@ -644,12 +637,12 @@ public class ControllerImpl {
 	) {
 		try {
 			
-			s = fix(s);
-			relations = fix(relations);
-			t = fix(t);
+			s = makeNonNull(s);
+			relations = makeNonNull(relations);
+			t = makeNonNull(t);
 			
-			keywords = fix(keywords);
-			categories = fix(categories);
+			keywords = makeNonNull(keywords);
+			categories = makeNonNull(categories);
 			
 			_logger.debug("Entering ControllerImpl.getStatements():\n"
 					+ "\tsourceIds: '"+String.join(",",s)
@@ -659,77 +652,62 @@ public class ControllerImpl {
 					+ "',\n\tsemanticGroups: '"+categories
 			);
 			
-			size = fixPageSize(size);
-			
 			List<BeaconStatement> statements = null ;
 			
-			// I attempt caching of the whole retrieved set
 			CacheLocation cacheLocation = 
 					cache.searchForResultSet(
 							"Statement", 
 							s.toString(), 
 							new String[] {
-									t.toString(),
-									String.join(" ", keywords), 
-									String.join(" ", categories), 
-									String.join(" ", relations),
-									size.toString() 
+									s.toString(),
 							}
 					);
 
 			@SuppressWarnings("unchecked")
-			List<BeaconStatement> cachedResult = 
-					(List<BeaconStatement>)cacheLocation.getResultSet();
+			List<Graph> graphs = (List<Graph>)cacheLocation.getResultSet();
 			
-			if(cachedResult==null) {			
+			Set<String> sourceAliases = allAliases(s);
 			
-				Set<String> sourceAliases = allAliases(s);
-				
+			if (graphs == null) {
 				_logger.debug("sourceAliases: '"+String.join(",",s)+"'");
-				
-				List<Graph> graphs = searchByIds(search::edgesBy, Util.list(sourceAliases), size);
-				
-				Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
-				
-				/* 
-				 * Execute makeId on all the returned nodes for the
-				 * side effect of registering their alias ndex node ids
-				 */
-				Util.map(translator::makeId, nodes);
-				
-				Collection<Edge> edges = Util.flatmap(Node::getEdges, nodes);
-				
-				if( ! t.isEmpty() ) {
-					
-					Set<String> targetAliases = getAliases(t);
-					targetAliases.addAll(t);
-					
-					// Filter for edges with specified targets opposite to source nodes
-					edges = filterByTarget( edges, sourceAliases, targetAliases );
-				}
-				
-				edges = filterByPredicate(edges, relations);
-				
-				edges = filterByText(edges, keywords);
-
-				/*
-				 * We only filter targets for semantic groups if  
-				 * exact target id's were NOT available for filtering? 
-				 * We do this filtering last because it is more involved
-				 * hence, we should do this on the smallest filtered 
-				 * edge list, after all other filters are applied.
-				 */
-				if( t.isEmpty() )
-					 edges = filterSemanticGroup( edges, sourceAliases, categories );
-				
-				statements = Util.map( translator::edgeToStatement, edges );
-				
-				// Store result in the cache
-				cacheLocation.setResultSet(statements);
-				
-			} else {
-				statements = cachedResult;
+				graphs = searchByIds(search::edgesBy, Util.list(sourceAliases), NETWORK_SEARCH_SIZE);
+				cacheLocation.setResultSet(graphs);
 			}
+			
+			Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
+			
+			/* 
+			 * Execute makeId on all the returned nodes for the
+			 * side effect of registering their alias ndex node ids
+			 */
+			Util.map(translator::makeId, nodes);
+			
+			Collection<Edge> edges = Util.flatmap(Node::getEdges, nodes);
+			
+			if( ! t.isEmpty() ) {
+				
+				Set<String> targetAliases = getAliases(t);
+				targetAliases.addAll(t);
+				
+				// Filter for edges with specified targets opposite to source nodes
+				edges = filterByTarget( edges, sourceAliases, targetAliases );
+			}
+			
+			edges = filterByPredicate(edges, relations);
+			
+			edges = filterByText(edges, keywords);
+
+			/*
+			 * We only filter targets for semantic groups if  
+			 * exact target id's were NOT available for filtering? 
+			 * We do this filtering last because it is more involved
+			 * hence, we should do this on the smallest filtered 
+			 * edge list, after all other filters are applied.
+			 */
+			if( t.isEmpty() )
+				 edges = filterSemanticGroup( edges, sourceAliases, categories );
+			
+			statements = Util.map( translator::edgeToStatement, edges );
 			
 			@SuppressWarnings("unchecked")
 			// Paging workaround since nDex paging doesn't seem to work as published?
@@ -751,7 +729,7 @@ public class ControllerImpl {
 		try {
 		
 			statementId = fix(statementId);
-			keywords = fix(keywords);
+			keywords = makeNonNull(keywords);
 			size = fixPageSize(size);
 			
 			if(statementId.startsWith(Translator.NDEX_NS)) {

@@ -27,7 +27,7 @@ import bio.knowledge.server.json.Support;
  * @author Meera Godden
  *
  */
-public class Graph {
+public class Graph implements CachedEntity {
 	
 	private static Logger _logger = LoggerFactory.getLogger(Graph.class);	
 	

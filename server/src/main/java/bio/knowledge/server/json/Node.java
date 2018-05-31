@@ -6,10 +6,11 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import bio.knowledge.server.impl.CachedEntity;
 import bio.knowledge.server.impl.Util;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Node extends PropertiedObject {
+public class Node extends PropertiedObject implements CachedEntity {
 
 	private String name;
 	private String represents;
