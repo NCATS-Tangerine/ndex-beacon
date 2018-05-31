@@ -32,10 +32,11 @@ public class NdexClient {
 	
 	private static final Integer PAGE_NUMBER = 0;
 	
-	private static final String NDEX = "http://www.ndexbio.org/v2";
-	private static final String NETWORK_SEARCH = NDEX + "/search/network?start={start}&size={size}";
-	private static final String BASIC_QUERY = NDEX + "/search/network/{networkId}/query";
-	private static final String ADVANCED_QUERY = NDEX + "/search/network/{networkId}/advancedquery";
+	public static final String NDEX = "http://www.ndexbio.org/v2";
+	public static final String NETWORK_SEARCH = NDEX + "/search/network?start={start}&size={size}";
+	public static final String QUERY_FOR_NODE_MATCH = NDEX + "/search/network/{networkId}/interconnectquery";
+	public static final String QUERY_FOR_NODE_AND_EDGES = NDEX + "/search/network/{networkId}/query";
+	public static final String ADVANCED_QUERY = NDEX + "/search/network/{networkId}/advancedquery";
 	
 	private static final int NETWORK_SEARCH_SIZE = 100;
 
@@ -49,7 +50,7 @@ public class NdexClient {
 		System.err.println(e.getClass() + ": " + e.getMessage());
 	}
 	
-	public NetworkList searchNetworks(SearchString searchString, int pageSize) {	
+	public NetworkList searchNetworks(SearchString searchString) {	
 		
 		try {
 			HttpEntity<SearchString> request = new HttpEntity<>(searchString, headers);
@@ -65,7 +66,7 @@ public class NdexClient {
 		}
 	}
 	
-	public CompletableFuture<Network> queryNetwork(String networkId, BasicQuery nodeSearch) {	
+	public CompletableFuture<Network> queryNetwork(String networkId, BasicQuery nodeSearch, String queryType) {	
 
 		HttpEntity<BasicQuery> request = new HttpEntity<>(nodeSearch, headers);
 		
@@ -74,7 +75,7 @@ public class NdexClient {
 			try {
 				
 				
-				Aspect[] aspects = rest.postForObject(BASIC_QUERY, request, Aspect[].class, networkId);
+				Aspect[] aspects = rest.postForObject(queryType, request, Aspect[].class, networkId);
 
 				//HashMap[] h = rest.postForObject(BASIC_QUERY, request, HashMap[].class, networkId);
 				for (int i = 0; i < aspects.length; i++) {

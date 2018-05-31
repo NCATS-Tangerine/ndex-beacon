@@ -42,7 +42,7 @@ public class SearchBuilder {
 	
 	public SearchString networksBy(String search) { return new SearchString(search); }
 	
-	public BasicQuery nodesBy(String search) { return new BasicQuery(search, 0); }
+	public BasicQuery nodesBy(String search) { return new BasicQuery(search, 0, 1); }
 
 	public BasicQuery edgesBy(String search) { return new BasicQuery(search, 1); }
 		

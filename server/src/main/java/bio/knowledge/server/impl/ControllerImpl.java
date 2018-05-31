@@ -76,8 +76,13 @@ public class ControllerImpl {
 		return string == null? "" : string;
 	}
 	
-	private static List<String> fix(List<String> stringList ) {
-		return  stringList == null? new ArrayList<String>() : Util.map(ControllerImpl::fix, stringList );
+	private static List<String> makeNonNull(List<String> stringList ) {
+		if (stringList != null) {
+			stringList.removeIf(s -> s == null || s.isEmpty());
+			return stringList;
+		} else {
+			return new ArrayList<String>();
+		}
 	}
 	
 	
@@ -121,35 +126,62 @@ public class ControllerImpl {
 		return search.and(query, search.edgeCount(1, 100000));
 	}
 	
-	private List<Graph> search(Function<String, BasicQuery> makeJson, String luceneSearch, int size) {
+	/**
+	 * Performs query on ndex networks (sends HTTP requests)
+	 * Caches query on luceneSearch 
+	 * @param makeJson
+	 * @param luceneSearch
+	 * @param size
+	 * @return graph returned from given luceneSearch
+	 */
+	private List<Graph> search(Function<String, BasicQuery> makeJson, String luceneSearch, String queryType) {
 		
-		SearchString networkSearch = search.networksBy(restrictQuery(luceneSearch));
-		BasicQuery subnetQuery = makeJson.apply(luceneSearch);
+	
+		CacheLocation cacheLocation = 
+				cache.searchForResultSet(
+						"Graph", 
+						luceneSearch, 
+						new String[] { luceneSearch }
+				);
+
+		@SuppressWarnings("unchecked")
+		List<Graph> cachedResult = 
+				(List<Graph>)cacheLocation.getResultSet();
 		
-		NetworkList networks = ndex.searchNetworks(networkSearch, size);
+		List<Graph> graphs = cachedResult;
+		if(graphs==null) {
 		
-		List<String> networkIds = Util.map(NetworkId::getExternalId, networks.getNetworks());
-		
-		Function<String, CompletableFuture<Network>> executeSearch = Util.curryRight(ndex::queryNetwork, subnetQuery);
-		
-		List<CompletableFuture<Network>> futures = Util.map(executeSearch, networkIds);
-		//futures = Util.map(this::get, futures);
-		
-		List<Network> subnetworks = new ArrayList<>();
-		
-		for (CompletableFuture<Network> future : futures) {
-			try {
-				subnetworks.add(future.get(TIMEOUT, TIMEUNIT));
-			} catch (InterruptedException | ExecutionException | TimeoutException e) {
-				log(e);
+			SearchString networkSearch = search.networksBy(restrictQuery(luceneSearch));
+			BasicQuery subnetQuery = makeJson.apply(luceneSearch);
+			
+			NetworkList networks = ndex.searchNetworks(networkSearch);
+			
+			List<String> networkIds = Util.map(NetworkId::getExternalId, networks.getNetworks());
+
+			List<CompletableFuture<Network>> futures = new ArrayList<>();
+			for (String networkId : networkIds) {
+				futures.add(ndex.queryNetwork(networkId, subnetQuery, queryType));
 			}
-		}
-		List<Graph> graphs = Util.map(Graph::new, subnetworks);
+			
+			List<Network> subnetworks = new ArrayList<>();
+			for (CompletableFuture<Network> future : futures) {
+				try {
+					subnetworks.add(future.get(TIMEOUT, TIMEUNIT));
+				} catch (InterruptedException | ExecutionException | TimeoutException e) {
+					log(e);
+				}
+			}
+			
+			graphs = Util.map(Graph::new, subnetworks);
+			
+			cacheLocation.setResultSet(graphs);
+			
+		} 
 		
 		return graphs;
 	}
 	
-	private List<Graph> searchByIds(Function<String, BasicQuery> makeJson, List<String> c, int size) {
+	private List<Graph> searchByIds(Function<String, BasicQuery> makeJson, List<String> c, String queryType) {
 		
 		_logger.debug("Entering searchByIds(c: '"+String.join(",", c)+"')");
 		
@@ -171,7 +203,7 @@ public class ControllerImpl {
 				String luceneSearch = search.id(nodeId);
 				BasicQuery subnetQuery = makeJson.apply(luceneSearch);
 				
-				CompletableFuture<Network> network = get(ndex.queryNetwork(networkId, subnetQuery));
+				CompletableFuture<Network> network = get(ndex.queryNetwork(networkId, subnetQuery, queryType));
 				
 				futures.add(network);
 			
@@ -185,7 +217,7 @@ public class ControllerImpl {
 			List<String> phrases = Util.map(search::phrase, realCuries);
 			String luceneSearch = search.or(phrases);
 			
-			List<Graph> results = search(makeJson, luceneSearch, size);
+			List<Graph> results = search(makeJson, luceneSearch, queryType);
 			
 			graphs.addAll(results);
 		}
@@ -230,7 +262,9 @@ public class ControllerImpl {
 			
 			match.setId(curie);
 			
-			List<Graph> graphs = searchByIds( search::nodesBy, c, DEFAULT_PAGE_SIZE );
+			List<String> curieToSearch = Util.list(curie);
+			
+			List<Graph> graphs = searchByIds( search::nodesBy, curieToSearch, NdexClient.QUERY_FOR_NODE_MATCH);
 			Collection<Node> nodes = Util.flatmap( Graph::getNodes, graphs );
 			
 			if (nodes.size() == 0) {
@@ -239,7 +273,7 @@ public class ControllerImpl {
 				match.setWithinDomain(true);
 			}
 			
-			Set<String> aliases = getAliases(nodes);
+			Set<String> aliases = getAliasesByNodes(curieToSearch, nodes);
 			
 			List<String> curies  = Util.filter(Node::isCurie, aliases);
 			Set<String> curiesSet = addCachedAliases(curies);
@@ -259,59 +293,57 @@ public class ControllerImpl {
 	 * networks are reliable sources of exact match information, and this
 	 * heuristic will hopefully prevent false positives.
 	 */
-	private Set<String> getAliases(Collection<Node> nodes) {
-		Map<String, List<String>> networkAliases = new HashMap<String, List<String>>();
-		
-		for (Node node : nodes) {
-			String networkId = node.getNetworkId();
-			
-			for (Attribute attribute : node.getAttributes()) {
-				if (attribute.getName().equals("alias")) {
-					if (networkAliases.containsKey(networkId)) {
-						networkAliases.get(networkId).addAll(attribute.getValues());
-						
-					} else {
-						List<String> aliases = new ArrayList<String>(attribute.getValues());
-						networkAliases.put(networkId, aliases);
-					}
-				}
-			}
-		}
+	private Set<String> getAliasesByNodes(List<String> curies, Collection<Node> nodes) {
 		
 		Set<String> aliases = new HashSet<String>();
 		
-		List<String> networkIds = new ArrayList<String>(networkAliases.keySet());
-		
-		for (int i = 0; i < networkIds.size(); i++) {
-			for (int j = i + 1; j < networkIds.size(); j++) {
-				String n1 = networkIds.get(i);
-				String n2 = networkIds.get(j);
-				
-				List<String> aliases1 = networkAliases.get(n1);
-				List<String> aliases2 = networkAliases.get(n2);
-				
-				for (String alias : aliases1) {
-					if (aliases2.contains(alias)) {
-						aliases.add(alias);
-					}
+		for (Node node : nodes) {
+			for (Attribute attribute : node.getAttributes()) {
+				if (attribute.getName().equals("alias") && (nodeOrAliasMatchesCuries(curies, node, attribute)))
+						aliases.addAll(attribute.getValues());
 				}
-			}
 		}
 		
 		return aliases;
+	
 	}
 	
+	/**
+	 * Search on ndex may return more than one node, one which matches the search curies in its node ID (getRepresents)
+	 * or in the alias values
+	 * @param curies
+	 * @param node
+	 * @param attribute - should be an "alias" attribute
+	 * @return true if current node has node ID or alias value that matches search curies, false otherwise
+	 */
+	private boolean nodeOrAliasMatchesCuries(List<String> curies, Node node, Attribute attribute) {
+		
+		assert(attribute.getName().equals("alias"));
+		
+		if (curies.contains(node.getRepresents()))
+			return true;
+		
+		List<String> attributeAliases = attribute.getValues();
+		for (String attributeAlias : attributeAliases) {
+			if (curies.contains(attributeAlias)) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+
 	/*
 	 * This only returns the aliases of the members of the 'c' list of input identifiers
 	 * but not directly the 'c' identifiers themselves nor their locally cached related ids
 	 */
 	private Set<String> getAliases( List<String> c ) {
 		
-		List<Graph> graphs = searchByIds( search::nodesBy, c, DEFAULT_PAGE_SIZE );
+		List<Graph> graphs = searchByIds( search::nodesBy, c, NdexClient.QUERY_FOR_NODE_MATCH);
 		
 		Collection<Node> nodes = Util.flatmap( Graph::getNodes, graphs );
 		
-		Set<String> aliases = getAliases(nodes);
+		Set<String> aliases = getAliasesByNodes(c, nodes);
 		
 		List<String> curies  = Util.filter(Node::isCurie, aliases);
 		
@@ -489,7 +521,7 @@ public class ControllerImpl {
 		return matching;
 	}
 
-	public List<? extends CachedEntity> getPage(List<? extends CachedEntity> items, Integer size) {
+	public List<?> getPage(List<?> items, Integer size) {
 		if (items.isEmpty()) {
 			return new ArrayList<>();
 		}
@@ -508,62 +540,28 @@ public class ControllerImpl {
 	public ResponseEntity<List<BeaconConcept>> getConcepts(List<String> keywords, List<String> categories, Integer size) {
 		try {
 			
-			keywords = fix(keywords);
-			categories = fix(categories);
+			keywords = makeNonNull(keywords);
+			categories = makeNonNull(categories);
 			size = fixPageSize(size);
 			
 			List<BeaconConcept> concepts = null ;
 			
 			String joinedKeywords = String.join(" ", keywords);
-			String joinedTypes = String.join(" ", categories);
+			String luceneSearch = search.startsWith(joinedKeywords);
+			List<Graph> graphs = search(search::nodesBy, luceneSearch, NdexClient.QUERY_FOR_NODE_AND_EDGES);		
+			Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
+			combineDuplicates(nodes);
+			Util.map(translator::makeId, nodes);
 			
-			// I attempt caching of the whole retrieved set
-			CacheLocation cacheLocation = 
-					cache.searchForResultSet(
-							"Concept", 
-							joinedKeywords, 
-							new String[] { 
-									joinedKeywords, 
-									joinedTypes
-							}
-					);
-
-			@SuppressWarnings("unchecked")
-			List<BeaconConcept> cachedResult = 
-					(List<BeaconConcept>)cacheLocation.getResultSet();
-			
-			if(cachedResult==null) {
-				
-				String luceneSearch = search.startsWith(joinedKeywords);
-
-				List<Graph> graphs = search(search::nodesBy, luceneSearch, size);		
-				
-				Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
-				combineDuplicates(nodes);
-				
-				/* 
-				 * Execute makeId on all the returned nodes for the
-				 * side effect of registering their alias ndex node ids
-				 */
-				Util.map(translator::makeId, nodes);
-				
-				concepts = Util.map(translator::nodeToConcept, nodes);
-				cacheLocation.setResultSet(concepts);
-				
-			} else {
-				concepts = cachedResult;
-			}
-			
+			concepts = Util.map(translator::nodeToConcept, nodes);
 			List<BeaconConcept> ofType = filterSemanticGroup(concepts, categories);
 			
 			@SuppressWarnings("unchecked")
-			// Paging workaround since nDex paging doesn't seem to work as published?
 			List<BeaconConcept> page = (List<BeaconConcept>)getPage(ofType, size);
 			return ResponseEntity.ok(page);
 		
 		} catch (Exception e) {
 			log(e);
-			// TODO: remove cache if there was an error? Perhaps something different if was timeout error?
 			return ResponseEntity.ok(new ArrayList<BeaconConcept>());
 		}
 	}
@@ -574,35 +572,17 @@ public class ControllerImpl {
 			conceptId = fix(conceptId);
 
 			List<BeaconConceptWithDetails> conceptDetails = null ;
+	
+	
+			List<Graph> graphs = searchByIds(search::nodesBy, Util.list(conceptId), NdexClient.QUERY_FOR_NODE_MATCH);		
+			Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
+			combineDuplicates(nodes);
 			
-			// I attempt caching of the whole retrieved set
-			CacheLocation cacheLocation = 
-					cache.searchForResultSet(
-							"ConceptWithDetails", 
-							conceptId, 
-							new String[] { "1" }
-							);
-
-			@SuppressWarnings("unchecked")
-			List<BeaconConceptWithDetails> cachedResult = (List<BeaconConceptWithDetails>)cacheLocation.getResultSet();
-
-			if(cachedResult==null) {
-
-				List<Graph> graphs = searchByIds(search::nodesBy, Util.list(conceptId), 100);		
-				Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
-				combineDuplicates(nodes);
-				
-				conceptDetails= Util.map(translator::nodeToConceptDetails, nodes);
-				
-				final String id = conceptId;
-				conceptDetails.removeIf(d -> !d.getId().equalsIgnoreCase(id));
-				
-				cacheLocation.setResultSet(conceptDetails);
-
-			} else {
-				
-				conceptDetails = cachedResult;
-			}
+			conceptDetails= Util.map(translator::nodeToConceptDetails, nodes);
+			
+			final String id = conceptId;
+			conceptDetails.removeIf(d -> !d.getId().equalsIgnoreCase(id));
+			
 
 			return ResponseEntity.ok(conceptDetails);
 
@@ -622,7 +602,7 @@ public class ControllerImpl {
 	
 	public ResponseEntity<List<ExactMatchResponse>> getExactMatchesToConceptList(List<String> c) {
 		try {
-			c = fix(c);
+			c = makeNonNull(c);
 			
 			List<ExactMatchResponse> exactMatches = getMatchingResponses(c);
 			
@@ -646,12 +626,12 @@ public class ControllerImpl {
 	) {
 		try {
 			
-			s = fix(s);
-			relations = fix(relations);
-			t = fix(t);
+			s = makeNonNull(s);
+			relations = makeNonNull(relations);
+			t = makeNonNull(t);
 			
-			keywords = fix(keywords);
-			categories = fix(categories);
+			keywords = makeNonNull(keywords);
+			categories = makeNonNull(categories);
 			
 			_logger.debug("Entering ControllerImpl.getStatements():\n"
 					+ "\tsourceIds: '"+String.join(",",s)
@@ -665,73 +645,41 @@ public class ControllerImpl {
 			
 			List<BeaconStatement> statements = null ;
 			
-			// I attempt caching of the whole retrieved set
-			CacheLocation cacheLocation = 
-					cache.searchForResultSet(
-							"Statement", 
-							s.toString(), 
-							new String[] {
-									t.toString(),
-									String.join(" ", keywords), 
-									String.join(" ", categories), 
-									String.join(" ", relations),
-									size.toString() 
-							}
-					);
-
-			@SuppressWarnings("unchecked")
-			List<BeaconStatement> cachedResult = 
-					(List<BeaconStatement>)cacheLocation.getResultSet();
+			Set<String> sourceAliases = allAliases(s);
+			_logger.debug("sourceAliases: '"+String.join(",",s)+"'");
 			
-			if(cachedResult==null) {			
+			List<Graph> graphs = searchByIds(search::edgesBy, Util.list(sourceAliases), NdexClient.QUERY_FOR_NODE_AND_EDGES);
 			
-				Set<String> sourceAliases = allAliases(s);
+			Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
 				
-				_logger.debug("sourceAliases: '"+String.join(",",s)+"'");
+			Util.map(translator::makeId, nodes);
+			
+			Collection<Edge> edges = Util.flatmap(Node::getEdges, nodes);
+			
+			if( ! t.isEmpty() ) {
 				
-				List<Graph> graphs = searchByIds(search::edgesBy, Util.list(sourceAliases), size);
+				Set<String> targetAliases = getAliases(t);
+				targetAliases.addAll(t);
 				
-				Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
-				
-				/* 
-				 * Execute makeId on all the returned nodes for the
-				 * side effect of registering their alias ndex node ids
-				 */
-				Util.map(translator::makeId, nodes);
-				
-				Collection<Edge> edges = Util.flatmap(Node::getEdges, nodes);
-				
-				if( ! t.isEmpty() ) {
-					
-					Set<String> targetAliases = getAliases(t);
-					targetAliases.addAll(t);
-					
-					// Filter for edges with specified targets opposite to source nodes
-					edges = filterByTarget( edges, sourceAliases, targetAliases );
-				}
-				
-				edges = filterByPredicate(edges, relations);
-				
-				edges = filterByText(edges, keywords);
-
-				/*
-				 * We only filter targets for semantic groups if  
-				 * exact target id's were NOT available for filtering? 
-				 * We do this filtering last because it is more involved
-				 * hence, we should do this on the smallest filtered 
-				 * edge list, after all other filters are applied.
-				 */
-				if( t.isEmpty() )
-					 edges = filterSemanticGroup( edges, sourceAliases, categories );
-				
-				statements = Util.map( translator::edgeToStatement, edges );
-				
-				// Store result in the cache
-				cacheLocation.setResultSet(statements);
-				
-			} else {
-				statements = cachedResult;
+				// Filter for edges with specified targets opposite to source nodes
+				edges = filterByTarget( edges, sourceAliases, targetAliases );
 			}
+			
+			edges = filterByPredicate(edges, relations);
+			
+			edges = filterByText(edges, keywords);
+
+			/*
+			 * We only filter targets for semantic groups if  
+			 * exact target id's were NOT available for filtering? 
+			 * We do this filtering last because it is more involved
+			 * hence, we should do this on the smallest filtered 
+			 * edge list, after all other filters are applied.
+			 */
+			if( t.isEmpty() )
+				 edges = filterSemanticGroup( edges, sourceAliases, categories );
+			
+			statements = Util.map( translator::edgeToStatement, edges );
 			
 			@SuppressWarnings("unchecked")
 			// Paging workaround since nDex paging doesn't seem to work as published?
@@ -753,7 +701,7 @@ public class ControllerImpl {
 		try {
 		
 			statementId = fix(statementId);
-			keywords = fix(keywords);
+			keywords = makeNonNull(keywords);
 			size = fixPageSize(size);
 			
 			if(statementId.startsWith(Translator.NDEX_NS)) {
@@ -764,7 +712,7 @@ public class ControllerImpl {
 			String conceptId = half[0];
 			Long statement = Long.valueOf(half[1]);
 
-			List<Graph> graphs = searchByIds(search::edgesBy, Util.list(conceptId), size);
+			List<Graph> graphs = searchByIds(search::edgesBy, Util.list(conceptId), NdexClient.QUERY_FOR_NODE_AND_EDGES);
 			
 			Collection<Edge> relatedEdges = Util.flatmap(Graph::getEdges, graphs);
 			
