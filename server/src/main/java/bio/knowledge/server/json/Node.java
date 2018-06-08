@@ -19,7 +19,11 @@ public class Node extends PropertiedObject {
 	private List<Edge> edges = new ArrayList<>();
 	
 	public static boolean isCurie(String string) {
-		return string != null && string.matches("([^ :]+:)?[^ ]+"); //string.matches("^(([\\i-[:]][\\c-[:]]*)?:)?.+$"); // ^(([\i-[:]][\c-[:]]*)?:)?.+$
+		if (string != null) {
+			return string.split(":").length > 1;
+		} else {
+			return false;
+		}
 	}
 
 	private void makeRepresentsCurie() {

@@ -56,12 +56,13 @@ public class ControllerImpl {
 	@Autowired PredicatesRegistry predicateRegistry;
 
 	private static final int DEFAULT_PAGE_SIZE = 10;
-	private static final long TIMEOUT = 8;
+	private static final long TIMEOUT = 30;
 	private static final TimeUnit TIMEUNIT = TimeUnit.SECONDS;
 		
 	
 	private void log(Exception e) {
 		_logger.error(e.getClass() + ": " + e.getMessage());
+		e.printStackTrace();
 	}
 	
 	//private static Integer fix(Integer integer) {
@@ -239,8 +240,8 @@ public class ControllerImpl {
 				match.setWithinDomain(true);
 			}
 			
-			Function<Node, List<String>> getAliases = Util.curryRight(Node::get, "alias");
-			List<String> aliases = Util.flatmap(getAliases, nodes);
+			Set<String> aliases = getAliases(nodes);
+			
 			List<String> curies  = Util.filter(Node::isCurie, aliases);
 			Set<String> curiesSet = addCachedAliases(curies);
 			curiesSet.removeAll(c);
@@ -254,6 +255,53 @@ public class ControllerImpl {
 		return response;
 	}
 	
+	/**
+	 * Gets only those aliases that are corroborated by multiple networks. Not all
+	 * networks are reliable sources of exact match information, and this
+	 * heuristic will hopefully prevent false positives.
+	 */
+	private Set<String> getAliases(Collection<Node> nodes) {
+		Map<String, List<String>> networkAliases = new HashMap<String, List<String>>();
+		
+		for (Node node : nodes) {
+			String networkId = node.getNetworkId();
+			
+			for (Attribute attribute : node.getAttributes()) {
+				if (attribute.getName().equals("alias")) {
+					if (networkAliases.containsKey(networkId)) {
+						networkAliases.get(networkId).addAll(attribute.getValues());
+						
+					} else {
+						List<String> aliases = new ArrayList<String>(attribute.getValues());
+						networkAliases.put(networkId, aliases);
+					}
+				}
+			}
+		}
+		
+		Set<String> aliases = new HashSet<String>();
+		
+		List<String> networkIds = new ArrayList<String>(networkAliases.keySet());
+		
+		for (int i = 0; i < networkIds.size(); i++) {
+			for (int j = i + 1; j < networkIds.size(); j++) {
+				String n1 = networkIds.get(i);
+				String n2 = networkIds.get(j);
+				
+				List<String> aliases1 = networkAliases.get(n1);
+				List<String> aliases2 = networkAliases.get(n2);
+				
+				for (String alias : aliases1) {
+					if (aliases2.contains(alias)) {
+						aliases.add(alias);
+					}
+				}
+			}
+		}
+		
+		return aliases;
+	}
+	
 	/*
 	 * This only returns the aliases of the members of the 'c' list of input identifiers
 	 * but not directly the 'c' identifiers themselves nor their locally cached related ids
@@ -264,8 +312,7 @@ public class ControllerImpl {
 		
 		Collection<Node> nodes = Util.flatmap( Graph::getNodes, graphs );
 		
-		Function<Node, List<String>> getAliases = Util.curryRight(Node::get, "alias");
-		List<String> aliases = Util.flatmap(getAliases, nodes);
+		Set<String> aliases = getAliases(nodes);
 		
 		List<String> curies  = Util.filter(Node::isCurie, aliases);
 		
@@ -548,6 +595,9 @@ public class ControllerImpl {
 				
 				conceptDetails= Util.map(translator::nodeToConceptDetails, nodes);
 				
+				final String id = conceptId;
+				conceptDetails.removeIf(d -> !d.getId().equalsIgnoreCase(id));
+				
 				cacheLocation.setResultSet(conceptDetails);
 
 			} else {
@@ -558,6 +608,7 @@ public class ControllerImpl {
 			return ResponseEntity.ok(conceptDetails);
 
 		} catch (Exception e) {
+			e.printStackTrace();
 			log(e);
 			return ResponseEntity.ok(new ArrayList<BeaconConceptWithDetails>());
 		}
@@ -693,6 +744,7 @@ public class ControllerImpl {
 		} catch (Exception e) {
 			_logger.error("Exiting ControllerImpl.getStatements() ERROR: "+e.getMessage());
 			log(e);
+			e.printStackTrace();
 			return ResponseEntity.ok(new ArrayList<>());
 		}
 	}
