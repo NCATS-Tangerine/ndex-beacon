@@ -56,6 +56,12 @@ public class Translator {
 		return NDEX_NS + node.getNetworkId() + NETWORK_NODE_DELIMITER + node.getId();
 	}
 	
+	/**
+	 * Returns node's CURIE if it exists and registers corresponding ndex networkId+identifier into the aliasRegistry
+	 * Otherwise returns a NdexId
+	 * @param node
+	 * @return CURIE or NDEX identifier
+	 */
 	public String makeId(Node node) {
 		String represents = node.getRepresents();
 		String nDexId = makeNdexId(node);
@@ -189,7 +195,11 @@ public class Translator {
 		 * Until you have a better solution, just
 		 * convert the name into a synthetic CURIE
 		 */
-		String pName  = edge.getName().toLowerCase();
+		String pName  = edge.getName();
+		if(pName==null ||pName.isEmpty()) {
+			pName = "related_to";
+		}
+		pName = pName.toLowerCase();
 		String biolinkName = ontology.predToBiolinkEdgeLabel(pName);
 		String pCurie = "";
 		if(NameSpace.isCurie(pName))
