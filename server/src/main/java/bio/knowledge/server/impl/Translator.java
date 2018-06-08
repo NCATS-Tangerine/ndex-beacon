@@ -1,10 +1,14 @@
 package bio.knowledge.server.impl;
 
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +36,8 @@ public class Translator {
 	@Autowired PredicatesRegistry predicateRegistry;
 	
 	@Autowired OntologyService ontology;
+	
+	private static Logger _logger = LoggerFactory.getLogger(Translator.class);
 
 	/*
 	 *  Not sure if this is the best choice but better than a colon, 
@@ -43,6 +49,8 @@ public class Translator {
 	public static final Character NETWORK_NODE_DELIMITER_CHAR = '#';
 	
 	public static final String NDEX_NS = "NDEX:";
+
+	Map<StatementTriple, Integer> subjectObjectRegistry = new HashMap<StatementTriple, Integer>();
 
 	private String makeNdexId(Node node) {
 		return NDEX_NS + node.getNetworkId() + NETWORK_NODE_DELIMITER + node.getId();
@@ -192,7 +200,7 @@ public class Translator {
 			pCurie = pName;
 		else
 			// Treat as an nDex defined CURIE
-			pCurie = NDEX_NS+edge.getName().trim().replaceAll("\\s", "_");
+			pCurie = ontology.convertToSnakeCase(NDEX_NS+edge.getName());
 		
 		predicateRegistry.indexPredicate( pCurie, biolinkName, "" );
 		
@@ -226,10 +234,31 @@ public class Translator {
 		statement.setPredicate(edgeToPredicate(edge));
 		statement.setObject(nodeToObject(edge.getObject()));
 		
+		logSubjectObjectCount(statement);
+		
+		
 		return statement;
 	}
 
 	
+	private void logSubjectObjectCount(BeaconStatement statement) {
+		
+		String subj = statement.getSubject().getCategory();
+		String obj = statement.getObject().getCategory();
+		String pred = statement.getPredicate().getRelation();
+		
+		StatementTriple lookup = new StatementTriple(subj, pred, obj);
+		
+		
+		if (subjectObjectRegistry.containsKey(lookup)) {
+			subjectObjectRegistry.put(lookup, subjectObjectRegistry.get(lookup)+1);
+		} else {
+			subjectObjectRegistry.put(lookup, 1);
+			_logger.info("New subj-pred-obj encounted - Subject: " + subj + "; Relation: " + pred + "; Object: " + obj);
+		}
+		
+	}
+
 	public BeaconAnnotation citationToEvidence(Citation citation) {
 		
 		BeaconAnnotation evidence = new BeaconAnnotation();

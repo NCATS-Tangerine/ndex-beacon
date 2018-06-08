@@ -36,7 +36,10 @@ import bio.knowledge.server.model.BeaconAnnotation;
 import bio.knowledge.server.model.BeaconConcept;
 import bio.knowledge.server.model.BeaconConceptCategory;
 import bio.knowledge.server.model.BeaconConceptWithDetails;
+import bio.knowledge.server.model.BeaconKnowledgeMapObject;
+import bio.knowledge.server.model.BeaconKnowledgeMapPredicate;
 import bio.knowledge.server.model.BeaconKnowledgeMapStatement;
+import bio.knowledge.server.model.BeaconKnowledgeMapSubject;
 import bio.knowledge.server.model.BeaconPredicate;
 import bio.knowledge.server.model.BeaconStatement;
 import bio.knowledge.server.model.ExactMatchResponse;
@@ -688,6 +691,8 @@ public class ControllerImpl {
 			// Paging workaround since nDex paging doesn't seem to work as published?
 			List<BeaconStatement> page = (List<BeaconStatement>)getPage(statements, size);
 			
+			_logger.info("\nFinished finding statements. Current known subject to object pairs:\n {} ", translator.subjectObjectRegistry); 
+			
 			return ResponseEntity.ok(page);
 		
 		} catch (Exception e) {
@@ -791,50 +796,45 @@ public class ControllerImpl {
 
 
 	public ResponseEntity<List<BeaconKnowledgeMapStatement>> getKnowledgeMap() {
-		throw new UnsupportedOperationException(
-				"Knowledge map endpoint is not yet implemented: "+
-				"https://github.com/NCATS-Tangerine/ndex-beacon/issues/9"
-		);
+		List<BeaconKnowledgeMapStatement> knowledgeMapStatements = new ArrayList<BeaconKnowledgeMapStatement>();
+		
+		for (Map.Entry<StatementTriple, Integer> entry : translator.subjectObjectRegistry.entrySet()) {
+			StatementTriple triple = entry.getKey();
+			BeaconKnowledgeMapStatement statement = new BeaconKnowledgeMapStatement();
+			
+			BeaconKnowledgeMapSubject subject = new BeaconKnowledgeMapSubject();
+			subject.setCategory(triple.getSubject());
+			subject.setPrefixes(ontology.getBiolinkCategoryIdPrefixes(triple.getSubject()));
+			statement.setSubject(subject);
+			
+			BeaconKnowledgeMapPredicate predicate = new BeaconKnowledgeMapPredicate();
+			//TODO: needs updating once biolink predicates are being generated more appropriately
+			// Predicate in the triple are currently being stored as NDEX:ndex_relation_name for extra logging information
+			// Here we need to convert it to a biolink label for public kmap reporting purposes
+			String predicateRelationship = ontology.removeSnakeCase(triple.getPredicate());
+			if (predicateRelationship.startsWith(Translator.NDEX_NS)) {
+				predicateRelationship = predicateRelationship.substring(Translator.NDEX_NS.length());
+			}
+			String biolinkName = ontology.predToBiolinkEdgeLabel(predicateRelationship);
+			predicate.setRelation(biolinkName);
+			statement.setPredicate(predicate);
+
+			BeaconKnowledgeMapObject object = new BeaconKnowledgeMapObject();
+			object.setCategory(triple.getObject());
+			object.setPrefixes(ontology.getBiolinkCategoryIdPrefixes(triple.getObject()));
+			statement.setObject(object);
+			
+			
+			statement.setSubject(subject);
+			statement.setPredicate(predicate);
+			statement.setObject(object);
+			statement.setFrequency(entry.getValue());
+			statement.setDescription(triple.getSubject() + " - " + predicateRelationship + " - " + triple.getObject());
+			
+			knowledgeMapStatements.add(statement);
+		}
+		
+		return ResponseEntity.ok(knowledgeMapStatements);
+		
 	}
-
-
-//	public ResponseEntity<List<Summary>> linkedTypes() {
-//		
-//		List<Summary> types = new ArrayList<Summary>();
-//		
-//		// Hard code some known types... See Translator.makeSemGroup()
-//		Summary GENE_Type = new Summary();
-//		GENE_Type.setId("GENE");
-//		types.add(GENE_Type);
-//		
-//		Summary CHEM_Type = new Summary();
-//		CHEM_Type.setId("CHEM");
-//		types.add(CHEM_Type);
-//		
-//		Summary DISO_Type = new Summary();
-//		DISO_Type.setId("DISO");
-//		types.add(DISO_Type);
-//		
-//		Summary PHYS_Type = new Summary();
-//		PHYS_Type.setId("PHYS");
-//		types.add(PHYS_Type);
-//		
-//		Summary ANAT_Type = new Summary();
-//		ANAT_Type.setId("ANAT");
-//		types.add(ANAT_Type);
-//		
-//		Summary LIVB_Type = new Summary();
-//		LIVB_Type.setId("LIVB");
-//		types.add(LIVB_Type);
-//		
-//		Summary PROC_Type = new Summary();
-//		PROC_Type.setId("PROC");
-//		types.add(PROC_Type);
-//		
-//		Summary OBJC_Type = new Summary();
-//		OBJC_Type.setId("OBJC");
-//		types.add(OBJC_Type);
-//		
-//		return ResponseEntity.ok(types);
-//	}
 }
