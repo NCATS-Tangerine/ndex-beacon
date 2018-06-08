@@ -1,6 +1,8 @@
 package bio.knowledge.server.ontology;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 
 import javax.annotation.PostConstruct;
@@ -32,6 +34,7 @@ public class OntologyService {
 	
 	HashSet<String> mappedBiolinkCategories;
 	HashSet<String> unmappedBiolinkCategories;
+	
 	
 	
 	@PostConstruct
@@ -101,9 +104,32 @@ public class OntologyService {
 	private Boolean exactlyMatchesBiolink(String pName) {
 		return (!(slotLookup.reverseLookup(pName).isEmpty()));
 	}
+	
+	/**
+	 * 
+	 * @param biolinkName
+	 * @return list of id_prefixes or empty list if no id_prefixes or name isn't a Biolink name
+	 */
+	public List<String> getBiolinkCategoryIdPrefixes(String biolinkName) {
+		BiolinkClass biolinkObj = classLookup.getClassByName(biolinkName);
+		if (biolinkObj == null) {
+			return new ArrayList<>();
+		} else {
+			List<String> idPrefixes = biolinkObj.getIdPrefixes();
+			if (idPrefixes == null) {
+				return new ArrayList<>();
+			} else {
+				return idPrefixes;
+			}
+		}
+	}
 
-	private String convertToSnakeCase(String name) {
+	public String convertToSnakeCase(String name) {
 		return name.trim().replaceAll("\\s", "_");
+	}
+	
+	public String removeSnakeCase(String name) {
+		return name.trim().replaceAll("_", " "); 
 	}
 
 }
