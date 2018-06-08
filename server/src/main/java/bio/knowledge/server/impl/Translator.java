@@ -195,7 +195,11 @@ public class Translator {
 		 * Until you have a better solution, just
 		 * convert the name into a synthetic CURIE
 		 */
-		String pName  = edge.getName().toLowerCase();
+		String pName  = edge.getName();
+		if(pName==null ||pName.isEmpty()) {
+			pName = "related_to";
+		}
+		pName = pName.toLowerCase();
 		String biolinkName = ontology.predToBiolinkEdgeLabel(pName);
 		String pCurie = "";
 		if(NameSpace.isCurie(pName))
