@@ -1,19 +1,17 @@
 package bio.knowledge.server.model;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import bio.knowledge.server.impl.CachedEntity;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import javax.validation.constraints.*;
 /**
  * BeaconConcept
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-05-17T12:46:02.920-07:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-06-12T19:09:25.899Z")
 
-public class BeaconConcept implements CachedEntity  {
+public class BeaconConcept   {
   @JsonProperty("id")
   private String id = null;
 
@@ -23,11 +21,8 @@ public class BeaconConcept implements CachedEntity  {
   @JsonProperty("category")
   private String category = null;
 
-  @JsonProperty("synonyms")
-  private List<String> synonyms = new ArrayList<String>();
-
-  @JsonProperty("definition")
-  private String definition = null;
+  @JsonProperty("description")
+  private String description = null;
 
   public BeaconConcept id(String id) {
     this.id = id;
@@ -35,10 +30,10 @@ public class BeaconConcept implements CachedEntity  {
   }
 
    /**
-   * local object identifier for the concept in the specified knowledge source database 
+   * local object CURIE for the concept in the specified knowledge source database 
    * @return id
   **/
-  @ApiModelProperty(value = "local object identifier for the concept in the specified knowledge source database ")
+  @ApiModelProperty(value = "local object CURIE for the concept in the specified knowledge source database ")
   public String getId() {
     return id;
   }
@@ -71,10 +66,10 @@ public class BeaconConcept implements CachedEntity  {
   }
 
    /**
-   * concept semantic type 
+   * concept semantic type 'category'. Should be specified from the [Biolink Model](https://biolink.github.io/biolink-model). 
    * @return category
   **/
-  @ApiModelProperty(value = "concept semantic type ")
+  @ApiModelProperty(value = "concept semantic type 'category'. Should be specified from the [Biolink Model](https://biolink.github.io/biolink-model). ")
   public String getCategory() {
     return category;
   }
@@ -83,45 +78,22 @@ public class BeaconConcept implements CachedEntity  {
     this.category = category;
   }
 
-  public BeaconConcept synonyms(List<String> synonyms) {
-    this.synonyms = synonyms;
-    return this;
-  }
-
-  public BeaconConcept addSynonymsItem(String synonymsItem) {
-    this.synonyms.add(synonymsItem);
+  public BeaconConcept description(String description) {
+    this.description = description;
     return this;
   }
 
    /**
-   * list of synonyms for concept 
-   * @return synonyms
+   * (optional) narrative concept definition 
+   * @return description
   **/
-  @ApiModelProperty(value = "list of synonyms for concept ")
-  public List<String> getSynonyms() {
-    return synonyms;
+  @ApiModelProperty(value = "(optional) narrative concept definition ")
+  public String getDescription() {
+    return description;
   }
 
-  public void setSynonyms(List<String> synonyms) {
-    this.synonyms = synonyms;
-  }
-
-  public BeaconConcept definition(String definition) {
-    this.definition = definition;
-    return this;
-  }
-
-   /**
-   * concept definition 
-   * @return definition
-  **/
-  @ApiModelProperty(value = "concept definition ")
-  public String getDefinition() {
-    return definition;
-  }
-
-  public void setDefinition(String definition) {
-    this.definition = definition;
+  public void setDescription(String description) {
+    this.description = description;
   }
 
 
@@ -137,13 +109,12 @@ public class BeaconConcept implements CachedEntity  {
     return Objects.equals(this.id, beaconConcept.id) &&
         Objects.equals(this.name, beaconConcept.name) &&
         Objects.equals(this.category, beaconConcept.category) &&
-        Objects.equals(this.synonyms, beaconConcept.synonyms) &&
-        Objects.equals(this.definition, beaconConcept.definition);
+        Objects.equals(this.description, beaconConcept.description);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, name, category, synonyms, definition);
+    return Objects.hash(id, name, category, description);
   }
 
   @Override
@@ -154,8 +125,7 @@ public class BeaconConcept implements CachedEntity  {
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("    category: ").append(toIndentedString(category)).append("\n");
-    sb.append("    synonyms: ").append(toIndentedString(synonyms)).append("\n");
-    sb.append("    definition: ").append(toIndentedString(definition)).append("\n");
+    sb.append("    description: ").append(toIndentedString(description)).append("\n");
     sb.append("}");
     return sb.toString();
   }

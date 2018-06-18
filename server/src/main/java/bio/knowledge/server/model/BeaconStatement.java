@@ -1,17 +1,20 @@
 package bio.knowledge.server.model;
 
 import java.util.Objects;
-
+import bio.knowledge.server.model.BeaconStatementObject;
+import bio.knowledge.server.model.BeaconStatementPredicate;
+import bio.knowledge.server.model.BeaconStatementSubject;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import bio.knowledge.server.impl.CachedEntity;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import javax.validation.constraints.*;
 /**
  * BeaconStatement
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-05-17T12:46:02.920-07:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-06-12T19:09:25.899Z")
 
-public class BeaconStatement implements CachedEntity  {
+public class BeaconStatement   {
   @JsonProperty("id")
   private String id = null;
 

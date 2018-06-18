@@ -1,33 +1,43 @@
 package bio.knowledge.server.model;
 
+import java.util.Objects;
+import bio.knowledge.server.model.BeaconConceptDetail;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import bio.knowledge.server.impl.CachedEntity;
-import io.swagger.annotations.ApiModelProperty;
+import javax.validation.constraints.*;
 /**
  * BeaconConceptWithDetails
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-05-17T12:46:02.920-07:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-06-12T19:09:25.899Z")
 
-public class BeaconConceptWithDetails implements CachedEntity  {
+public class BeaconConceptWithDetails   {
   @JsonProperty("id")
   private String id = null;
+
+  @JsonProperty("uri")
+  private String uri = null;
 
   @JsonProperty("name")
   private String name = null;
 
+  @JsonProperty("symbol")
+  private String symbol = null;
+
   @JsonProperty("category")
   private String category = null;
+
+  @JsonProperty("description")
+  private String description = null;
 
   @JsonProperty("synonyms")
   private List<String> synonyms = new ArrayList<String>();
 
-  @JsonProperty("definition")
-  private String definition = null;
+  @JsonProperty("exact_matches")
+  private List<String> exactMatches = new ArrayList<String>();
 
   @JsonProperty("details")
   private List<BeaconConceptDetail> details = new ArrayList<BeaconConceptDetail>();
@@ -38,16 +48,34 @@ public class BeaconConceptWithDetails implements CachedEntity  {
   }
 
    /**
-   * local object identifier for the concept in the specified knowledge source database 
+   * local object CURIE for the concept in the specified knowledge source database 
    * @return id
   **/
-  @ApiModelProperty(value = "local object identifier for the concept in the specified knowledge source database ")
+  @ApiModelProperty(value = "local object CURIE for the concept in the specified knowledge source database ")
   public String getId() {
     return id;
   }
 
   public void setId(String id) {
     this.id = id;
+  }
+
+  public BeaconConceptWithDetails uri(String uri) {
+    this.uri = uri;
+    return this;
+  }
+
+   /**
+   * (optional) equivalent to expansion of the CURIE 
+   * @return uri
+  **/
+  @ApiModelProperty(value = "(optional) equivalent to expansion of the CURIE ")
+  public String getUri() {
+    return uri;
+  }
+
+  public void setUri(String uri) {
+    this.uri = uri;
   }
 
   public BeaconConceptWithDetails name(String name) {
@@ -68,22 +96,58 @@ public class BeaconConceptWithDetails implements CachedEntity  {
     this.name = name;
   }
 
+  public BeaconConceptWithDetails symbol(String symbol) {
+    this.symbol = symbol;
+    return this;
+  }
+
+   /**
+   * (optional) symbol, used for genomic data 
+   * @return symbol
+  **/
+  @ApiModelProperty(value = "(optional) symbol, used for genomic data ")
+  public String getSymbol() {
+    return symbol;
+  }
+
+  public void setSymbol(String symbol) {
+    this.symbol = symbol;
+  }
+
   public BeaconConceptWithDetails category(String category) {
     this.category = category;
     return this;
   }
 
    /**
-   * concept semantic type 
+   * concept semantic type 'category'. Should be specified from the [Biolink Model](https://biolink.github.io/biolink-model). 
    * @return category
   **/
-  @ApiModelProperty(value = "concept semantic type ")
+  @ApiModelProperty(value = "concept semantic type 'category'. Should be specified from the [Biolink Model](https://biolink.github.io/biolink-model). ")
   public String getCategory() {
     return category;
   }
 
   public void setCategory(String category) {
     this.category = category;
+  }
+
+  public BeaconConceptWithDetails description(String description) {
+    this.description = description;
+    return this;
+  }
+
+   /**
+   * (optional) narrative concept definition 
+   * @return description
+  **/
+  @ApiModelProperty(value = "(optional) narrative concept definition ")
+  public String getDescription() {
+    return description;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
   }
 
   public BeaconConceptWithDetails synonyms(List<String> synonyms) {
@@ -109,22 +173,27 @@ public class BeaconConceptWithDetails implements CachedEntity  {
     this.synonyms = synonyms;
   }
 
-  public BeaconConceptWithDetails definition(String definition) {
-    this.definition = definition;
+  public BeaconConceptWithDetails exactMatches(List<String> exactMatches) {
+    this.exactMatches = exactMatches;
+    return this;
+  }
+
+  public BeaconConceptWithDetails addExactMatchesItem(String exactMatchesItem) {
+    this.exactMatches.add(exactMatchesItem);
     return this;
   }
 
    /**
-   * concept definition 
-   * @return definition
+   * List of [CURIE](https://www.w3.org/TR/curie/)  identifiers of concepts thought to be exactly matching concepts, [*sensa*-SKOS](http://www.w3.org/2004/02/skos/core#exactMatch). This is generally the same list returned by the /exact_matches endpoint (given the concept 'id' as input) 
+   * @return exactMatches
   **/
-  @ApiModelProperty(value = "concept definition ")
-  public String getDefinition() {
-    return definition;
+  @ApiModelProperty(value = "List of [CURIE](https://www.w3.org/TR/curie/)  identifiers of concepts thought to be exactly matching concepts, [*sensa*-SKOS](http://www.w3.org/2004/02/skos/core#exactMatch). This is generally the same list returned by the /exact_matches endpoint (given the concept 'id' as input) ")
+  public List<String> getExactMatches() {
+    return exactMatches;
   }
 
-  public void setDefinition(String definition) {
-    this.definition = definition;
+  public void setExactMatches(List<String> exactMatches) {
+    this.exactMatches = exactMatches;
   }
 
   public BeaconConceptWithDetails details(List<BeaconConceptDetail> details) {
@@ -161,16 +230,19 @@ public class BeaconConceptWithDetails implements CachedEntity  {
     }
     BeaconConceptWithDetails beaconConceptWithDetails = (BeaconConceptWithDetails) o;
     return Objects.equals(this.id, beaconConceptWithDetails.id) &&
+        Objects.equals(this.uri, beaconConceptWithDetails.uri) &&
         Objects.equals(this.name, beaconConceptWithDetails.name) &&
+        Objects.equals(this.symbol, beaconConceptWithDetails.symbol) &&
         Objects.equals(this.category, beaconConceptWithDetails.category) &&
+        Objects.equals(this.description, beaconConceptWithDetails.description) &&
         Objects.equals(this.synonyms, beaconConceptWithDetails.synonyms) &&
-        Objects.equals(this.definition, beaconConceptWithDetails.definition) &&
+        Objects.equals(this.exactMatches, beaconConceptWithDetails.exactMatches) &&
         Objects.equals(this.details, beaconConceptWithDetails.details);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, name, category, synonyms, definition, details);
+    return Objects.hash(id, uri, name, symbol, category, description, synonyms, exactMatches, details);
   }
 
   @Override
@@ -179,10 +251,13 @@ public class BeaconConceptWithDetails implements CachedEntity  {
     sb.append("class BeaconConceptWithDetails {\n");
     
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
+    sb.append("    uri: ").append(toIndentedString(uri)).append("\n");
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
+    sb.append("    symbol: ").append(toIndentedString(symbol)).append("\n");
     sb.append("    category: ").append(toIndentedString(category)).append("\n");
+    sb.append("    description: ").append(toIndentedString(description)).append("\n");
     sb.append("    synonyms: ").append(toIndentedString(synonyms)).append("\n");
-    sb.append("    definition: ").append(toIndentedString(definition)).append("\n");
+    sb.append("    exactMatches: ").append(toIndentedString(exactMatches)).append("\n");
     sb.append("    details: ").append(toIndentedString(details)).append("\n");
     sb.append("}");
     return sb.toString();

@@ -1,14 +1,15 @@
 package bio.knowledge.server.model;
 
 import java.util.Objects;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import javax.validation.constraints.*;
 /**
  * BeaconStatementPredicate
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-05-17T12:46:02.920-07:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-06-12T19:09:25.899Z")
 
 public class BeaconStatementPredicate   {
   @JsonProperty("edge_label")
@@ -17,16 +18,19 @@ public class BeaconStatementPredicate   {
   @JsonProperty("relation")
   private String relation = null;
 
+  @JsonProperty("negated")
+  private Boolean negated = null;
+
   public BeaconStatementPredicate edgeLabel(String edgeLabel) {
     this.edgeLabel = edgeLabel;
     return this;
   }
 
    /**
-   * minimal Biolink model predicate term
+   * The predicate edge label associated with this statement, which should be as published by the /predicates API endpoint and must be taken from the minimal predicate ('slot') list of the [Biolink Model](https://biolink.github.io/biolink-model). 
    * @return edgeLabel
   **/
-  @ApiModelProperty(value = "minimal Biolink model predicate term")
+  @ApiModelProperty(value = "The predicate edge label associated with this statement, which should be as published by the /predicates API endpoint and must be taken from the minimal predicate ('slot') list of the [Biolink Model](https://biolink.github.io/biolink-model). ")
   public String getEdgeLabel() {
     return edgeLabel;
   }
@@ -41,16 +45,34 @@ public class BeaconStatementPredicate   {
   }
 
    /**
-   * SHOULD be from maximal Biolink model predicate list, but beacon-specific extensions allowed. Preferred format is a CURIE, where one exists, but strings/labels acceptable. May be empty.
+   * The predicate relation associated with this statement, which should be as published by the /predicates API endpoint with the preferred format being a CURIE where one exists, but strings/labels acceptable. This relation may be equivalent to the edge_label (e.g. edge_label: has_phenotype, relation: RO:0002200), or a more specific relation in cases where the source provides more granularity (e.g. edge_label: molecularly_interacts_with, relation: RO:0002447)
    * @return relation
   **/
-  @ApiModelProperty(value = "SHOULD be from maximal Biolink model predicate list, but beacon-specific extensions allowed. Preferred format is a CURIE, where one exists, but strings/labels acceptable. May be empty.")
+  @ApiModelProperty(value = "The predicate relation associated with this statement, which should be as published by the /predicates API endpoint with the preferred format being a CURIE where one exists, but strings/labels acceptable. This relation may be equivalent to the edge_label (e.g. edge_label: has_phenotype, relation: RO:0002200), or a more specific relation in cases where the source provides more granularity (e.g. edge_label: molecularly_interacts_with, relation: RO:0002447)")
   public String getRelation() {
     return relation;
   }
 
   public void setRelation(String relation) {
     this.relation = relation;
+  }
+
+  public BeaconStatementPredicate negated(Boolean negated) {
+    this.negated = negated;
+    return this;
+  }
+
+   /**
+   * (Optional) a boolean that if set to true, indicates the  edge statement is negated i.e. is not true 
+   * @return negated
+  **/
+  @ApiModelProperty(value = "(Optional) a boolean that if set to true, indicates the  edge statement is negated i.e. is not true ")
+  public Boolean getNegated() {
+    return negated;
+  }
+
+  public void setNegated(Boolean negated) {
+    this.negated = negated;
   }
 
 
@@ -64,12 +86,13 @@ public class BeaconStatementPredicate   {
     }
     BeaconStatementPredicate beaconStatementPredicate = (BeaconStatementPredicate) o;
     return Objects.equals(this.edgeLabel, beaconStatementPredicate.edgeLabel) &&
-        Objects.equals(this.relation, beaconStatementPredicate.relation);
+        Objects.equals(this.relation, beaconStatementPredicate.relation) &&
+        Objects.equals(this.negated, beaconStatementPredicate.negated);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(edgeLabel, relation);
+    return Objects.hash(edgeLabel, relation, negated);
   }
 
   @Override
@@ -79,6 +102,7 @@ public class BeaconStatementPredicate   {
     
     sb.append("    edgeLabel: ").append(toIndentedString(edgeLabel)).append("\n");
     sb.append("    relation: ").append(toIndentedString(relation)).append("\n");
+    sb.append("    negated: ").append(toIndentedString(negated)).append("\n");
     sb.append("}");
     return sb.toString();
   }

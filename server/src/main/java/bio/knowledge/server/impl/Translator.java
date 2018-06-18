@@ -1,6 +1,7 @@
 package bio.knowledge.server.impl;
 
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +17,6 @@ import bio.knowledge.server.json.Attribute;
 import bio.knowledge.server.json.Citation;
 import bio.knowledge.server.json.Edge;
 import bio.knowledge.server.json.Node;
-import bio.knowledge.server.model.BeaconAnnotation;
 import bio.knowledge.server.model.BeaconConcept;
 import bio.knowledge.server.model.BeaconConceptDetail;
 import bio.knowledge.server.model.BeaconConceptWithDetails;
@@ -130,7 +130,7 @@ public class Translator {
 		concept.setId(conceptId);
 		concept.setName(makeName(node));
 		concept.setCategory(inferConceptCategory(conceptId, node));
-		concept.setSynonyms(node.getSynonyms());
+//		concept.setSynonyms(node.getSynonyms());
 		
 		return concept;
 	}
@@ -157,21 +157,33 @@ public class Translator {
 		String conceptId = makeId(node) ; 
 		
 		conceptDetails.setId(conceptId);
-		
+		conceptDetails.setUri(null);
 		conceptDetails.setName(makeName(node));
-		
+		conceptDetails.setSymbol(null);
 		conceptDetails.setCategory(inferConceptCategory(conceptId,node));
-		
-		Consumer<String> addSynonym = s -> conceptDetails.addSynonymsItem(s);
-		node.getSynonyms().forEach(addSynonym);
 
-		List<BeaconConceptDetail> details = Util.flatmap(this::attributeToDetails, node.getAttributes());
+//		Consumer<String> addSynonym = s -> conceptDetails.addSynonymsItem(s);
+//		node.getSynonyms().forEach(addSynonym);
+
+//		List<BeaconConceptDetail> details = Util.flatmap(this::attributeToDetails, node.getAttributes());
+
+		List<String> aliases = new ArrayList<>();
+		List<BeaconConceptDetail> details = new ArrayList<>();
+		
+		for (Attribute attribute : node.getAttributes()) {
+			if (attribute.getName().equals("alias")) {
+				aliases.addAll(attribute.getValues());
+			} else {
+				details.addAll(attributeToDetails(attribute));
+			}
+		}
+
+		conceptDetails.setExactMatches(aliases);
 		conceptDetails.setDetails(details);
 		
 		return conceptDetails;
 	}
-	
-	
+
 	private BeaconStatementSubject nodeToSubject(Node node) {
 		
 		BeaconStatementSubject subject = new BeaconStatementSubject();
@@ -186,6 +198,7 @@ public class Translator {
 		return subject;
 	}
 	
+	// TODO: update biolink predicate matching and negated 
 	private BeaconStatementPredicate edgeToPredicate(Edge edge) {
 		
 		BeaconStatementPredicate predicate = new BeaconStatementPredicate();
@@ -268,14 +281,5 @@ public class Translator {
 		}
 		
 	}
-
-	public BeaconAnnotation citationToEvidence(Citation citation) {
-		
-		BeaconAnnotation evidence = new BeaconAnnotation();
-		evidence.setId(citation.getCitationId());
-		evidence.setLabel(citation.getFullText());
-		return evidence;
-	}
-
 	
 }

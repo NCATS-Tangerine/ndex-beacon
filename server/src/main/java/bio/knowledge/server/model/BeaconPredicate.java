@@ -1,14 +1,15 @@
 package bio.knowledge.server.model;
 
 import java.util.Objects;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import javax.validation.constraints.*;
 /**
  * BeaconPredicate
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-05-17T12:46:02.920-07:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-06-12T19:09:25.899Z")
 
 public class BeaconPredicate   {
   @JsonProperty("id")
@@ -80,10 +81,10 @@ public class BeaconPredicate   {
   }
 
    /**
-   * human readable name of a 'minimal' Biolink model predicate relation terms (see [Biolink Model](https://biolink.github.io/biolink-model) for the full list of terms) 
+   * A predicate edge label which must be taken from the minimal predicate ('slot') list of the [Biolink Model](https://biolink.github.io/biolink-model). 
    * @return edgeLabel
   **/
-  @ApiModelProperty(value = "human readable name of a 'minimal' Biolink model predicate relation terms (see [Biolink Model](https://biolink.github.io/biolink-model) for the full list of terms) ")
+  @ApiModelProperty(value = "A predicate edge label which must be taken from the minimal predicate ('slot') list of the [Biolink Model](https://biolink.github.io/biolink-model). ")
   public String getEdgeLabel() {
     return edgeLabel;
   }
@@ -98,10 +99,10 @@ public class BeaconPredicate   {
   }
 
    /**
-   * human readable name of a 'maximal' Biolink model predicate relation terms (see [Biolink Model](https://biolink.github.io/biolink-model) for the full list of terms) 
+   * The predicate relation, with the preferred format being a CURIE where one exists, but strings/labels acceptable. This relation  may be equivalent to the edge_label (e.g. edge_label: has_phenotype, relation: RO:0002200), or a more specific relation in cases where the source provides more granularity  (e.g. edge_label: molecularly_interacts_with, relation: RO:0002447) 
    * @return relation
   **/
-  @ApiModelProperty(value = "human readable name of a 'maximal' Biolink model predicate relation terms (see [Biolink Model](https://biolink.github.io/biolink-model) for the full list of terms) ")
+  @ApiModelProperty(value = "The predicate relation, with the preferred format being a CURIE where one exists, but strings/labels acceptable. This relation  may be equivalent to the edge_label (e.g. edge_label: has_phenotype, relation: RO:0002200), or a more specific relation in cases where the source provides more granularity  (e.g. edge_label: molecularly_interacts_with, relation: RO:0002447) ")
   public String getRelation() {
     return relation;
   }
@@ -116,10 +117,10 @@ public class BeaconPredicate   {
   }
 
    /**
-   * CURIE-encoded identifier of the locally defined predicate relation. Such terms should be formally documented as mappings in the  [Biolink Model](https://biolink.github.io/biolink-model) 
+   * CURIE-encoded identifier of the locally defined predicate relation. Such terms should be formally documented as mappings in the [Biolink Model](https://biolink.github.io/biolink-model) 
    * @return localId
   **/
-  @ApiModelProperty(value = "CURIE-encoded identifier of the locally defined predicate relation. Such terms should be formally documented as mappings in the  [Biolink Model](https://biolink.github.io/biolink-model) ")
+  @ApiModelProperty(value = "CURIE-encoded identifier of the locally defined predicate relation. Such terms should be formally documented as mappings in the [Biolink Model](https://biolink.github.io/biolink-model) ")
   public String getLocalId() {
     return localId;
   }

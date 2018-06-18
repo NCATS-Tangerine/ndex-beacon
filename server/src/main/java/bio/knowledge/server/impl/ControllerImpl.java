@@ -32,7 +32,6 @@ import bio.knowledge.server.json.NetworkId;
 import bio.knowledge.server.json.NetworkList;
 import bio.knowledge.server.json.Node;
 import bio.knowledge.server.json.SearchString;
-import bio.knowledge.server.model.BeaconAnnotation;
 import bio.knowledge.server.model.BeaconConcept;
 import bio.knowledge.server.model.BeaconConceptCategory;
 import bio.knowledge.server.model.BeaconConceptWithDetails;
@@ -42,6 +41,7 @@ import bio.knowledge.server.model.BeaconKnowledgeMapStatement;
 import bio.knowledge.server.model.BeaconKnowledgeMapSubject;
 import bio.knowledge.server.model.BeaconPredicate;
 import bio.knowledge.server.model.BeaconStatement;
+import bio.knowledge.server.model.BeaconStatementWithDetails;
 import bio.knowledge.server.model.ExactMatchResponse;
 import bio.knowledge.server.ontology.OntologyService;
 
@@ -277,8 +277,7 @@ public class ControllerImpl {
 			
 			List<String> curies  = Util.filter(Node::isCurie, aliases);
 			Set<String> curiesSet = addCachedAliases(curies);
-			curiesSet.removeAll(c);
-			
+			curiesSet.remove(curie);
 			List<String> exactMatches = new ArrayList<String>(curiesSet);
 			match.setHasExactMatches(exactMatches);
 			
@@ -289,9 +288,8 @@ public class ControllerImpl {
 	}
 	
 	/**
-	 * Gets only those aliases that are corroborated by multiple networks. Not all
-	 * networks are reliable sources of exact match information, and this
-	 * heuristic will hopefully prevent false positives.
+	 * Returns aliases by searching through returned nodes for the "alias" attribute and checking that the node
+	 * represents the curie we are looking for
 	 */
 	private Set<String> getAliasesByNodes(List<String> curies, Collection<Node> nodes) {
 		
@@ -309,12 +307,12 @@ public class ControllerImpl {
 	}
 	
 	/**
-	 * Search on ndex may return more than one node, one which matches the search curies in its node ID (getRepresents)
+	 * Search on ndex may return more than one node, one which matches the search curie in its node ID (getRepresents)
 	 * or in the alias values
-	 * @param curies
+	 * @param curie
 	 * @param node
 	 * @param attribute - should be an "alias" attribute
-	 * @return true if current node has node ID or alias value that matches search curies, false otherwise
+	 * @return true if current node has node ID or alias value that matches search curie, false otherwise
 	 */
 	private boolean nodeOrAliasMatchesCuries(List<String> curies, Node node, Attribute attribute) {
 		
@@ -451,8 +449,8 @@ public class ControllerImpl {
 		return edges;
 	}
 	
-	private Collection<Edge> filterByText( Collection<Edge> edges, List<String> keywords ) {
 		
+	private Collection<Edge> filterByText( Collection<Edge> edges, List<String> keywords ) {
 		if (keywords.isEmpty()) return edges;
 		
 		Predicate<Edge> matches =
@@ -463,25 +461,6 @@ public class ControllerImpl {
 		return matching;
 	}
 	
-	private Collection<Edge> filterByPredicate(Collection<Edge> edges, List<String> predicateFilter) {
-		
-		if (predicateFilter.isEmpty()) return edges;
-
-		// Translate predicate ids to their names
-		List<String> relations = new ArrayList<String>();
-		for(String pid : predicateFilter) 
-			if(predicateRegistry.containsKey(pid)) 
-				relations.add(predicateRegistry.get(pid).getEdgeLabel());
-			// else - ignore as unknown?
-		
-		if(relations.isEmpty()) return edges;
-		
-		Predicate<Edge> matches = e -> containsAll( e.getName(), relations );
-		Collection<Edge> matching = Util.filter(matches, edges);
-		
-		return matching;
-	}
-
 	private boolean testTargetId( Edge edge, Set<String> sourceAliases, Set<String> targetAliases ) {
 		
 		Node subject = edge.getSubject();
@@ -510,7 +489,6 @@ public class ControllerImpl {
 		return edges;
 	}
 	
-
 	private List<Citation> filterMatching(List<Citation> citations, List<String> keywords) {
 		
 		if (keywords.isEmpty()) return citations;
@@ -566,34 +544,32 @@ public class ControllerImpl {
 		}
 	}
 	
-	public ResponseEntity<List<BeaconConceptWithDetails>> getConceptDetails(String conceptId) {
-
+	// TODO: method may throw assert error - not sure if there will be more than one returned
+	// and in what circumstances
+	public ResponseEntity<BeaconConceptWithDetails> getConceptDetails(String conceptId) {
 		try {
 			conceptId = fix(conceptId);
-
-			List<BeaconConceptWithDetails> conceptDetails = null ;
-	
 	
 			List<Graph> graphs = searchByIds(search::nodesBy, Util.list(conceptId), NdexClient.QUERY_FOR_NODE_MATCH);		
 			Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
 			combineDuplicates(nodes);
 			
-			conceptDetails= Util.map(translator::nodeToConceptDetails, nodes);
+			List<BeaconConceptWithDetails> conceptDetails= Util.map(translator::nodeToConceptDetails, nodes);
 			
 			final String id = conceptId;
 			conceptDetails.removeIf(d -> !d.getId().equalsIgnoreCase(id));
 			
+			assert(conceptDetails.size() == 1);
 
-			return ResponseEntity.ok(conceptDetails);
+			return ResponseEntity.ok(conceptDetails.get(0));
 
 		} catch (Exception e) {
 			e.printStackTrace();
 			log(e);
-			return ResponseEntity.ok(new ArrayList<BeaconConceptWithDetails>());
+			return ResponseEntity.ok(new BeaconConceptWithDetails());
 		}
 	}
-
-
+	
 	public ResponseEntity<List<BeaconPredicate>> getPredicates() {
 		List<BeaconPredicate> responses = new ArrayList<BeaconPredicate>(predicateRegistry.values());
 		return ResponseEntity.ok(responses);		
@@ -614,36 +590,34 @@ public class ControllerImpl {
 		}
 	}
 
-	
 	public ResponseEntity<List<BeaconStatement>> getStatements(
-			
 			List<String> s, 
-			List<String> relations,
-			List<String> t, 
+			String edgeLabel, 
+			String relation,
+			List<String> t,
 			List<String> keywords, 
-			List<String> categories,
-			Integer size 
+			List<String> categories, 
+			Integer size
 	) {
 		try {
-			
 			s = makeNonNull(s);
-			relations = makeNonNull(relations);
+			edgeLabel = fix(edgeLabel);
+			relation = fix(relation);
 			t = makeNonNull(t);
-			
 			keywords = makeNonNull(keywords);
 			categories = makeNonNull(categories);
+			size = fixPageSize(size);
 			
 			_logger.debug("Entering ControllerImpl.getStatements():\n"
 					+ "\tsourceIds: '"+String.join(",",s)
-					+ "',\n\trelations: '"+String.join("", relations)
+					+ "',\n\tedgeLabel: '"+edgeLabel
+					+ "',\n\trelation: '"+relation
 					+ "',\n\ttargetIds: '"+String.join(",",t)
 					+ "',\n\tkeywords: '"+keywords
 					+ "',\n\tsemanticGroups: '"+categories
 			);
 			
-			size = fixPageSize(size);
-			
-			List<BeaconStatement> statements = null ;
+			List<BeaconStatement> statements = null;
 			
 			Set<String> sourceAliases = allAliases(s);
 			_logger.debug("sourceAliases: '"+String.join(",",s)+"'");
@@ -665,8 +639,6 @@ public class ControllerImpl {
 				edges = filterByTarget( edges, sourceAliases, targetAliases );
 			}
 			
-			edges = filterByPredicate(edges, relations);
-			
 			edges = filterByText(edges, keywords);
 
 			/*
@@ -680,6 +652,8 @@ public class ControllerImpl {
 				 edges = filterSemanticGroup( edges, sourceAliases, categories );
 			
 			statements = Util.map( translator::edgeToStatement, edges );
+			
+			statements = filterByRelationAndEdgeLabel(statements, relation, edgeLabel);
 			
 			@SuppressWarnings("unchecked")
 			// Paging workaround since nDex paging doesn't seem to work as published?
@@ -696,63 +670,87 @@ public class ControllerImpl {
 			return ResponseEntity.ok(new ArrayList<>());
 		}
 	}
-
-	public ResponseEntity<List<BeaconAnnotation>> getEvidence(String statementId, List<String> keywords, Integer size) {
-		try {
+	
+	
+	private List<BeaconStatement> filterByRelationAndEdgeLabel(List<BeaconStatement> statements, String relation,
+			String edgeLabel) {
 		
-			statementId = fix(statementId);
-			keywords = makeNonNull(keywords);
-			size = fixPageSize(size);
-			
-			if(statementId.startsWith(Translator.NDEX_NS)) {
-				statementId = statementId.replaceAll("^"+Translator.NDEX_NS, "");
-			}
-			
-			String[] half = statementId.split("_", 2);
-			String conceptId = half[0];
-			Long statement = Long.valueOf(half[1]);
-
-			List<Graph> graphs = searchByIds(search::edgesBy, Util.list(conceptId), NdexClient.QUERY_FOR_NODE_AND_EDGES);
-			
-			Collection<Edge> relatedEdges = Util.flatmap(Graph::getEdges, graphs);
-			
-			Predicate<Edge> wasRequested = e -> e.getId().equals(statement);
-			List<Edge> maybeEdge = Util.filter(wasRequested, relatedEdges);
-			
-			if (maybeEdge.size() == 1) {
-				
-				List<BeaconAnnotation> evidence = new ArrayList<BeaconAnnotation>();
-
-				/*
-				 *  Insert the current Graph network identifier 
-				 *  as one piece of "evidence" alongside 
-				 *  any other discovered citation evidence
-				 */
-				BeaconAnnotation networkEvidence = new BeaconAnnotation();
-				String[] idPart = statementId.split(Translator.NETWORK_NODE_DELIMITER, 2);
-				networkEvidence.setId("ndex.network:"+idPart[0]);
-				networkEvidence.setLabel("nDex Network");
-				networkEvidence.setType("TAS");
-				evidence.add(networkEvidence);
-				
-				// Add any edge Citation annotation, if available
-				Edge edge = maybeEdge.get(0);
-				List<Citation> citations = edge.getCitations();
-				List<Citation> matching = filterMatching(citations, keywords);
-				
-				if(citations != null)
-					evidence.addAll( Util.map(translator::citationToEvidence, matching) );
-				
-				return ResponseEntity.ok(evidence);
-			
-			} else {
-				return ResponseEntity.ok(new ArrayList<>());
-			}
-			
-		} catch (Exception e) {
-			log(e);
-			return ResponseEntity.ok(new ArrayList<>());
+		if (relation.isEmpty() && edgeLabel.isEmpty()) {
+			return statements;
 		}
+		
+		Predicate<BeaconStatement> matches; 
+		
+		if (edgeLabel.isEmpty()) {
+			matches = s -> relation.equals(s.getPredicate().getRelation());
+		} else if (relation.isEmpty()) {
+			matches = s -> edgeLabel.equals(s.getPredicate().getEdgeLabel());
+		} else {
+			matches = s -> relation.equals(s.getPredicate().getRelation()) 
+					       && edgeLabel.equals(s.getPredicate().getEdgeLabel());
+		}
+		
+		List<BeaconStatement> matchingStatements = Util.filter(matches, statements);
+		return matchingStatements;
+	}
+
+	public ResponseEntity<BeaconStatementWithDetails> getEvidence(String statementId, List<String> keywords, Integer size) {
+//		try {
+//		
+//			statementId = fix(statementId);
+//			keywords = makeNonNull(keywords);
+//			size = fixPageSize(size);
+//			
+//			if(statementId.startsWith(Translator.NDEX_NS)) {
+//				statementId = statementId.replaceAll("^"+Translator.NDEX_NS, "");
+//			}
+//			
+//			String[] half = statementId.split("_", 2);
+//			String conceptId = half[0];
+//			Long statement = Long.valueOf(half[1]);
+//
+//			List<Graph> graphs = searchByIds(search::edgesBy, Util.list(conceptId), NdexClient.QUERY_FOR_NODE_AND_EDGES);
+//			
+//			Collection<Edge> relatedEdges = Util.flatmap(Graph::getEdges, graphs);
+//			
+//			Predicate<Edge> wasRequested = e -> e.getId().equals(statement);
+//			List<Edge> maybeEdge = Util.filter(wasRequested, relatedEdges);
+//			
+//			if (maybeEdge.size() == 1) {
+//				
+//				List<BeaconAnnotation> evidence = new ArrayList<BeaconAnnotation>();
+//
+//				/*
+//				 *  Insert the current Graph network identifier 
+//				 *  as one piece of "evidence" alongside 
+//				 *  any other discovered citation evidence
+//				 */
+//				BeaconAnnotation networkEvidence = new BeaconAnnotation();
+//				String[] idPart = statementId.split(Translator.NETWORK_NODE_DELIMITER, 2);
+//				networkEvidence.setId("ndex.network:"+idPart[0]);
+//				networkEvidence.setLabel("nDex Network");
+//				networkEvidence.setType("TAS");
+//				evidence.add(networkEvidence);
+//				
+//				// Add any edge Citation annotation, if available
+//				Edge edge = maybeEdge.get(0);
+//				List<Citation> citations = edge.getCitations();
+//				List<Citation> matching = filterMatching(citations, keywords);
+//				
+//				if(citations != null)
+//					evidence.addAll( Util.map(translator::citationToEvidence, matching) );
+//				
+//				return ResponseEntity.ok(evidence);
+//			
+//			} else {
+//				return ResponseEntity.ok(new ArrayList<>());
+//			}
+//			
+//		} catch (Exception e) {
+//			log(e);
+//			return ResponseEntity.ok(new ArrayList<>());
+//		}
+		return ResponseEntity.ok(new BeaconStatementWithDetails());
 	}
 	
 	public ResponseEntity<List<BeaconConceptCategory>> getCategories() {
@@ -830,4 +828,6 @@ public class ControllerImpl {
 		return ResponseEntity.ok(knowledgeMapStatements);
 		
 	}
+
+	
 }

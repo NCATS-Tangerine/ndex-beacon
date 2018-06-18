@@ -48,8 +48,6 @@ public class PredicatesRegistry extends HashMap<String, BeaconPredicate> {
 
 		if( Util.nullOrEmpty(id) || Util.nullOrEmpty(name) ) return ; 
 
-		BeaconPredicate p;
-		
 		if(!containsKey(id)) {
 			
 			/*
@@ -57,7 +55,7 @@ public class PredicatesRegistry extends HashMap<String, BeaconPredicate> {
 			 *  doesn't yet exist for this
 			 *  predicate, then create it!
 			 */
-			p = new BeaconPredicate();
+			BeaconPredicate p = new BeaconPredicate();
 			
 			// predicate resource CURIE
 			p.setId(id);  
