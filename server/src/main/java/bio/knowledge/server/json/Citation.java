@@ -18,6 +18,8 @@ import bio.knowledge.server.impl.Util;
 public class Citation extends IdentifiedObject {
 	
 	private String citationId;
+	private String name;
+	private String evidenceType;
 	
 	private List<Support> supports = new ArrayList<>();
 
@@ -29,6 +31,26 @@ public class Citation extends IdentifiedObject {
 	@JsonProperty("dc:identifier")
 	public void setCitationId(String citationId) {
 		this.citationId = citationId;
+	}
+	
+	@JsonProperty("dc:title")
+	public String getName() {
+		return name;
+	}
+	
+	@JsonProperty("dc:title")
+	public void setName(String name) {
+		this.name = name;
+	}
+	
+	@JsonProperty("dc:type")
+	public String getEvidenceType() {
+		return evidenceType;
+	}
+	
+	@JsonProperty("dc:type")
+	public void setEvidenceType(String type) {
+		this.evidenceType = type;
 	}
 	
 	public List<Support> getSupports() {

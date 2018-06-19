@@ -41,6 +41,8 @@ import bio.knowledge.server.model.BeaconKnowledgeMapStatement;
 import bio.knowledge.server.model.BeaconKnowledgeMapSubject;
 import bio.knowledge.server.model.BeaconPredicate;
 import bio.knowledge.server.model.BeaconStatement;
+import bio.knowledge.server.model.BeaconStatementAnnotation;
+import bio.knowledge.server.model.BeaconStatementCitation;
 import bio.knowledge.server.model.BeaconStatementWithDetails;
 import bio.knowledge.server.model.ExactMatchResponse;
 import bio.knowledge.server.ontology.OntologyService;
@@ -136,7 +138,6 @@ public class ControllerImpl {
 	 */
 	private List<Graph> search(Function<String, BasicQuery> makeJson, String luceneSearch, String queryType) {
 		
-	
 		CacheLocation cacheLocation = 
 				cache.searchForResultSet(
 						"Graph", 
@@ -694,65 +695,49 @@ public class ControllerImpl {
 		return matchingStatements;
 	}
 
-	public ResponseEntity<BeaconStatementWithDetails> getEvidence(String statementId, List<String> keywords, Integer size) {
-//		try {
-//		
-//			statementId = fix(statementId);
-//			keywords = makeNonNull(keywords);
-//			size = fixPageSize(size);
-//			
-//			if(statementId.startsWith(Translator.NDEX_NS)) {
-//				statementId = statementId.replaceAll("^"+Translator.NDEX_NS, "");
-//			}
-//			
-//			String[] half = statementId.split("_", 2);
-//			String conceptId = half[0];
-//			Long statement = Long.valueOf(half[1]);
-//
-//			List<Graph> graphs = searchByIds(search::edgesBy, Util.list(conceptId), NdexClient.QUERY_FOR_NODE_AND_EDGES);
-//			
-//			Collection<Edge> relatedEdges = Util.flatmap(Graph::getEdges, graphs);
-//			
-//			Predicate<Edge> wasRequested = e -> e.getId().equals(statement);
-//			List<Edge> maybeEdge = Util.filter(wasRequested, relatedEdges);
-//			
-//			if (maybeEdge.size() == 1) {
-//				
-//				List<BeaconAnnotation> evidence = new ArrayList<BeaconAnnotation>();
-//
-//				/*
-//				 *  Insert the current Graph network identifier 
-//				 *  as one piece of "evidence" alongside 
-//				 *  any other discovered citation evidence
-//				 */
-//				BeaconAnnotation networkEvidence = new BeaconAnnotation();
-//				String[] idPart = statementId.split(Translator.NETWORK_NODE_DELIMITER, 2);
-//				networkEvidence.setId("ndex.network:"+idPart[0]);
-//				networkEvidence.setLabel("nDex Network");
-//				networkEvidence.setType("TAS");
-//				evidence.add(networkEvidence);
-//				
-//				// Add any edge Citation annotation, if available
-//				Edge edge = maybeEdge.get(0);
-//				List<Citation> citations = edge.getCitations();
-//				List<Citation> matching = filterMatching(citations, keywords);
-//				
-//				if(citations != null)
-//					evidence.addAll( Util.map(translator::citationToEvidence, matching) );
-//				
-//				return ResponseEntity.ok(evidence);
-//			
-//			} else {
-//				return ResponseEntity.ok(new ArrayList<>());
-//			}
-//			
-//		} catch (Exception e) {
-//			log(e);
-//			return ResponseEntity.ok(new ArrayList<>());
-//		}
-		return ResponseEntity.ok(new BeaconStatementWithDetails());
+	public ResponseEntity<BeaconStatementWithDetails> getStatementDetails(String statementId, List<String> keywords, Integer size) {
+		try {
+			statementId = fix(statementId);
+			keywords = makeNonNull(keywords);
+			size = fixPageSize(size);
+
+			String[] splitIds = statementId.split("_", 2);
+			String networkAndSubjectId = splitIds[0];
+			String networkId = networkAndSubjectId.replaceFirst(Translator.NDEX_NS, "").split("#")[0];
+			Long objectId = Long.valueOf(splitIds[1]);
+
+			List<Graph> graphs = searchByIds(search::edgesBy, Util.list(networkAndSubjectId), NdexClient.QUERY_FOR_NODE_AND_EDGES);
+
+			Collection<Edge> relatedEdges = Util.flatmap(Graph::getEdges, graphs);
+
+			Predicate<Edge> wasRequested = e -> e.getId().equals(objectId);
+			List<Edge> maybeEdge = Util.filter(wasRequested, relatedEdges);
+
+			assert(maybeEdge.size() == 1);
+			if (maybeEdge.size() == 1) {
+				BeaconStatementWithDetails result = translator.edgeToStatementDetails(maybeEdge.get(0), networkId);
+				filterByKeywords(result, keywords);
+				return ResponseEntity.ok(result);
+			} else {
+				return ResponseEntity.ok(null);
+			}
+
+		} catch (Exception e) {
+			return ResponseEntity.ok(null);
+		}
 	}
 	
+	private void filterByKeywords(BeaconStatementWithDetails result, List<String> keywords) {
+		if (keywords.isEmpty()) return;
+
+		List<BeaconStatementCitation> evidence = result.getEvidence();
+
+		if (!(evidence.isEmpty())) {
+			Predicate<BeaconStatementCitation> hasKeywords = c -> containsAll(c.getName(), keywords);
+			result.setEvidence(Util.filter(hasKeywords, evidence));
+		}
+	}
+
 	public ResponseEntity<List<BeaconConceptCategory>> getCategories() {
 		List<BeaconConceptCategory> types = new ArrayList<BeaconConceptCategory>();
 		

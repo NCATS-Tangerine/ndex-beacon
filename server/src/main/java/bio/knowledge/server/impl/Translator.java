@@ -21,9 +21,12 @@ import bio.knowledge.server.model.BeaconConcept;
 import bio.knowledge.server.model.BeaconConceptDetail;
 import bio.knowledge.server.model.BeaconConceptWithDetails;
 import bio.knowledge.server.model.BeaconStatement;
+import bio.knowledge.server.model.BeaconStatementAnnotation;
+import bio.knowledge.server.model.BeaconStatementCitation;
 import bio.knowledge.server.model.BeaconStatementObject;
 import bio.knowledge.server.model.BeaconStatementPredicate;
 import bio.knowledge.server.model.BeaconStatementSubject;
+import bio.knowledge.server.model.BeaconStatementWithDetails;
 import bio.knowledge.server.ontology.OntologyService;
 import bio.knowledge.server.ontology.NdexConceptCategoryService;
 import bio.knowledge.server.ontology.NdexConceptCategoryService.NameSpace;
@@ -150,6 +153,54 @@ public class Translator {
 		return details;
 	}
 	
+	public BeaconStatementWithDetails edgeToStatementDetails(Edge edge, String networkId) {
+		
+		BeaconStatementWithDetails result = new BeaconStatementWithDetails();
+		
+		result.setId(Translator.NDEX_NS + networkId);
+		result.setIsDefinedBy(Translator.NDEX_NS + networkId);
+		result.setProvidedBy("NDEX");
+		
+		if (edge.getAttributes() != null) {
+			for (Attribute a : edge.getAttributes()) {
+				for (String value : a.getValues()) {
+					BeaconStatementAnnotation annotation = new BeaconStatementAnnotation();
+					annotation.setTag(a.getName());
+					annotation.setValue(value);
+					result.addAnnotationItem(annotation);
+				}
+			}
+		}
+		
+		if (edge.getCitations() != null) {
+			for (Citation citation : edge.getCitations()) {
+				BeaconStatementCitation beaconC = new BeaconStatementCitation();
+				beaconC.setId(citation.getCitationId());
+				beaconC.setName(formatCitationName(citation.getName(), citation.getFullText()));
+				beaconC.setEvidenceType(citation.getEvidenceType());
+			}
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * Formats citation name so any information from dc:title is separated from any 
+	 * information from Supports with a | character
+	 * @param name
+	 * @param supportsText
+	 * @return
+	 */
+	private String formatCitationName(String name, String supportsText) {
+		if (name == null) {
+			return supportsText;
+		} else if (supportsText == null || supportsText.trim().isEmpty()) {
+			return name;
+		} else {
+			return name + " | " + supportsText;
+		}
+	}
+
 	public BeaconConceptWithDetails nodeToConceptDetails(Node node) {
 		
 		BeaconConceptWithDetails conceptDetails = new BeaconConceptWithDetails();

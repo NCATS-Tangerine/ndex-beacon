@@ -25,18 +25,6 @@ public class Aspect {
 	private EdgeCitation[] edgeCitations = new EdgeCitation[0];
 	private Support[] supports = new Support[0];
 	private EdgeSupport[] edgeSupports = new EdgeSupport[0];
-	
-	
-	
-//	@JsonProperty("numberVerification")
-//	public NetworkId[] getNdexStatus() {
-//		return ndexStatus;
-//	}
-//
-//	@JsonProperty("numberVerification")
-//	public void setNdexStatus(NetworkId[] ndexStatus) {
-//		this.ndexStatus = ndexStatus;
-//	}
 
 	public String getNdexStatus() {
 		return ndexStatus;

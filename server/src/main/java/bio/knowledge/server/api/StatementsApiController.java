@@ -30,7 +30,7 @@ public class StatementsApiController implements StatementsApi {
     public ResponseEntity<BeaconStatementWithDetails> getStatementDetails(@ApiParam(value = "(url-encoded) CURIE identifier of the concept-relationship statement (\"assertion\", \"claim\") for which associated evidence is sought ",required=true ) @PathVariable("statementId") String statementId,
          @ApiParam(value = "an array of keywords or substrings against which to  filter annotation names (e.g. publication titles).") @RequestParam(value = "keywords", required = false) List<String> keywords,
          @ApiParam(value = "maximum number of concept entries requested by the client; if this  argument is omitted, then the query is expected to returned all  the available data for the query ") @RequestParam(value = "size", required = false) Integer size) {
-        return ctrl.getEvidence(statementId, keywords, size);
+        return ctrl.getStatementDetails(statementId, keywords, size);
     }
 
     public ResponseEntity<List<BeaconStatement>> getStatements( @NotNull @ApiParam(value = "an array set of [CURIE-encoded](https://www.w3.org/TR/curie/) identifiers of  'source' concepts possibly known to the beacon. Unknown CURIES should simply be ignored (silent match failure). ", required = true) @RequestParam(value = "s", required = true) List<String> s,
