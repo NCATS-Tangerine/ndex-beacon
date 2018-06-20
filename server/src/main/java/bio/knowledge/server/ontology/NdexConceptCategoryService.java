@@ -616,4 +616,27 @@ public class NdexConceptCategoryService {
 		 */
 		return BiolinkTerm.NAMED_THING.getLabel();
 	}
+	
+	/**
+	 * These are all the possible categories Ndex results can be linked to, based on 
+	 * {@link #inferConceptCategory(String, String, java.util.List)}  
+	 */
+	static public BiolinkTerm[] POSSIBLE_NDEX_CATEGORIES = 
+		{ BiolinkTerm.ANATOMICAL_ENTITY,
+		  BiolinkTerm.BIOLOGICAL_ENTITY,
+		  BiolinkTerm.CHEMICAL_SUBSTANCE,
+		  BiolinkTerm.DISEASE,
+		  BiolinkTerm.DRUG,
+		  BiolinkTerm.GENE,
+		  BiolinkTerm.GENE_OR_GENE_PRODUCT,
+		  BiolinkTerm.INDIVIDUAL_ORGANISM,
+		  BiolinkTerm.MOLECULAR_ENTITY,
+		  BiolinkTerm.NAMED_THING,
+		  BiolinkTerm.PATHWAY,
+		  BiolinkTerm.PHYSIOLOGICAL_PROCESS,
+		  BiolinkTerm.PROCEDURE,
+		  BiolinkTerm.PROTEIN,
+		  BiolinkTerm.SEQUENCE_VARIANT,
+		  BiolinkTerm.TRANSCRIPT
+		  };
 }

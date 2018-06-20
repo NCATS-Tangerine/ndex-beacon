@@ -20,7 +20,13 @@ public class Node extends PropertiedObject {
 	
 	public static boolean isCurie(String string) {
 		if (string != null) {
-			return string.split(":").length > 1;
+			String[] split = string.split(":"); 
+			if (split.length == 2) {
+				String reference = split[1];
+				return (!(reference.contains(" ")) && (!(reference.contains("http"))));
+			} else {
+				return false;
+			}
 		} else {
 			return false;
 		}

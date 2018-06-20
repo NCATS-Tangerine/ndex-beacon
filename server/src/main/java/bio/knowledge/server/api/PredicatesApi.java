@@ -20,7 +20,7 @@ import javax.validation.constraints.*;
 @Api(value = "predicates", description = "the predicates API")
 public interface PredicatesApi {
 
-    @ApiOperation(value = "", notes = "Get a list of predicates used in statements issued by the knowledge source ", response = BeaconPredicate.class, responseContainer = "List", tags={ "metadata", })
+    @ApiOperation(value = "", notes = "Get a list of predicates used in statements issued by the knowledge source. For NDEX, this is only a list of those discovered so far through queries", response = BeaconPredicate.class, responseContainer = "List", tags={ "metadata", })
     @ApiResponses(value = { 
         @ApiResponse(code = 200, message = "Successful response with predicates with CURIE and definitions indexed by beacons which support the relation ", response = BeaconPredicate.class) })
     @RequestMapping(value = "/predicates",

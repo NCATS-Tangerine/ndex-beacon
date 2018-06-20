@@ -64,10 +64,15 @@ public class PredicatesRegistry extends HashMap<String, BeaconPredicate> {
 			p.setLocalRelation(name);
 			p.setRelation(name);
 			p.setDescription(definition);
+			p.setFrequency(1);
 			
 			
 			put(id, p);
 			
+		} else {
+			BeaconPredicate p = get(id); 
+			p.setFrequency(p.getFrequency()+1);
+			put(id, p);
 		}
 		
 

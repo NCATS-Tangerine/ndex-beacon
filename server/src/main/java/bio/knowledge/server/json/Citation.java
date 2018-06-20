@@ -32,27 +32,27 @@ public class Citation extends IdentifiedObject {
 	public void setCitationId(String citationId) {
 		this.citationId = citationId;
 	}
-	
+
 	@JsonProperty("dc:title")
 	public String getName() {
 		return name;
 	}
-	
+
 	@JsonProperty("dc:title")
 	public void setName(String name) {
 		this.name = name;
 	}
-	
+
 	@JsonProperty("dc:type")
 	public String getEvidenceType() {
 		return evidenceType;
 	}
-	
+
 	@JsonProperty("dc:type")
 	public void setEvidenceType(String type) {
 		this.evidenceType = type;
 	}
-	
+
 	public List<Support> getSupports() {
 		return supports;
 	}

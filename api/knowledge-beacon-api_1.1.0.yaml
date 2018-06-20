@@ -31,7 +31,8 @@ paths:
         Get a list of concept categories and number of their concept instances
         documented by the knowledge source. These types should be mapped onto
         the Translator-endorsed Biolink Model concept type classes with local
-        types, explicitly added as mappings to the Biolink Model YAML file. 
+        types, explicitly added as mappings to the Biolink Model YAML file. A 
+        frequency of -1 indicates the category can exist, but the count is unknown. 
       tags:
         - metadata
       operationId: getConceptCategories

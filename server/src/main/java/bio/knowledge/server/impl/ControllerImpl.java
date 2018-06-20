@@ -22,10 +22,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import bio.knowledge.ontology.BiolinkTerm;
 import bio.knowledge.server.impl.Cache.CacheLocation;
 import bio.knowledge.server.json.Attribute;
 import bio.knowledge.server.json.BasicQuery;
-import bio.knowledge.server.json.Citation;
 import bio.knowledge.server.json.Edge;
 import bio.knowledge.server.json.Network;
 import bio.knowledge.server.json.NetworkId;
@@ -35,16 +35,13 @@ import bio.knowledge.server.json.SearchString;
 import bio.knowledge.server.model.BeaconConcept;
 import bio.knowledge.server.model.BeaconConceptCategory;
 import bio.knowledge.server.model.BeaconConceptWithDetails;
-import bio.knowledge.server.model.BeaconKnowledgeMapObject;
-import bio.knowledge.server.model.BeaconKnowledgeMapPredicate;
 import bio.knowledge.server.model.BeaconKnowledgeMapStatement;
-import bio.knowledge.server.model.BeaconKnowledgeMapSubject;
 import bio.knowledge.server.model.BeaconPredicate;
 import bio.knowledge.server.model.BeaconStatement;
-import bio.knowledge.server.model.BeaconStatementAnnotation;
 import bio.knowledge.server.model.BeaconStatementCitation;
 import bio.knowledge.server.model.BeaconStatementWithDetails;
 import bio.knowledge.server.model.ExactMatchResponse;
+import bio.knowledge.server.ontology.NdexConceptCategoryService;
 import bio.knowledge.server.ontology.OntologyService;
 
 @Service
@@ -59,6 +56,7 @@ public class ControllerImpl {
 	@Autowired private Translator translator;
 	@Autowired AliasNamesRegistry aliasRegistry;
 	@Autowired PredicatesRegistry predicateRegistry;
+	@Autowired KnowledgeMapRegistry knowledgeMapRegistry;
 
 	private static final int DEFAULT_PAGE_SIZE = 10;
 	private static final long TIMEOUT = 30;
@@ -259,6 +257,7 @@ public class ControllerImpl {
 		List<ExactMatchResponse> response = new ArrayList<>();
 		
 		for (String curie : c) {
+			
 			ExactMatchResponse match = new ExactMatchResponse();
 			
 			match.setId(curie);
@@ -298,9 +297,12 @@ public class ControllerImpl {
 		
 		for (Node node : nodes) {
 			for (Attribute attribute : node.getAttributes()) {
-				if (attribute.getName().equals("alias") && (nodeOrAliasMatchesCuries(curies, node, attribute)))
-						aliases.addAll(attribute.getValues());
+				if (attribute.getName().equals("alias") && (nodeOrAliasMatchesCuries(curies, node, attribute))) {
+					for (String value : attribute.getValues()) {
+						aliases.add(value.trim());
+					}
 				}
+			}
 		}
 		
 		return aliases;
@@ -489,16 +491,6 @@ public class ControllerImpl {
 		
 		return edges;
 	}
-	
-	private List<Citation> filterMatching(List<Citation> citations, List<String> keywords) {
-		
-		if (keywords.isEmpty()) return citations;
-
-		Predicate<Citation> matches = c -> containsAll(c.getFullText(), keywords);
-			
-		List<Citation> matching = Util.filter(matches, citations);
-		return matching;
-	}
 
 	public List<?> getPage(List<?> items, Integer size) {
 		if (items.isEmpty()) {
@@ -530,6 +522,7 @@ public class ControllerImpl {
 			List<Graph> graphs = search(search::nodesBy, luceneSearch, NdexClient.QUERY_FOR_NODE_AND_EDGES);		
 			Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
 			combineDuplicates(nodes);
+			addToKmapAndPredMetadata(nodes);
 			Util.map(translator::makeId, nodes);
 			
 			concepts = Util.map(translator::nodeToConcept, nodes);
@@ -544,7 +537,8 @@ public class ControllerImpl {
 			return ResponseEntity.ok(new ArrayList<BeaconConcept>());
 		}
 	}
-	
+
+
 	// TODO: method may throw assert error - not sure if there will be more than one returned
 	// and in what circumstances
 	public ResponseEntity<BeaconConceptWithDetails> getConceptDetails(String conceptId) {
@@ -570,13 +564,7 @@ public class ControllerImpl {
 			return ResponseEntity.ok(new BeaconConceptWithDetails());
 		}
 	}
-	
-	public ResponseEntity<List<BeaconPredicate>> getPredicates() {
-		List<BeaconPredicate> responses = new ArrayList<BeaconPredicate>(predicateRegistry.values());
-		return ResponseEntity.ok(responses);		
-	}
 
-	
 	public ResponseEntity<List<ExactMatchResponse>> getExactMatchesToConceptList(List<String> c) {
 		try {
 			c = makeNonNull(c);
@@ -660,8 +648,6 @@ public class ControllerImpl {
 			// Paging workaround since nDex paging doesn't seem to work as published?
 			List<BeaconStatement> page = (List<BeaconStatement>)getPage(statements, size);
 			
-			_logger.info("\nFinished finding statements. Current known subject to object pairs:\n {} ", translator.subjectObjectRegistry); 
-			
 			return ResponseEntity.ok(page);
 		
 		} catch (Exception e) {
@@ -741,78 +727,40 @@ public class ControllerImpl {
 	public ResponseEntity<List<BeaconConceptCategory>> getCategories() {
 		List<BeaconConceptCategory> types = new ArrayList<BeaconConceptCategory>();
 		
-		// Hard code some known types... See Translator.makeSemGroup()
-		types.add(createBeaconConceptCategoryFromUMLS("GENE"));
-		types.add(createBeaconConceptCategoryFromUMLS("CHEM"));
-		types.add(createBeaconConceptCategoryFromUMLS("DISO"));
-		types.add(createBeaconConceptCategoryFromUMLS("PHYS"));
-		types.add(createBeaconConceptCategoryFromUMLS("ANAT"));
-		types.add(createBeaconConceptCategoryFromUMLS("PROC"));
-		types.add(createBeaconConceptCategoryFromUMLS("OBJC"));
-		
-		
-		// doesn't seem to exist in Biolink
-//		BeaconConceptCategory LIVB_Type = new BeaconConceptCategory();
-//		LIVB_Type.setId(ontology.umlsToBiolinkCategory("LIVB"));
-//		types.add(LIVB_Type);
-//		
-		
+		for (BiolinkTerm term : NdexConceptCategoryService.POSSIBLE_NDEX_CATEGORIES) {
+			BeaconConceptCategory category = new BeaconConceptCategory();
+			category.setCategory(term.getLabel());
+			category.setId(term.getCurie());
+			category.setFrequency(-1);
+			category.setDescription(term.getDefinition());
+			category.setUri(term.getIri());
+			types.add(category);
+		}
+	
 		return ResponseEntity.ok(types);
     }
 	
-	private BeaconConceptCategory createBeaconConceptCategoryFromUMLS(String umls) {
-		BeaconConceptCategory category = new BeaconConceptCategory();
-		String biolinkName = ontology.umlsToBiolinkCategory(umls);
-		category.setId(biolinkName);
-		category.setCategory(biolinkName);
-		category.setLocalId(umls);
-		category.setLocalCategory("UMLSSG:" + umls);
-		return category;
+	public ResponseEntity<List<BeaconPredicate>> getPredicates() {
+		List<BeaconPredicate> responses = new ArrayList<BeaconPredicate>(predicateRegistry.values());
+		return ResponseEntity.ok(responses);		
 	}
-
 
 	public ResponseEntity<List<BeaconKnowledgeMapStatement>> getKnowledgeMap() {
-		List<BeaconKnowledgeMapStatement> knowledgeMapStatements = new ArrayList<BeaconKnowledgeMapStatement>();
 		
-		for (Map.Entry<StatementTriple, Integer> entry : translator.subjectObjectRegistry.entrySet()) {
-			StatementTriple triple = entry.getKey();
-			BeaconKnowledgeMapStatement statement = new BeaconKnowledgeMapStatement();
-			
-			BeaconKnowledgeMapSubject subject = new BeaconKnowledgeMapSubject();
-			subject.setCategory(triple.getSubject());
-			subject.setPrefixes(ontology.getBiolinkCategoryIdPrefixes(triple.getSubject()));
-			statement.setSubject(subject);
-			
-			BeaconKnowledgeMapPredicate predicate = new BeaconKnowledgeMapPredicate();
-			//TODO: needs updating once biolink predicates are being generated more appropriately
-			// Predicate in the triple are currently being stored as NDEX:ndex_relation_name for extra logging information
-			// Here we need to convert it to a biolink label for public kmap reporting purposes
-			String predicateRelationship = ontology.removeSnakeCase(triple.getPredicate());
-			if (predicateRelationship.startsWith(Translator.NDEX_NS)) {
-				predicateRelationship = predicateRelationship.substring(Translator.NDEX_NS.length());
-			}
-			String biolinkName = ontology.predToBiolinkEdgeLabel(predicateRelationship);
-			predicate.setRelation(biolinkName);
-			statement.setPredicate(predicate);
+		List<BeaconKnowledgeMapStatement> responses = 
+				new ArrayList<BeaconKnowledgeMapStatement>(knowledgeMapRegistry.values());
 
-			BeaconKnowledgeMapObject object = new BeaconKnowledgeMapObject();
-			object.setCategory(triple.getObject());
-			object.setPrefixes(ontology.getBiolinkCategoryIdPrefixes(triple.getObject()));
-			statement.setObject(object);
-			
-			
-			statement.setSubject(subject);
-			statement.setPredicate(predicate);
-			statement.setObject(object);
-			statement.setFrequency(entry.getValue());
-			statement.setDescription(triple.getSubject() + " - " + predicateRelationship + " - " + triple.getObject());
-			
-			knowledgeMapStatements.add(statement);
-		}
-		
-		return ResponseEntity.ok(knowledgeMapStatements);
-		
+		return ResponseEntity.ok(responses);
 	}
-
 	
+	/**
+	 * Adds information to /predicates and /kmap endpoints through the translator::edgeToStatement method 
+	 * This results in extra computation to create statements that are never used, so it may be useful
+	 * to save the information somewhere in the future
+	 * @param nodes
+	 */
+	private void addToKmapAndPredMetadata(Collection<Node> nodes) {
+		Collection<Edge> edges = Util.flatmap(Node::getEdges, nodes);
+		Util.map( translator::edgeToStatement, edges );
+	}
 }

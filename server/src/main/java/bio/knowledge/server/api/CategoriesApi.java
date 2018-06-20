@@ -20,7 +20,8 @@ import javax.validation.constraints.*;
 @Api(value = "categories", description = "the categories API")
 public interface CategoriesApi {
 
-    @ApiOperation(value = "", notes = "Get a list of concept categories and number of their concept instances documented by the knowledge source. These types should be mapped onto the Translator-endorsed Biolink Model concept type classes with local types, explicitly added as mappings to the Biolink Model YAML file.  ", response = BeaconConceptCategory.class, responseContainer = "List", tags={ "metadata", })
+    @ApiOperation(value = "", notes = "Get a list of concept categories and number of their concept instances documented by the knowledge source. These types should be mapped onto the Translator-endorsed Biolink Model concept type classes with local types, explicitly added as mappings to the Biolink Model YAML file. " + 
+    		"A frequency of -1 indicates the category can exist, but the count is unknown.", response = BeaconConceptCategory.class, responseContainer = "List", tags={ "metadata", })
     @ApiResponses(value = { 
         @ApiResponse(code = 200, message = "Successful response with categories and frequency returned ", response = BeaconConceptCategory.class) })
     @RequestMapping(value = "/categories",

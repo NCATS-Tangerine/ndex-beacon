@@ -3,8 +3,10 @@ package bio.knowledge.server.impl;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -40,6 +42,8 @@ public class Translator {
 	
 	@Autowired OntologyService ontology;
 	
+	@Autowired KnowledgeMapRegistry knowledgeMapRegistry;
+	
 	private static Logger _logger = LoggerFactory.getLogger(Translator.class);
 
 	/*
@@ -54,13 +58,15 @@ public class Translator {
 	public static final String NDEX_NS = "NDEX:";
 
 	Map<StatementTriple, Integer> subjectObjectRegistry = new HashMap<StatementTriple, Integer>();
+	Map<String, Set<String>> categoryPrefixRegistry = new HashMap<String, Set<String>>();
 
 	private String makeNdexId(Node node) {
 		return NDEX_NS + node.getNetworkId() + NETWORK_NODE_DELIMITER + node.getId();
 	}
 	
 	/**
-	 * Returns node's CURIE if it exists and registers corresponding ndex networkId+identifier into the aliasRegistry
+	 * Returns node's CURIE if it exists, matches CURIE-like structure,
+	 * registers corresponding ndex networkId+identifier into the aliasRegistry
 	 * Otherwise returns a NdexId
 	 * @param node
 	 * @return CURIE or NDEX identifier
@@ -68,7 +74,7 @@ public class Translator {
 	public String makeId(Node node) {
 		String represents = node.getRepresents();
 		String nDexId = makeNdexId(node);
-		if( represents != null ) {
+		if( represents != null && hasCurieStructure(represents) ) {
 			if( ! aliasRegistry.containsKey(represents))
 				aliasRegistry.indexAlias(represents, nDexId);
 			return represents;
@@ -76,6 +82,22 @@ public class Translator {
 			return nDexId;
 	}
 	
+	/**
+	 * Some CURIEs in the represents field are not actual CURIEs and are more like descriptions or
+	 * even hyperlinks to resources
+	 * This simple heuristic returns false for strings that have spaces and hyperlinks
+	 * @param represents
+	 * @return
+	 */
+	private boolean hasCurieStructure(String represents) {
+		try {
+			String reference = represents.split(":")[1];
+			return (!(reference.contains(" ")) && (!(reference.contains("http"))));
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
 	private String makeId(Edge edge) {
 		return makeNdexId(edge.getSubject()) + "_" + edge.getId();
 	}
@@ -154,13 +176,13 @@ public class Translator {
 	}
 	
 	public BeaconStatementWithDetails edgeToStatementDetails(Edge edge, String networkId) {
-		
+
 		BeaconStatementWithDetails result = new BeaconStatementWithDetails();
-		
+
 		result.setId(Translator.NDEX_NS + networkId);
 		result.setIsDefinedBy(Translator.NDEX_NS + networkId);
 		result.setProvidedBy("NDEX");
-		
+
 		if (edge.getAttributes() != null) {
 			for (Attribute a : edge.getAttributes()) {
 				for (String value : a.getValues()) {
@@ -171,7 +193,7 @@ public class Translator {
 				}
 			}
 		}
-		
+
 		if (edge.getCitations() != null) {
 			for (Citation citation : edge.getCitations()) {
 				BeaconStatementCitation beaconC = new BeaconStatementCitation();
@@ -180,10 +202,10 @@ public class Translator {
 				beaconC.setEvidenceType(citation.getEvidenceType());
 			}
 		}
-		
+
 		return result;
 	}
-	
+
 	/**
 	 * Formats citation name so any information from dc:title is separated from any 
 	 * information from Supports with a | character
@@ -308,29 +330,8 @@ public class Translator {
 		statement.setPredicate(edgeToPredicate(edge));
 		statement.setObject(nodeToObject(edge.getObject()));
 		
-		logSubjectObjectCount(statement);
-		
-		
+		knowledgeMapRegistry.indexKnowledgeMapEntry(statement);	
 		return statement;
 	}
 
-	
-	private void logSubjectObjectCount(BeaconStatement statement) {
-		
-		String subj = statement.getSubject().getCategory();
-		String obj = statement.getObject().getCategory();
-		String pred = statement.getPredicate().getRelation();
-		
-		StatementTriple lookup = new StatementTriple(subj, pred, obj);
-		
-		
-		if (subjectObjectRegistry.containsKey(lookup)) {
-			subjectObjectRegistry.put(lookup, subjectObjectRegistry.get(lookup)+1);
-		} else {
-			subjectObjectRegistry.put(lookup, 1);
-			_logger.info("New subj-pred-obj encounted - Subject: " + subj + "; Relation: " + pred + "; Object: " + obj);
-		}
-		
-	}
-	
 }

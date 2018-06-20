@@ -4,7 +4,7 @@ package bio.knowledge.server.impl;
 import java.util.Objects;
 
 /**
- * Class to store subject, predicate, object relationships
+ * Class to store subject, predicate (relation), object relationships
  * 
  * @author Imelda
  */

@@ -20,7 +20,7 @@ import javax.validation.constraints.*;
 @Api(value = "kmap", description = "the kmap API")
 public interface KmapApi {
 
-    @ApiOperation(value = "", notes = "Get a high level knowledge map of the all the beacons by subject semantic type, predicate and semantic object type ", response = BeaconKnowledgeMapStatement.class, responseContainer = "List", tags={ "metadata", })
+    @ApiOperation(value = "", notes = "Get a high level knowledge map of the all the beacons by subject semantic type, predicate and semantic object type. For NDEX, this is only a list of those discovered so far through queries", response = BeaconKnowledgeMapStatement.class, responseContainer = "List", tags={ "metadata", })
     @ApiResponses(value = { 
         @ApiResponse(code = 200, message = "Successful response with categories and frequency returned ", response = BeaconKnowledgeMapStatement.class) })
     @RequestMapping(value = "/kmap",
