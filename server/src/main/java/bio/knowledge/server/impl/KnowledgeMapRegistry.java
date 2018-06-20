@@ -83,7 +83,6 @@ public class KnowledgeMapRegistry extends HashMap<StatementTriple, BeaconKnowled
 		if (nodeId.startsWith(Translator.NDEX_NS)) return null;
 		
 		String prefix = nodeId.split(":")[0];
-		prefix = prefix.trim().toLowerCase();
 		List<String> set; 
 		if (prefixes.containsKey(category)) {
 			set = prefixes.get(category);
