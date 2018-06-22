@@ -1,6 +1,5 @@
 package bio.knowledge.server.impl;
 
-import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.http.HttpEntity;

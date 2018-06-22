@@ -54,9 +54,9 @@ public class ControllerImpl {
 	@Autowired private SearchBuilder search;
 	@Autowired private NdexClient ndex;
 	@Autowired private Translator translator;
-	@Autowired AliasNamesRegistry aliasRegistry;
-	@Autowired PredicatesRegistry predicateRegistry;
-	@Autowired KnowledgeMapRegistry knowledgeMapRegistry;
+	@Autowired private AliasNamesRegistry aliasRegistry;
+	@Autowired private PredicatesRegistry predicateRegistry;
+	@Autowired private KnowledgeMapRegistry knowledgeMapRegistry;
 
 	private static final int DEFAULT_PAGE_SIZE = 10;
 	private static final long TIMEOUT = 30;

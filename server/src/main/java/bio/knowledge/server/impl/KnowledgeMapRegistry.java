@@ -2,10 +2,8 @@ package bio.knowledge.server.impl;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +36,7 @@ public class KnowledgeMapRegistry extends HashMap<StatementTriple, BeaconKnowled
 		
 		if (!containsKey(triple)) {
 			String pred = triple.getPredicate();
-			_logger.info("New subj-pred-obj encounted - "
+			_logger.info("New subj-pred-obj encountered - "
 					+ "Subject: " + subj + "; "
 					+ "Relation: " + pred + "; "
 					+ "Object: " + obj);

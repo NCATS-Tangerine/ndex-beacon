@@ -3,11 +3,9 @@ package bio.knowledge.server.impl;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.slf4j.Logger;
@@ -29,9 +27,9 @@ import bio.knowledge.server.model.BeaconStatementObject;
 import bio.knowledge.server.model.BeaconStatementPredicate;
 import bio.knowledge.server.model.BeaconStatementSubject;
 import bio.knowledge.server.model.BeaconStatementWithDetails;
-import bio.knowledge.server.ontology.OntologyService;
 import bio.knowledge.server.ontology.NdexConceptCategoryService;
 import bio.knowledge.server.ontology.NdexConceptCategoryService.NameSpace;
+import bio.knowledge.server.ontology.OntologyService;
 
 @Service
 public class Translator {

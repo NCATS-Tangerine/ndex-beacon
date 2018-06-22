@@ -1,14 +1,10 @@
 package bio.knowledge.server.model;
 
 import java.util.Objects;
-import bio.knowledge.server.model.BeaconKnowledgeMapObject;
-import bio.knowledge.server.model.BeaconKnowledgeMapPredicate;
-import bio.knowledge.server.model.BeaconKnowledgeMapSubject;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import io.swagger.annotations.ApiModel;
+
 import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.*;
 /**
  * BeaconKnowledgeMapStatement
  */
