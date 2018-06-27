@@ -152,7 +152,7 @@ public class Translator {
 		
 		concept.setId(conceptId);
 		concept.setName(makeName(node));
-		concept.setCategory(inferConceptCategory(conceptId, node));
+		concept.addCategoriesItem(inferConceptCategory(conceptId, node));
 //		concept.setSynonyms(node.getSynonyms());
 		
 		return concept;
@@ -231,7 +231,7 @@ public class Translator {
 		conceptDetails.setUri(null);
 		conceptDetails.setName(makeName(node));
 		conceptDetails.setSymbol(null);
-		conceptDetails.setCategory(inferConceptCategory(conceptId,node));
+		conceptDetails.addCategoriesItem(inferConceptCategory(conceptId,node));
 
 //		Consumer<String> addSynonym = s -> conceptDetails.addSynonymsItem(s);
 //		node.getSynonyms().forEach(addSynonym);
@@ -264,7 +264,7 @@ public class Translator {
 		
 		subject.setName(makeName(node));
 		
-		subject.setCategory(inferConceptCategory(conceptId,node));
+		subject.addCategoriesItem(inferConceptCategory(conceptId,node));
 		
 		return subject;
 	}
@@ -314,7 +314,7 @@ public class Translator {
 		
 		object.setName(makeName(node));
 		
-		object.setCategory(inferConceptCategory(conceptId,node));
+		object.addCategoriesItem(inferConceptCategory(conceptId,node));
 		
 		return object;
 	}

@@ -1,14 +1,17 @@
 package bio.knowledge.server.model;
 
 import java.util.Objects;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.ArrayList;
+import java.util.List;
+import javax.validation.constraints.*;
 /**
  * BeaconStatementObject
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-06-12T19:09:25.899Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-06-27T18:01:11.438Z")
 
 public class BeaconStatementObject   {
   @JsonProperty("id")
@@ -17,8 +20,8 @@ public class BeaconStatementObject   {
   @JsonProperty("name")
   private String name = null;
 
-  @JsonProperty("category")
-  private String category = null;
+  @JsonProperty("categories")
+  private List<String> categories = new ArrayList<String>();
 
   public BeaconStatementObject id(String id) {
     this.id = id;
@@ -56,22 +59,27 @@ public class BeaconStatementObject   {
     this.name = name;
   }
 
-  public BeaconStatementObject category(String category) {
-    this.category = category;
+  public BeaconStatementObject categories(List<String> categories) {
+    this.categories = categories;
+    return this;
+  }
+
+  public BeaconStatementObject addCategoriesItem(String categoriesItem) {
+    this.categories.add(categoriesItem);
     return this;
   }
 
    /**
    * a semantic group for the object concept (specified as a code gene, pathway, disease, etc. - see [Biolink Model](https://biolink.github.io/biolink-model) for the full list of categories) 
-   * @return category
+   * @return categories
   **/
   @ApiModelProperty(value = "a semantic group for the object concept (specified as a code gene, pathway, disease, etc. - see [Biolink Model](https://biolink.github.io/biolink-model) for the full list of categories) ")
-  public String getCategory() {
-    return category;
+  public List<String> getCategories() {
+    return categories;
   }
 
-  public void setCategory(String category) {
-    this.category = category;
+  public void setCategories(List<String> categories) {
+    this.categories = categories;
   }
 
 
@@ -86,12 +94,12 @@ public class BeaconStatementObject   {
     BeaconStatementObject beaconStatementObject = (BeaconStatementObject) o;
     return Objects.equals(this.id, beaconStatementObject.id) &&
         Objects.equals(this.name, beaconStatementObject.name) &&
-        Objects.equals(this.category, beaconStatementObject.category);
+        Objects.equals(this.categories, beaconStatementObject.categories);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, name, category);
+    return Objects.hash(id, name, categories);
   }
 
   @Override
@@ -101,7 +109,7 @@ public class BeaconStatementObject   {
     
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
-    sb.append("    category: ").append(toIndentedString(category)).append("\n");
+    sb.append("    categories: ").append(toIndentedString(categories)).append("\n");
     sb.append("}");
     return sb.toString();
   }

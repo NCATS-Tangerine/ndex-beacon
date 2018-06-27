@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import bio.knowledge.ontology.BiolinkTerm;
 import bio.knowledge.server.model.BeaconKnowledgeMapObject;
 import bio.knowledge.server.model.BeaconKnowledgeMapPredicate;
 import bio.knowledge.server.model.BeaconKnowledgeMapStatement;
@@ -132,10 +133,19 @@ public class KnowledgeMapRegistry extends HashMap<StatementTriple, BeaconKnowled
 	}
 
 	private StatementTriple getTriple(BeaconStatement statement) {
-		String subj = statement.getSubject().getCategory();
-		String obj = statement.getObject().getCategory();
+		String subj = getTripleConceptCategory(statement.getSubject().getCategories());
+		String obj = getTripleConceptCategory(statement.getObject().getCategories());
 		String pred = statement.getPredicate().getRelation();
 		return new StatementTriple(subj, pred, obj);
 		
+	}
+	
+	/**
+	 * 
+	 * @param categories
+	 * @return default Biolink category if no categories listed, otherwise first (and likely only) category
+	 */
+	private String getTripleConceptCategory(List<String> categories) {
+		return (categories.isEmpty()) ? BiolinkTerm.NAMED_THING.getLabel() : categories.get(0);
 	}
 }

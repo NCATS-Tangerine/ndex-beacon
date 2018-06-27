@@ -2,6 +2,7 @@ package bio.knowledge.server.impl;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -411,7 +412,7 @@ public class ControllerImpl {
 		
 		if (types.isEmpty()) return concepts;
 		
-		Predicate<BeaconConcept> hasType = n -> types.contains(n.getCategory());
+		Predicate<BeaconConcept> hasType = n -> !Collections.disjoint(types, n.getCategories());
 		concepts = Util.filter(hasType, concepts);
 		
 		return concepts;

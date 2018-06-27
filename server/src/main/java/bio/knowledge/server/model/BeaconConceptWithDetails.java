@@ -1,16 +1,18 @@
 package bio.knowledge.server.model;
 
+import java.util.Objects;
+import bio.knowledge.server.model.BeaconConceptDetail;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import io.swagger.annotations.ApiModelProperty;
+import javax.validation.constraints.*;
 /**
  * BeaconConceptWithDetails
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-06-12T19:09:25.899Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-06-27T18:01:11.438Z")
 
 public class BeaconConceptWithDetails   {
   @JsonProperty("id")
@@ -25,8 +27,8 @@ public class BeaconConceptWithDetails   {
   @JsonProperty("symbol")
   private String symbol = null;
 
-  @JsonProperty("category")
-  private String category = null;
+  @JsonProperty("categories")
+  private List<String> categories = new ArrayList<String>();
 
   @JsonProperty("description")
   private String description = null;
@@ -112,22 +114,27 @@ public class BeaconConceptWithDetails   {
     this.symbol = symbol;
   }
 
-  public BeaconConceptWithDetails category(String category) {
-    this.category = category;
+  public BeaconConceptWithDetails categories(List<String> categories) {
+    this.categories = categories;
+    return this;
+  }
+
+  public BeaconConceptWithDetails addCategoriesItem(String categoriesItem) {
+    this.categories.add(categoriesItem);
     return this;
   }
 
    /**
    * concept semantic type 'category'. Should be specified from the [Biolink Model](https://biolink.github.io/biolink-model). 
-   * @return category
+   * @return categories
   **/
   @ApiModelProperty(value = "concept semantic type 'category'. Should be specified from the [Biolink Model](https://biolink.github.io/biolink-model). ")
-  public String getCategory() {
-    return category;
+  public List<String> getCategories() {
+    return categories;
   }
 
-  public void setCategory(String category) {
-    this.category = category;
+  public void setCategories(List<String> categories) {
+    this.categories = categories;
   }
 
   public BeaconConceptWithDetails description(String description) {
@@ -231,7 +238,7 @@ public class BeaconConceptWithDetails   {
         Objects.equals(this.uri, beaconConceptWithDetails.uri) &&
         Objects.equals(this.name, beaconConceptWithDetails.name) &&
         Objects.equals(this.symbol, beaconConceptWithDetails.symbol) &&
-        Objects.equals(this.category, beaconConceptWithDetails.category) &&
+        Objects.equals(this.categories, beaconConceptWithDetails.categories) &&
         Objects.equals(this.description, beaconConceptWithDetails.description) &&
         Objects.equals(this.synonyms, beaconConceptWithDetails.synonyms) &&
         Objects.equals(this.exactMatches, beaconConceptWithDetails.exactMatches) &&
@@ -240,7 +247,7 @@ public class BeaconConceptWithDetails   {
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, uri, name, symbol, category, description, synonyms, exactMatches, details);
+    return Objects.hash(id, uri, name, symbol, categories, description, synonyms, exactMatches, details);
   }
 
   @Override
@@ -252,7 +259,7 @@ public class BeaconConceptWithDetails   {
     sb.append("    uri: ").append(toIndentedString(uri)).append("\n");
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("    symbol: ").append(toIndentedString(symbol)).append("\n");
-    sb.append("    category: ").append(toIndentedString(category)).append("\n");
+    sb.append("    categories: ").append(toIndentedString(categories)).append("\n");
     sb.append("    description: ").append(toIndentedString(description)).append("\n");
     sb.append("    synonyms: ").append(toIndentedString(synonyms)).append("\n");
     sb.append("    exactMatches: ").append(toIndentedString(exactMatches)).append("\n");
