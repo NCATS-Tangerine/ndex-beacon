@@ -1,5 +1,6 @@
 package bio.knowledge.server.impl;
 
+import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.http.HttpEntity;
@@ -12,6 +13,7 @@ import bio.knowledge.server.json.AdvancedQuery;
 import bio.knowledge.server.json.Aspect;
 import bio.knowledge.server.json.BasicQuery;
 import bio.knowledge.server.json.Network;
+import bio.knowledge.server.json.NetworkSummary;
 import bio.knowledge.server.json.NetworkList;
 import bio.knowledge.server.json.SearchString;
 
@@ -36,6 +38,7 @@ public class NdexClient {
 	public static final String QUERY_FOR_NODE_MATCH = NDEX + "/search/network/{networkId}/interconnectquery";
 	public static final String QUERY_FOR_NODE_AND_EDGES = NDEX + "/search/network/{networkId}/query";
 	public static final String ADVANCED_QUERY = NDEX + "/search/network/{networkId}/advancedquery";
+	public static final String NETWORK_SUMMARY = NDEX + "/network/{networkId}/summary";
 	
 	private static final int NETWORK_SEARCH_SIZE = 100;
 
@@ -54,7 +57,7 @@ public class NdexClient {
 		try {
 			HttpEntity<SearchString> request = new HttpEntity<>(searchString, headers);
 			//@SuppressWarnings("unused")
-			//HashMap networkHash = rest.postForObject(NETWORK_SEARCH, request, HashMap.class, PAGE_NUMBER, NETWORK_SEARCH_SIZE);
+			HashMap networkHash = rest.postForObject(NETWORK_SEARCH, request, HashMap.class, PAGE_NUMBER, NETWORK_SEARCH_SIZE);
 			NetworkList networks = rest.postForObject(NETWORK_SEARCH, request, NetworkList.class, PAGE_NUMBER, NETWORK_SEARCH_SIZE);
 			
 			return networks;
@@ -65,7 +68,7 @@ public class NdexClient {
 		}
 	}
 	
-	public CompletableFuture<Network> queryNetwork(String networkId, BasicQuery nodeSearch, String queryType) {	
+	public CompletableFuture<Network> queryNetwork(NetworkSummary networkSummary, BasicQuery nodeSearch, String queryType) {	
 
 		HttpEntity<BasicQuery> request = new HttpEntity<>(nodeSearch, headers);
 		
@@ -73,16 +76,18 @@ public class NdexClient {
 		
 			try {
 				
-				
+				String networkId = networkSummary.getNetworkId();
 				Aspect[] aspects = rest.postForObject(queryType, request, Aspect[].class, networkId);
 
-				//HashMap[] h = rest.postForObject(BASIC_QUERY, request, HashMap[].class, networkId);
-				for (int i = 0; i < aspects.length; i++) {
-					aspects[i].setNdexStatus(networkId); 
-				}
+//				//HashMap[] h = rest.postForObject(BASIC_QUERY, request, HashMap[].class, networkId);
+//				for (int i = 0; i < aspects.length; i++) {
+//					aspects[i].setNdexStatus(networkId); 
+//				}
 				
 				
 				Network network = new Network();
+				network.setNetworkId(networkId);
+				network.setProperties(networkSummary.getProperties());
 				network.setData(aspects);
 				
 				return network;
@@ -95,6 +100,20 @@ public class NdexClient {
 		});
 		
 		return future;
+	}
+	
+	public NetworkSummary queryNetworkId(String networkId) {
+		try {
+			CompletableFuture<NetworkSummary> future = CompletableFuture.supplyAsync(() -> {
+				NetworkSummary networkSummary = rest.getForObject(NETWORK_SUMMARY, NetworkSummary.class, networkId);
+				return networkSummary;
+			});
+			
+			return future.get();
+		} catch (Exception e) {
+			log(e);
+			return new NetworkSummary();
+		}
 	}
 	
 	public Network advancedQueryNetwork(String networkId, AdvancedQuery nodeSearch) {	

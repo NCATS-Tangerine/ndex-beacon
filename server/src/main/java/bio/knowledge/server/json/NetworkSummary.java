@@ -1,27 +1,29 @@
 package bio.knowledge.server.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class NetworkSummary extends NetworkId {
+public class NetworkSummary {
 
-	private String description;
-	private String name;
-	
-	public String getDescription() {
-		return description;
+	private String networkId;
+	private NetworkProperty[] properties = new NetworkProperty[0];
+
+	@JsonProperty("externalId")
+	public String getNetworkId() {
+		return networkId;
+	}
+
+	@JsonProperty("externalId")
+	public void setNetworkId(String networkId) {
+		this.networkId = networkId;
 	}
 	
-	public void setDescription(String description) {
-		this.description = description;
+	public NetworkProperty[] getProperties() {
+		return properties;
 	}
-	
-	public String getName() {
-		return name;
+
+	public void setProperties(NetworkProperty[] properties) {
+		this.properties = properties;
 	}
-	
-	public void setName(String name) {
-		this.name = name;
-	}
-	
 }

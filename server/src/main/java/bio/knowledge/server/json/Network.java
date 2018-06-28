@@ -12,7 +12,7 @@ import bio.knowledge.server.impl.AspectListDeserializer;
  *
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Network {
+public class Network extends NetworkSummary {
 	
 	private Aspect[] data = new Aspect[0];
 
@@ -24,5 +24,4 @@ public class Network {
 	public void setData(Aspect[] data) {
 		this.data = data;
 	}
-	
 }

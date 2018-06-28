@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 import bio.knowledge.server.json.Attribute;
 import bio.knowledge.server.json.Citation;
 import bio.knowledge.server.json.Edge;
+import bio.knowledge.server.json.NetworkProperty;
 import bio.knowledge.server.json.Node;
 import bio.knowledge.server.model.BeaconConcept;
 import bio.knowledge.server.model.BeaconConceptDetail;
@@ -50,10 +53,13 @@ public class Translator {
 	 *  accepted in IRI parts of CURIES as a fragment delimiter, 
 	 *  which in effect, a node/edge part of a network kind of is...
 	 */
-	public static final String    NETWORK_NODE_DELIMITER = "#";
-	public static final Character NETWORK_NODE_DELIMITER_CHAR = '#';
+	public static final String    NETWORK_NODE_DELIMITER = "_";
+	public static final Character NETWORK_NODE_DELIMITER_CHAR = '_';
 	
 	public static final String NDEX_NS = "NDEX:";
+	public static final String DEFINED_BY = "http://starinformatics.com";
+
+	private static final String NDEX_URL = "http://www.ndexbio.org/#/network/";
 
 	Map<StatementTriple, Integer> subjectObjectRegistry = new HashMap<StatementTriple, Integer>();
 	Map<String, Set<String>> categoryPrefixRegistry = new HashMap<String, Set<String>>();
@@ -173,13 +179,14 @@ public class Translator {
 		return details;
 	}
 	
-	public BeaconStatementWithDetails edgeToStatementDetails(Edge edge, String networkId) {
+	public BeaconStatementWithDetails edgeToStatementDetails(Edge edge, String statementId) {
 
 		BeaconStatementWithDetails result = new BeaconStatementWithDetails();
 
-		result.setId(Translator.NDEX_NS + networkId);
-		result.setIsDefinedBy(Translator.NDEX_NS + networkId);
-		result.setProvidedBy("NDEX");
+		result.setId(statementId);
+		result.setIsDefinedBy(DEFINED_BY);
+		String networkId = statementId.split(Translator.NETWORK_NODE_DELIMITER)[0].replaceFirst(Translator.NDEX_NS, "");
+		result.setProvidedBy(NDEX_URL + networkId);
 
 		if (edge.getAttributes() != null) {
 			for (Attribute a : edge.getAttributes()) {
@@ -198,10 +205,62 @@ public class Translator {
 				beaconC.setId(citation.getCitationId());
 				beaconC.setName(formatCitationName(citation.getName(), citation.getFullText()));
 				beaconC.setEvidenceType(citation.getEvidenceType());
+				result.addEvidenceItem(beaconC);
+			}
+		}
+		
+		if (edge.getNetworkReference() != null) {
+			BeaconStatementCitation citation = getCitationFromNetworkReference(edge.getNetworkReference());
+			if (citation != null) {
+				result.addEvidenceItem(citation);
 			}
 		}
 
 		return result;
+	}
+
+	/**
+	 * Parses html text from network reference property, using simple regexes, to determine citation id, url, and name.
+	 * Some code from https://stackoverflow.com/questions/600733/using-java-to-find-substring-of-a-bigger-string-using-regular-expression
+	 * @param properties
+	 * @return citation parsed from reference property in a network, or null if reference could not be parsed
+	 */
+	private BeaconStatementCitation getCitationFromNetworkReference(NetworkProperty networkReference) {
+		try {
+			BeaconStatementCitation citation = new BeaconStatementCitation();
+			String html = networkReference.getValue();
+			final String URL_REGEX = "(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]";
+			Matcher urlMatcher = Pattern.compile(URL_REGEX).matcher(html);
+			if (urlMatcher.find()) {
+				String url = urlMatcher.group();
+				citation.setUri(url);
+				citation.setId(url);
+			}
+			
+//			final String DOI_REGEX = "doi:[-a-zA-Z0-9/. ]+";
+			final String DOI_REGEX = "doi:.*";
+			Matcher doiMatcher = Pattern.compile(DOI_REGEX).matcher(html);
+			if (doiMatcher.find()) {
+				String title = doiMatcher.group().replaceAll("<[^>]*>", "").replaceAll("&nbsp;", "");
+				citation.setId(title);
+			}
+			
+			final String TITLE_REGEX = "<b>.*</b>";
+			Matcher titleMatcher = Pattern.compile(TITLE_REGEX).matcher(html);
+			if (titleMatcher.find()) {
+				String title = titleMatcher.group().replaceAll("<[^>]*>", "");
+				citation.setName(title);
+			} else {
+				String fullText = html.replaceAll("<[^>]*>", "").replaceAll("&nbsp;", "");
+				citation.setName(fullText);
+			}
+			
+			return citation;
+			
+		} catch (Exception e) {
+			_logger.warn("Could not change networkReference into Citation: " + networkReference.getValue());
+			return null;
+		}
 	}
 
 	/**

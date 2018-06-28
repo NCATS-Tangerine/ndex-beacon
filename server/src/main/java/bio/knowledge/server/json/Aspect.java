@@ -15,8 +15,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Aspect {
 		
-//	private NetworkId[] ndexStatus = new NetworkId[0];
-	private String ndexStatus;
 	private Node[] nodes = new Node[0];
 	private Edge[] edges = new Edge[0];
 	private Attribute[] nodeAttributes = new Attribute[0];
@@ -25,14 +23,6 @@ public class Aspect {
 	private EdgeCitation[] edgeCitations = new EdgeCitation[0];
 	private Support[] supports = new Support[0];
 	private EdgeSupport[] edgeSupports = new EdgeSupport[0];
-
-	public String getNdexStatus() {
-		return ndexStatus;
-	}
-
-	public void setNdexStatus(String ndexStatus) {
-		this.ndexStatus = ndexStatus;
-	}
 
 	public Node[] getNodes() {
 		return nodes;
