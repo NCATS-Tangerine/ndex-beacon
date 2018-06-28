@@ -2,6 +2,7 @@ package bio.knowledge.server.impl;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -28,7 +29,7 @@ import bio.knowledge.server.json.Attribute;
 import bio.knowledge.server.json.BasicQuery;
 import bio.knowledge.server.json.Edge;
 import bio.knowledge.server.json.Network;
-import bio.knowledge.server.json.NetworkId;
+import bio.knowledge.server.json.NetworkSummary;
 import bio.knowledge.server.json.NetworkList;
 import bio.knowledge.server.json.Node;
 import bio.knowledge.server.json.SearchString;
@@ -155,11 +156,9 @@ public class ControllerImpl {
 			
 			NetworkList networks = ndex.searchNetworks(networkSearch);
 			
-			List<String> networkIds = Util.map(NetworkId::getExternalId, networks.getNetworks());
-
 			List<CompletableFuture<Network>> futures = new ArrayList<>();
-			for (String networkId : networkIds) {
-				futures.add(ndex.queryNetwork(networkId, subnetQuery, queryType));
+			for (NetworkSummary network : networks.getNetworks()) {
+				futures.add(ndex.queryNetwork(network, subnetQuery, queryType));
 			}
 			
 			List<Network> subnetworks = new ArrayList<>();
@@ -202,7 +201,8 @@ public class ControllerImpl {
 				String luceneSearch = search.id(nodeId);
 				BasicQuery subnetQuery = makeJson.apply(luceneSearch);
 				
-				CompletableFuture<Network> network = get(ndex.queryNetwork(networkId, subnetQuery, queryType));
+				NetworkSummary networkSummary = ndex.queryNetworkId(networkId);
+				CompletableFuture<Network> network = get(ndex.queryNetwork(networkSummary, subnetQuery, queryType));
 				
 				futures.add(network);
 			
@@ -411,7 +411,7 @@ public class ControllerImpl {
 		
 		if (types.isEmpty()) return concepts;
 		
-		Predicate<BeaconConcept> hasType = n -> types.contains(n.getCategory());
+		Predicate<BeaconConcept> hasType = n -> !Collections.disjoint(types, n.getCategories());
 		concepts = Util.filter(hasType, concepts);
 		
 		return concepts;
@@ -687,10 +687,9 @@ public class ControllerImpl {
 			keywords = makeNonNull(keywords);
 			size = fixPageSize(size);
 
-			String[] splitIds = statementId.split("_", 2);
-			String networkAndSubjectId = splitIds[0];
-			String networkId = networkAndSubjectId.replaceFirst(Translator.NDEX_NS, "").split("#")[0];
-			Long objectId = Long.valueOf(splitIds[1]);
+			String[] splitIds = statementId.split(Translator.NETWORK_NODE_DELIMITER, 3);
+			String networkAndSubjectId = splitIds[0] + Translator.NETWORK_NODE_DELIMITER + splitIds[1];
+			Long objectId = Long.valueOf(splitIds[2]);
 
 			List<Graph> graphs = searchByIds(search::edgesBy, Util.list(networkAndSubjectId), NdexClient.QUERY_FOR_NODE_AND_EDGES);
 
@@ -701,7 +700,7 @@ public class ControllerImpl {
 
 			assert(maybeEdge.size() == 1);
 			if (maybeEdge.size() == 1) {
-				BeaconStatementWithDetails result = translator.edgeToStatementDetails(maybeEdge.get(0), networkId);
+				BeaconStatementWithDetails result = translator.edgeToStatementDetails(maybeEdge.get(0), statementId);
 				filterByKeywords(result, keywords);
 				return ResponseEntity.ok(result);
 			} else {

@@ -1,14 +1,17 @@
 package bio.knowledge.server.model;
 
 import java.util.Objects;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.ArrayList;
+import java.util.List;
+import javax.validation.constraints.*;
 /**
  * BeaconConcept
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-06-12T19:09:25.899Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-06-27T18:01:11.438Z")
 
 public class BeaconConcept   {
   @JsonProperty("id")
@@ -17,8 +20,8 @@ public class BeaconConcept   {
   @JsonProperty("name")
   private String name = null;
 
-  @JsonProperty("category")
-  private String category = null;
+  @JsonProperty("categories")
+  private List<String> categories = new ArrayList<String>();
 
   @JsonProperty("description")
   private String description = null;
@@ -59,22 +62,27 @@ public class BeaconConcept   {
     this.name = name;
   }
 
-  public BeaconConcept category(String category) {
-    this.category = category;
+  public BeaconConcept categories(List<String> categories) {
+    this.categories = categories;
+    return this;
+  }
+
+  public BeaconConcept addCategoriesItem(String categoriesItem) {
+    this.categories.add(categoriesItem);
     return this;
   }
 
    /**
    * concept semantic type 'category'. Should be specified from the [Biolink Model](https://biolink.github.io/biolink-model). 
-   * @return category
+   * @return categories
   **/
   @ApiModelProperty(value = "concept semantic type 'category'. Should be specified from the [Biolink Model](https://biolink.github.io/biolink-model). ")
-  public String getCategory() {
-    return category;
+  public List<String> getCategories() {
+    return categories;
   }
 
-  public void setCategory(String category) {
-    this.category = category;
+  public void setCategories(List<String> categories) {
+    this.categories = categories;
   }
 
   public BeaconConcept description(String description) {
@@ -107,13 +115,13 @@ public class BeaconConcept   {
     BeaconConcept beaconConcept = (BeaconConcept) o;
     return Objects.equals(this.id, beaconConcept.id) &&
         Objects.equals(this.name, beaconConcept.name) &&
-        Objects.equals(this.category, beaconConcept.category) &&
+        Objects.equals(this.categories, beaconConcept.categories) &&
         Objects.equals(this.description, beaconConcept.description);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, name, category, description);
+    return Objects.hash(id, name, categories, description);
   }
 
   @Override
@@ -123,7 +131,7 @@ public class BeaconConcept   {
     
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
-    sb.append("    category: ").append(toIndentedString(category)).append("\n");
+    sb.append("    categories: ").append(toIndentedString(categories)).append("\n");
     sb.append("    description: ").append(toIndentedString(description)).append("\n");
     sb.append("}");
     return sb.toString();

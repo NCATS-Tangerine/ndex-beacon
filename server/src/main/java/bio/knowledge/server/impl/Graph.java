@@ -18,6 +18,7 @@ import bio.knowledge.server.json.Edge;
 import bio.knowledge.server.json.EdgeCitation;
 import bio.knowledge.server.json.EdgeSupport;
 import bio.knowledge.server.json.Network;
+import bio.knowledge.server.json.NetworkProperty;
 import bio.knowledge.server.json.Node;
 import bio.knowledge.server.json.Support;
 
@@ -29,8 +30,7 @@ import bio.knowledge.server.json.Support;
  */
 public class Graph implements CachedEntity {
 	
-	private static Logger _logger = LoggerFactory.getLogger(Graph.class);	
-	
+	private static Logger _logger = LoggerFactory.getLogger(Graph.class);
 		
 	private Map<Long, Node> nodes = new HashMap<>();
 	private Map<Long, Edge> edges = new HashMap<>();
@@ -51,12 +51,13 @@ public class Graph implements CachedEntity {
 			
 			if(a==null) continue;
 			addCitations(a.getCitations());
+			connectNodesAndEdges(a.getEdges());
+			annotateNodesWithNetworkId(network.getNetworkId());
 			
-			annotateNodesWithNetworkId(a.getNdexStatus());
 			connectAttributesToNodes(a.getNodeAttributes());
 			connectAttributesToEdges(a.getEdgeAttributes());
+			addNetworkReferenceToEdges(network.getProperties());
 
-			connectNodesAndEdges(a.getEdges());
 			connectEdgesToCitations(a.getEdgeCitations());
 			connectSupportsToCitations(a.getSupports());
 			interconnectEdgesSupportsAndCitations(a.getEdgeSupports());
@@ -66,6 +67,16 @@ public class Graph implements CachedEntity {
 		
 	}
 	
+	private void addNetworkReferenceToEdges(NetworkProperty[] properties) {
+		for (NetworkProperty property : properties) {
+			if (property.getPredicateString().equalsIgnoreCase("reference")) {
+				for (Edge edge : edges.values()) {
+					edge.setNetworkReference(property);
+				}
+			}
+		}
+	}
+
 	private void logWarningMessage(String message) {
 		_logger.warn("Building graph - " + message);
 	}

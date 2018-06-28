@@ -1,14 +1,15 @@
 package bio.knowledge.server.model;
 
 import java.util.Objects;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
+import com.fasterxml.jackson.annotation.JsonCreator;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import javax.validation.constraints.*;
 /**
  * BeaconKnowledgeMapPredicate
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-06-12T19:09:25.899Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.SpringCodegen", date = "2018-06-27T18:01:11.438Z")
 
 public class BeaconKnowledgeMapPredicate   {
   @JsonProperty("edge_label")
@@ -16,6 +17,9 @@ public class BeaconKnowledgeMapPredicate   {
 
   @JsonProperty("relation")
   private String relation = null;
+
+  @JsonProperty("negated")
+  private Boolean negated = null;
 
   public BeaconKnowledgeMapPredicate edgeLabel(String edgeLabel) {
     this.edgeLabel = edgeLabel;
@@ -53,6 +57,24 @@ public class BeaconKnowledgeMapPredicate   {
     this.relation = relation;
   }
 
+  public BeaconKnowledgeMapPredicate negated(Boolean negated) {
+    this.negated = negated;
+    return this;
+  }
+
+   /**
+   * Indicates whether edge statement is negated (i.e. is not true) 
+   * @return negated
+  **/
+  @ApiModelProperty(value = "Indicates whether edge statement is negated (i.e. is not true) ")
+  public Boolean getNegated() {
+    return negated;
+  }
+
+  public void setNegated(Boolean negated) {
+    this.negated = negated;
+  }
+
 
   @Override
   public boolean equals(java.lang.Object o) {
@@ -64,12 +86,13 @@ public class BeaconKnowledgeMapPredicate   {
     }
     BeaconKnowledgeMapPredicate beaconKnowledgeMapPredicate = (BeaconKnowledgeMapPredicate) o;
     return Objects.equals(this.edgeLabel, beaconKnowledgeMapPredicate.edgeLabel) &&
-        Objects.equals(this.relation, beaconKnowledgeMapPredicate.relation);
+        Objects.equals(this.relation, beaconKnowledgeMapPredicate.relation) &&
+        Objects.equals(this.negated, beaconKnowledgeMapPredicate.negated);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(edgeLabel, relation);
+    return Objects.hash(edgeLabel, relation, negated);
   }
 
   @Override
@@ -79,6 +102,7 @@ public class BeaconKnowledgeMapPredicate   {
     
     sb.append("    edgeLabel: ").append(toIndentedString(edgeLabel)).append("\n");
     sb.append("    relation: ").append(toIndentedString(relation)).append("\n");
+    sb.append("    negated: ").append(toIndentedString(negated)).append("\n");
     sb.append("}");
     return sb.toString();
   }

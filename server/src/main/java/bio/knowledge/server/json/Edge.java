@@ -16,6 +16,7 @@ public class Edge extends PropertiedObject {
 	private Node object;
 	private List<Citation> citations;
 	private List<Support> supports;
+	private NetworkProperty networkReference;
 
 	@JsonProperty("i")
 	public String getName() {
@@ -77,6 +78,14 @@ public class Edge extends PropertiedObject {
 	
 	public void setSupports(List<Support> support) {
 		this.supports = support;
+	}
+
+	public NetworkProperty getNetworkReference() {
+		return networkReference;
+	}
+
+	public void setNetworkReference(NetworkProperty networkReference) {
+		this.networkReference = networkReference;
 	}
 
 }
