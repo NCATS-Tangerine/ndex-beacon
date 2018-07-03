@@ -93,7 +93,7 @@ public class Translator {
 	 * @param represents
 	 * @return
 	 */
-	private boolean hasCurieStructure(String represents) {
+	public static boolean hasCurieStructure(String represents) {
 		try {
 			String reference = represents.split(":")[1];
 			return (!(reference.contains(" ")) && (!(reference.contains("http"))));
@@ -287,16 +287,11 @@ public class Translator {
 		String conceptId = makeId(node) ; 
 		
 		conceptDetails.setId(conceptId);
-		conceptDetails.setUri(null);
+		conceptDetails.setUri(node.getUri());
 		conceptDetails.setName(makeName(node));
 		conceptDetails.setSymbol(null);
 		conceptDetails.addCategoriesItem(inferConceptCategory(conceptId,node));
-
-//		Consumer<String> addSynonym = s -> conceptDetails.addSynonymsItem(s);
-//		node.getSynonyms().forEach(addSynonym);
-
-//		List<BeaconConceptDetail> details = Util.flatmap(this::attributeToDetails, node.getAttributes());
-
+		
 		List<String> aliases = new ArrayList<>();
 		List<BeaconConceptDetail> details = new ArrayList<>();
 		
