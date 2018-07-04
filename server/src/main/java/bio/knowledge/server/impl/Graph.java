@@ -17,6 +17,7 @@ import bio.knowledge.server.json.Citation;
 import bio.knowledge.server.json.Edge;
 import bio.knowledge.server.json.EdgeCitation;
 import bio.knowledge.server.json.EdgeSupport;
+import bio.knowledge.server.json.Namespace;
 import bio.knowledge.server.json.Network;
 import bio.knowledge.server.json.NetworkProperty;
 import bio.knowledge.server.json.Node;
@@ -53,6 +54,7 @@ public class Graph implements CachedEntity {
 			addCitations(a.getCitations());
 			connectNodesAndEdges(a.getEdges());
 			annotateNodesWithNetworkId(network.getNetworkId());
+			addUriToNodes(a.getNamespaces());
 			
 			connectAttributesToNodes(a.getNodeAttributes());
 			connectAttributesToEdges(a.getEdgeAttributes());
@@ -67,6 +69,33 @@ public class Graph implements CachedEntity {
 		
 	}
 	
+	/**
+	 * Adds uri information to each concept node, if the node contains the represents field and has a CURIE-like structure,
+	 * by connecting the appropriate namespace information to the node
+	 * @param ns
+	 */
+	private void addUriToNodes(Namespace[] ns) {
+		if (ns==null || ns.length == 0) return;
+		
+		HashMap<String, String> namespaces = ns[0];
+		
+		for (Node node : nodes.values()) {
+			String represents = node.getRepresents();
+			if (represents != null && Translator.hasCurieStructure(represents)) {
+				String[] split = represents.split(":");
+				String namespace = split[0];
+				String id = split[1];
+				if (namespaces.containsKey(namespace)) {
+					String partialUri = namespaces.get(namespace);
+					node.setUri(partialUri + id);
+				} else {
+					_logger.warn("Building graph - namespace information for " + represents + "doesn't exist");
+				}
+			}
+		}
+		
+	}
+
 	private void addNetworkReferenceToEdges(NetworkProperty[] properties) {
 		for (NetworkProperty property : properties) {
 			if (property.getPredicateString().equalsIgnoreCase("reference")) {

@@ -15,6 +15,7 @@ public class Node extends PropertiedObject {
 	private String represents;
 	
 	private String networkId;
+	private String uri;
 	private List<String> synonyms = new ArrayList<>();
 	private List<Edge> edges = new ArrayList<>();
 	
@@ -87,6 +88,14 @@ public class Node extends PropertiedObject {
 
 	public void addEdge(Edge edge) {
 		edges.add(edge);
+	}
+
+	public String getUri() {
+		return uri;
+	}
+
+	public void setUri(String uri) {
+		this.uri = uri;
 	}
 		
 }

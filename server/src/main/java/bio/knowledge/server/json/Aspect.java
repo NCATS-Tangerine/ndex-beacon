@@ -1,6 +1,9 @@
 package bio.knowledge.server.json;
 
+import java.util.HashMap;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * 
@@ -17,6 +20,7 @@ public class Aspect {
 		
 	private Node[] nodes = new Node[0];
 	private Edge[] edges = new Edge[0];
+	private Namespace[] namespaces = new Namespace[0]; 
 	private Attribute[] nodeAttributes = new Attribute[0];
 	private Attribute[] edgeAttributes = new Attribute[0];
 	private Citation[] citations = new Citation[0];
@@ -86,6 +90,16 @@ public class Aspect {
 
 	public void setEdgeSupports(EdgeSupport[] edgeSupports) {
 		this.edgeSupports = edgeSupports;
+	}
+
+	@JsonProperty("@context")
+	public Namespace[] getNamespaces() {
+		return namespaces;
+	}
+	
+	@JsonProperty("@context")
+	public void setNamespaces(Namespace[] namespaces) {
+		this.namespaces = namespaces;
 	}
 	
 }

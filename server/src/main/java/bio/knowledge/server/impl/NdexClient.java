@@ -57,7 +57,7 @@ public class NdexClient {
 		try {
 			HttpEntity<SearchString> request = new HttpEntity<>(searchString, headers);
 			//@SuppressWarnings("unused")
-			HashMap networkHash = rest.postForObject(NETWORK_SEARCH, request, HashMap.class, PAGE_NUMBER, NETWORK_SEARCH_SIZE);
+//			HashMap networkHash = rest.postForObject(NETWORK_SEARCH, request, HashMap.class, PAGE_NUMBER, NETWORK_SEARCH_SIZE);
 			NetworkList networks = rest.postForObject(NETWORK_SEARCH, request, NetworkList.class, PAGE_NUMBER, NETWORK_SEARCH_SIZE);
 			
 			return networks;
