@@ -63,7 +63,7 @@ public class Citation extends IdentifiedObject {
 	
 	public String getFullText() {
 		List<String> texts = Util.map(Support::getText, supports);
-		String text = String.join(" ", texts);
+		String text = String.join("; ", texts);
 		return text;
 	}
 
