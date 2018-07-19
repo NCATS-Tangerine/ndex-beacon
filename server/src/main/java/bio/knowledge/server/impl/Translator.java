@@ -95,8 +95,11 @@ public class Translator {
 	 */
 	public static boolean hasCurieStructure(String represents) {
 		try {
+			if (represents.contains("http:")) return false;
+			
 			String reference = represents.split(":")[1];
-			return (!(reference.contains(" ")) && (!(reference.contains("http"))));
+			return (!(reference.contains(" ")));
+			
 		} catch (Exception e) {
 			return false;
 		}
@@ -203,7 +206,7 @@ public class Translator {
 			for (Citation citation : edge.getCitations()) {
 				BeaconStatementCitation beaconC = new BeaconStatementCitation();
 				beaconC.setId(citation.getCitationId());
-				beaconC.setName(formatCitationName(citation.getName(), citation.getFullText()));
+				beaconC.setName(citation.getName());
 				beaconC.setEvidenceType(citation.getEvidenceType());
 				result.addEvidenceItem(beaconC);
 			}
@@ -211,7 +214,7 @@ public class Translator {
 		
 		if (edge.getNetworkReference() != null) {
 			BeaconStatementCitation citation = getCitationFromNetworkReference(edge.getNetworkReference());
-			if (citation != null) {
+			if (citation != null && citation.getId() != null) {
 				result.addEvidenceItem(citation);
 			}
 		}

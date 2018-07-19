@@ -37,15 +37,18 @@ public class Graph implements CachedEntity {
 	private Map<Long, Edge> edges = new HashMap<>();
 	private Map<Long, Citation> citations = new HashMap<>();
 	private Map<Long, Support> supports = new HashMap<>();
+	private Network network;
 
 	public Graph(Network network) {
 
-		network.getClass();
+		this.network = network;
 		// Add all nodes first, so that edges have something to connect to
 		for (Aspect a : network.getData()) {
 			if(a==null) continue;
 			
 			addNodes(a.getNodes());
+			addCitations(a.getCitations());
+			addSupports(a.getSupports());
 		}
 	
 		for (Aspect a : network.getData()) {
@@ -60,15 +63,13 @@ public class Graph implements CachedEntity {
 			connectAttributesToEdges(a.getEdgeAttributes());
 			addNetworkReferenceToEdges(network.getProperties());
 
-			connectEdgesToCitations(a.getEdgeCitations());
 			connectSupportsToCitations(a.getSupports());
+			connectEdgesToCitations(a.getEdgeCitations());
 			interconnectEdgesSupportsAndCitations(a.getEdgeSupports());
 		}
 		
-		this.getClass();
-		
 	}
-	
+
 	/**
 	 * Adds uri information to each concept node, if the node contains the represents field and has a CURIE-like structure,
 	 * by connecting the appropriate namespace information to the node
@@ -81,15 +82,23 @@ public class Graph implements CachedEntity {
 		
 		for (Node node : nodes.values()) {
 			String represents = node.getRepresents();
-			if (represents != null && Translator.hasCurieStructure(represents)) {
-				String[] split = represents.split(":");
-				String namespace = split[0];
-				String id = split[1];
-				if (namespaces.containsKey(namespace)) {
-					String partialUri = namespaces.get(namespace);
-					node.setUri(partialUri + id);
+			if (represents != null) {
+				if (Translator.hasCurieStructure(represents)) {
+					String[] split = represents.split(":");
+					String namespace = split[0];
+					String id = split[1];
+					if (namespaces.containsKey(namespace)) {
+						String partialUri = namespaces.get(namespace);
+						node.setUri(partialUri + id);
+					} else {
+						_logger.warn("Building graph - namespace information for " + represents + " doesn't exist; "
+								+ "network: " + network.getNetworkId());
+					}
 				} else {
-					_logger.warn("Building graph - namespace information for " + represents + "doesn't exist");
+					Attribute a = new Attribute();
+					a.setName("represents");
+					a.setValues(Util.list(represents));
+					node.addAttribute(a);
 				}
 			}
 		}
@@ -133,6 +142,14 @@ public class Graph implements CachedEntity {
 		
 		for (Citation citation : c)
 			citations.put(citation.getId(), citation);		
+	}
+	
+
+	private void addSupports(Support[] s) {
+		if ( s==null || s.length == 0) return;
+		
+		for (Support support : s)
+			supports.put(support.getId(), support);	
 	}
 	
 	private void annotateNodesWithNetworkId(String i) {
@@ -302,7 +319,7 @@ public class Graph implements CachedEntity {
 		for (Long id : ids) {
 			T item = map.get(id);
 			if (item == null) 
-				logWarningMessage("trying to connect to graph, but id does not exist: " + id);
+				logWarningMessage("trying to connect to graph, "+ "but id does not exist: " + id + " for network: " + network.getNetworkId());
 			else 
 				related.add(item); 
 		}

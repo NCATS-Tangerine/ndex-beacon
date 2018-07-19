@@ -1,5 +1,6 @@
 package bio.knowledge.server.json;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -14,8 +15,8 @@ public class Edge extends PropertiedObject {
 	
 	private Node subject;
 	private Node object;
-	private List<Citation> citations;
-	private List<Support> supports;
+	private List<Citation> citations = new ArrayList<>();
+	private List<Support> supports = new ArrayList<>();
 	private NetworkProperty networkReference;
 
 	@JsonProperty("i")
