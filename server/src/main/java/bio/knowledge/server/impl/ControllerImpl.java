@@ -60,8 +60,8 @@ public class ControllerImpl {
 	@Autowired private KnowledgeMapRegistry knowledgeMapRegistry;
 
 	private static final int DEFAULT_PAGE_SIZE = 10;
-	private static final long TIMEOUT = 60;
-	private static final TimeUnit TIMEUNIT = TimeUnit.SECONDS;
+	private static final long TIMEOUT = 10;
+	private static final TimeUnit TIMEUNIT = TimeUnit.MINUTES;
 		
 	
 	private void log(Exception e) {
