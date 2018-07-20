@@ -164,8 +164,8 @@ public class ControllerImpl {
 			List<Network> subnetworks = new ArrayList<>();
 			for (CompletableFuture<Network> future : futures) {
 				try {
-					subnetworks.add(future.get(TIMEOUT, TIMEUNIT));
-				} catch (InterruptedException | ExecutionException | TimeoutException e) {
+					subnetworks.add(future.get());
+				} catch (InterruptedException | ExecutionException e) {
 					log(e);
 				}
 			}
@@ -223,9 +223,9 @@ public class ControllerImpl {
 		
 		for (CompletableFuture<Network> future : futures) {
 			try {
-				Graph graph = new Graph(future.get(TIMEOUT, TIMEUNIT));
+				Graph graph = new Graph(future.get());
 				graphs.add(graph);
-			} catch (InterruptedException | ExecutionException | TimeoutException e) {
+			} catch (InterruptedException | ExecutionException e) {
 			}
 		}
 		
