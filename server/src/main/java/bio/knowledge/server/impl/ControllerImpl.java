@@ -60,8 +60,8 @@ public class ControllerImpl {
 	@Autowired private KnowledgeMapRegistry knowledgeMapRegistry;
 
 	private static final int DEFAULT_PAGE_SIZE = 10;
-	private static final long TIMEOUT = 60;
-	private static final TimeUnit TIMEUNIT = TimeUnit.SECONDS;
+	private static final long TIMEOUT = 10;
+	private static final TimeUnit TIMEUNIT = TimeUnit.MINUTES;
 		
 	
 	private void log(Exception e) {
@@ -164,8 +164,8 @@ public class ControllerImpl {
 			List<Network> subnetworks = new ArrayList<>();
 			for (CompletableFuture<Network> future : futures) {
 				try {
-					subnetworks.add(future.get());
-				} catch (InterruptedException | ExecutionException e) {
+					subnetworks.add(future.get(TIMEOUT, TIMEUNIT));
+				} catch (InterruptedException | ExecutionException | TimeoutException e) {
 					log(e);
 				}
 			}
@@ -223,9 +223,9 @@ public class ControllerImpl {
 		
 		for (CompletableFuture<Network> future : futures) {
 			try {
-				Graph graph = new Graph(future.get());
+				Graph graph = new Graph(future.get(TIMEOUT, TIMEUNIT));
 				graphs.add(graph);
-			} catch (InterruptedException | ExecutionException e) {
+			} catch (InterruptedException | ExecutionException | TimeoutException e) {
 			}
 		}
 		
