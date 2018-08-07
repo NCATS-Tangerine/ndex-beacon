@@ -234,7 +234,7 @@ public class ControllerImpl {
 		return graphs;
 	}
 	
-	private  Set<String> addCachedAliases(Collection<String> ids) {
+	private Set<String> addCachedAliases(Collection<String> ids) {
 		
 		Set<String> aliases = new HashSet<>();
 		/*
@@ -248,10 +248,44 @@ public class ControllerImpl {
 		}
 		return aliases;
 	}
+	
+	/**
+	 * Searches NDEX network for all curies and returns ExactMatchResponse for each
+	 * @param curies
+	 * @return
+	 */
+	private List<ExactMatchResponse> getMatchingResponses(List<String> curies) {
+		
+		List<Graph> graphs = searchByIds( search::nodesBy, curies, NdexClient.QUERY_FOR_NODE_MATCH);
+		Collection<Node> nodes = Util.flatmap( Graph::getNodes, graphs );
+		
+		Map<String, Set<String>> aliases = getAliases(curies, nodes);
+		
+		List<ExactMatchResponse> results = new ArrayList<>();
+		for (String curie : curies) {
+			ExactMatchResponse match = new ExactMatchResponse();
+			match.setId(curie);
+			
+			curie = curie.toLowerCase();
+			if (aliases.containsKey(curie)) {
+				match.setWithinDomain(true);
+				List<String> exactMatches = Util.filter(Node::isCurie, aliases.get(curie));
+				match.setHasExactMatches(exactMatches);
+			} else {
+				match.setWithinDomain(false);
+			}
+			results.add(match);
+		}
+		
+		return results;
+	}
 	/*
 	 * This only returns the aliases of the members of the 'c' list of input identifiers
 	 * but not directly the 'c' identifiers themselves nor their locally cached related ids
+	 * 
+	 * Polls one at a time
 	 */
+	/*
 	private List<ExactMatchResponse> getMatchingResponses( List<String> c ) {
 		
 		List<ExactMatchResponse> response = new ArrayList<>();
@@ -285,7 +319,7 @@ public class ControllerImpl {
 		}
 		
 		return response;
-	}
+	}*/
 	
 	/**
 	 * Returns aliases by searching through returned nodes for the "alias" attribute and checking that the node
@@ -309,6 +343,72 @@ public class ControllerImpl {
 	
 	}
 	
+	/**
+	 * Creates a map of node ids known by the network and each id's aliases
+	 * @param curies - the curies of interest
+	 * @param nodes - the nodes found by querying NDEX for the given curies
+	 * @return map of node ids that are known by the network and the ids' aliases
+	 */
+	private Map<String, Set<String>> getAliases(List<String> curies, Collection<Node> nodes) {
+		Map<String, Set<String>> result = new HashMap<>();
+		
+		for (Node node : nodes) {
+			String nodeName = translator.makeId(node);
+			
+			String nodeId = null;
+			if (curies.contains(node.getRepresents())) {
+				nodeId = node.getRepresents();
+			} else if (curies.contains(nodeName)) {
+				nodeId = nodeName;
+			}
+			
+			if (nodeId != null && !result.containsKey(nodeId)) {
+				result.put(nodeId.toLowerCase(), new HashSet<>());
+			}
+			
+			for (Attribute attribute : node.getAttributes()) {
+				if (attribute.getName().equals("alias")) {
+					if (nodeId == null) {
+						nodeId = curieInAttributes(curies, attribute);
+					}
+					
+					if (nodeId != null) {
+					
+						Set<String> aliases = new HashSet<>();
+						for (String value : attribute.getValues()) {
+							aliases.add(value.trim());
+						}
+						
+						nodeId = nodeId.toLowerCase();
+						if (result.containsKey(nodeId)) {
+							aliases.addAll(result.get(nodeId));
+						}
+						
+						result.put(nodeId, aliases);
+					}
+				}
+			}
+		}
+		return result;
+	}
+	
+	/**
+	 * Checks attribute values for match of any curies
+	 * @param curies
+	 * @param attribute
+	 * @return curie that matches item in curies list; or null if none match
+	 */
+	private String curieInAttributes(List<String> curies, Attribute attribute) {
+		List<String> attributeAliases = attribute.getValues();
+		for (String attributeAlias : attributeAliases) {
+			if (curies.contains(attributeAlias)) {
+				return attributeAlias;
+			}
+		}
+		
+		return null;
+	}
+
 	/**
 	 * Search on ndex may return more than one node, one which matches the search curie in its node ID (getRepresents)
 	 * or in the alias values
@@ -519,12 +619,10 @@ public class ControllerImpl {
 			
 			String joinedKeywords = String.join(" ", keywords);
 			String luceneSearch = search.startsWith(joinedKeywords);
-			List<Graph> graphs = search(search::nodesBy, luceneSearch, NdexClient.QUERY_FOR_NODE_AND_EDGES);		
+			List<Graph> graphs = search(search::nodesBy, luceneSearch, NdexClient.QUERY_FOR_NODE_MATCH);		
 			Collection<Node> nodes = Util.flatmap(Graph::getNodes, graphs);
 			combineDuplicates(nodes);
-			addToKmapAndPredMetadata(nodes);
-			Util.map(translator::makeId, nodes);
-			
+			addToKmapAndPredMetadata(nodes);			
 			concepts = Util.map(translator::nodeToConcept, nodes);
 			List<BeaconConcept> ofType = filterSemanticGroup(concepts, categories);
 			
@@ -568,7 +666,7 @@ public class ControllerImpl {
 	public ResponseEntity<List<ExactMatchResponse>> getExactMatchesToConceptList(List<String> c) {
 		try {
 			c = makeNonNull(c);
-			
+			_logger.info("getting exact matches for: " + String.join(", ", c));
 			List<ExactMatchResponse> exactMatches = getMatchingResponses(c);
 			
 			return ResponseEntity.ok(exactMatches);
