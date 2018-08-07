@@ -85,7 +85,7 @@ public class Graph implements CachedEntity {
 			if (represents != null) {
 				if (Translator.hasCurieStructure(represents)) {
 					String[] split = represents.split(":");
-					String namespace = split[0].toLowerCase();
+					String namespace = split[0];
 					String id = split[1];
 					if (namespaces.containsKey(namespace)) {
 						String partialUri = namespaces.get(namespace);

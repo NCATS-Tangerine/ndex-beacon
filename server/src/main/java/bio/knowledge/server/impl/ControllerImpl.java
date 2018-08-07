@@ -356,9 +356,10 @@ public class ControllerImpl {
 			String nodeName = translator.makeId(node);
 			
 			String nodeId = null;
-			if (curies.contains(node.getRepresents())) {
+			String represents = node.getRepresents();
+			if (represents != null && curies.stream().anyMatch(represents::equalsIgnoreCase)) {
 				nodeId = node.getRepresents();
-			} else if (curies.contains(nodeName)) {
+			} else if (curies.stream().anyMatch(nodeName::equalsIgnoreCase)) {
 				nodeId = nodeName;
 			}
 			
