@@ -2,9 +2,37 @@
 
 Knowledge Beacon wrapper for the NDex Bio graph repository
 
-## Quickstart Using Docker ##
+## Quickstart
 
-At the moment Docker is only available to Linux users. Docker can be installed through a shell script available online.
+Clone the project:
+
+```shell
+git clone https://github.com/NCATS-Tangerine/ndex-beacon.git
+```
+
+You can run the project directly on your machine or from within a Docker container.
+
+### Running Directly on Machine
+
+*[Optional]* Set the port you want to run the beacon on. By default the port is set to **8080** (localhost:8080). Open `server/src/main/resources/application.properties`, and change `server.port`.
+
+Build the project with Gradle (we are currently using Gradle 4.7). From the root folder of the project:
+
+```shell
+gradle build
+```
+
+Execute the JAR file:
+
+```shell
+java -jar build/libs/ndex-beacon-#.#.#.jar
+```
+
+where *#.#.#* is the release number of the application (e.g. 1.0.18)
+
+### Running Using Docker (Linux) ##
+
+Docker can be installed through a shell script available online.
 
 ```shell
 wget https://get.docker.com -O install.sh
