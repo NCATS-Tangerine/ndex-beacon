@@ -52,3 +52,33 @@ docker run -p 8080:8080 ncats:ndex
 ```
 
 Now open your browser to `localhost:8080/api` to see the application running.
+
+## Overview (developer's comments)
+
+This beacon queries for NDEx networks by our search parameters, and then queries those resulting networks again for the desired data. All data that the beacon discovers is cached, and used for the metadata endpoints
+
+The `bio.knowledge.server.json` package contains the Java implementations of NDEx models. Documentation for the NDEx data model is here: www.home.ndexbio.org/data-model/
+
+The swagger documentation is here: http://openapi.ndexbio.org/#/
+
+NDEx uses lucene search: https://lucene.apache.org/core/
+
+In NdexClient.java we use a number of endpoints to query nDex:
+
+The **BASE URL** is http://www.ndexbio.org/v2
+
+**NETWORK SEARCH** /search/network?start={start}&size={size}
+
+This queries for all networks with the given search term (which is provided in the body of the post request). Among other things, it returns the network ID's for matching networks.
+
+**QUERY FOR NODE MATCH** /search/network/{networkId}/interconnectquery
+
+We feed a network ID, and it returns all the data (nodes, edges, node attributes, edge attributes, citations, etc.) that match those search terms. Again the search term is given in the body of the post request. This only returns data (nodes, edges, etc.) matches.
+
+**QUERY FOR NODE AND EDGES** /search/network/{networkId}/query
+
+This functions similarly as interconnectquery, but returns all the data that interconnectquery would plus all nodes and edges and so on that those given nodes are connected to.
+
+**NETWORK SUMMARY** /network/{networkId}/summary
+
+This endpoint provides a summary of information about the network. We use it to get citation data for the entire network.
