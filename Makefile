@@ -3,7 +3,7 @@ docker-build:
 	docker build -t ncats:ndex .
 
 docker-run:
-	docker run --rm --name ndex -p 8084:8080 ncats:ndex
+	docker run --rm --name ndex -p 8076:8080 ncats:ndex
 
 docker-stop:
 	docker stop ndex
