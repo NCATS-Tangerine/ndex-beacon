@@ -34,9 +34,7 @@ public class OntologyService {
 	
 	HashSet<String> mappedBiolinkCategories;
 	HashSet<String> unmappedBiolinkCategories;
-	
-	
-	
+
 	@PostConstruct
 	private void init() {
 		Optional<BeaconBiolinkModel> optional = BeaconBiolinkModel.load();
@@ -77,19 +75,21 @@ public class OntologyService {
 
 	/**
 	 * Simple heuristic for creating Biolink edge label from simple string
-	 * @param pName
+	 * @param label
 	 * @return
 	 */
-	public String predToBiolinkEdgeLabel(String pName) {
+	public String predToBiolinkEdgeLabel(String label) {
 		
 		String edgeLabel;
 		
-		if (exactlyMatchesBiolink(pName)) {
-			mappedBiolinkCategories.add(pName);
-			edgeLabel = convertToSnakeCase(pName);
+		if (exactlyMatchesBiolink(label)) {
+			
+			mappedBiolinkCategories.add(label);
+			edgeLabel = convertToSnakeCase(label);
+			
 		} else {
-			if (unmappedBiolinkCategories.add(pName)) {
-				_logger.info("new unknown category added: " + pName);
+			if (unmappedBiolinkCategories.add(label)) {
+				_logger.info("new unknown category added: " + label);
 				_logger.info("Known Predicates: " + String.join(", ", mappedBiolinkCategories));
 				_logger.info("Unknown Predicates: " + String.join(", ", unmappedBiolinkCategories));
 			}

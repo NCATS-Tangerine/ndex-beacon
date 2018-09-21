@@ -28,9 +28,12 @@ package bio.knowledge.server.impl;
 
 import java.util.HashMap;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import bio.knowledge.server.model.BeaconPredicate;
+import bio.knowledge.server.ontology.OntologyService;
+import bio.knowledge.server.ontology.NdexConceptCategoryService.NameSpace;
 
 /**
  * This class serves as an in-memory cache for nDex predicate relationships
@@ -42,12 +45,29 @@ import bio.knowledge.server.model.BeaconPredicate;
 @Component
 public class PredicatesRegistry extends HashMap<String, BeaconPredicate> {
 	
+	@Autowired OntologyService ontology;
+
 	private static final long serialVersionUID = -8061884198941425340L;
 
-	public void indexPredicate( String id, String name, String definition ) {
+	public BeaconPredicate indexPredicate( String edgeLabel ) {
 
-		if( Util.nullOrEmpty(id) || Util.nullOrEmpty(name) ) return ; 
+		if( Util.nullOrEmpty(edgeLabel) ) return null ; 
 
+		BeaconPredicate p = null;
+		
+		edgeLabel = ontology.predToBiolinkEdgeLabel(edgeLabel);
+		
+		String pCurie = "";
+		if(NameSpace.isCurie(edgeLabel))
+			/*
+			 *  The edgename looks like a 
+			 *  CURIE so use it directly
+			 */
+			pCurie = edgeLabel;
+		else
+			// Treat as an nDex defined CURIE
+			pCurie = ontology.convertToSnakeCase(Ndex.NDEX_NS+edge.getName());
+		
 		if(!containsKey(id)) {
 			
 			/*
@@ -55,7 +75,7 @@ public class PredicatesRegistry extends HashMap<String, BeaconPredicate> {
 			 *  doesn't yet exist for this
 			 *  predicate, then create it!
 			 */
-			BeaconPredicate p = new BeaconPredicate();
+			p = new BeaconPredicate();
 			
 			// predicate resource CURIE
 			p.setId(id);  
@@ -70,11 +90,10 @@ public class PredicatesRegistry extends HashMap<String, BeaconPredicate> {
 			put(id, p);
 			
 		} else {
-			BeaconPredicate p = get(id); 
+			p = get(id); 
 			p.setFrequency(p.getFrequency()+1);
-			put(id, p);
 		}
 		
-
+		return p;
 	}
 }

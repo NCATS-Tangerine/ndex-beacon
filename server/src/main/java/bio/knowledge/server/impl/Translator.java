@@ -23,6 +23,7 @@ import bio.knowledge.server.json.Node;
 import bio.knowledge.server.model.BeaconConcept;
 import bio.knowledge.server.model.BeaconConceptDetail;
 import bio.knowledge.server.model.BeaconConceptWithDetails;
+import bio.knowledge.server.model.BeaconPredicate;
 import bio.knowledge.server.model.BeaconStatement;
 import bio.knowledge.server.model.BeaconStatementAnnotation;
 import bio.knowledge.server.model.BeaconStatementCitation;
@@ -33,6 +34,7 @@ import bio.knowledge.server.model.BeaconStatementWithDetails;
 import bio.knowledge.server.ontology.NdexConceptCategoryService;
 import bio.knowledge.server.ontology.NdexConceptCategoryService.NameSpace;
 import bio.knowledge.server.ontology.OntologyService;
+import bio.knowledge.server.impl.Ndex;
 
 @Service
 public class Translator {
@@ -56,16 +58,13 @@ public class Translator {
 	public static final String    NETWORK_NODE_DELIMITER = "_";
 	public static final Character NETWORK_NODE_DELIMITER_CHAR = '_';
 	
-	public static final String NDEX_NS = "NDEX:";
 	public static final String DEFINED_BY = "http://starinformatics.com";
-
-	private static final String NDEX_URL = "http://www.ndexbio.org/#/network/";
 
 	Map<StatementTriple, Integer> subjectObjectRegistry = new HashMap<StatementTriple, Integer>();
 	Map<String, Set<String>> categoryPrefixRegistry = new HashMap<String, Set<String>>();
 
 	private String makeNdexId(Node node) {
-		return NDEX_NS + node.getNetworkId() + NETWORK_NODE_DELIMITER + node.getId();
+		return Ndex.NDEX_NS + node.getNetworkId() + NETWORK_NODE_DELIMITER + node.getId();
 	}
 	
 	/**
@@ -185,8 +184,8 @@ public class Translator {
 
 		result.setId(statementId);
 		result.setIsDefinedBy(DEFINED_BY);
-		String networkId = statementId.split(Translator.NETWORK_NODE_DELIMITER)[0].replaceFirst(Translator.NDEX_NS, "");
-		result.setProvidedBy(NDEX_URL + networkId);
+		String networkId = statementId.split(Translator.NETWORK_NODE_DELIMITER)[0].replaceFirst(Ndex.NDEX_NS, "");
+		result.setProvidedBy(Ndex.NDEX_URL + networkId);
 
 		if (edge.getAttributes() != null) {
 			for (Attribute a : edge.getAttributes()) {
@@ -326,37 +325,26 @@ public class Translator {
 	// TODO: update biolink predicate matching and negated 
 	private BeaconStatementPredicate edgeToPredicate(Edge edge) {
 		
-		BeaconStatementPredicate predicate = new BeaconStatementPredicate();
+		BeaconStatementPredicate stmtPredicate = new BeaconStatementPredicate();
 		
 		/*
 		 * Harvest the Predicate here? 
 		 * Until you have a better solution, just
 		 * convert the name into a synthetic CURIE
 		 */
-		String pName  = edge.getName();
-		if(pName==null ||pName.isEmpty()) {
-			pName = "related_to";
+		String edgeLabel  = edge.getName();
+		if(edgeLabel==null ||edgeLabel.isEmpty()) {
+			edgeLabel = "related_to";
 		}
-		pName = pName.toLowerCase();
-		String biolinkName = ontology.predToBiolinkEdgeLabel(pName);
-		String pCurie = "";
-		if(NameSpace.isCurie(pName))
-			/*
-			 *  The edgename looks like a 
-			 *  CURIE so use it directly
-			 */
-			pCurie = pName;
-		else
-			// Treat as an nDex defined CURIE
-			pCurie = ontology.convertToSnakeCase(NDEX_NS+edge.getName());
+		edgeLabel = edgeLabel.toLowerCase();
 		
-		predicateRegistry.indexPredicate( pCurie, biolinkName, "" );
+		BeaconPredicate p = predicateRegistry.indexPredicate( edgeLabel );
 		
-		predicate.setRelation(pCurie);
-		//predicate.setEdgeLabel(pName);
-		predicate.setEdgeLabel(biolinkName);
+		stmtPredicate.setEdgeLabel(p.getEdgeLabel());
+		stmtPredicate.setRelation(p.getRelation());
+		stmtPredicate.setNegated(false);
 		
-		return predicate;
+		return stmtPredicate;
 	}
 	
 	private BeaconStatementObject nodeToObject(Node node) {
