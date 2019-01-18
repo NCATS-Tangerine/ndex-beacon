@@ -26,10 +26,10 @@ If the build is failing make sure you have pulled all git submodules, you may ha
 Once the JAR file has been built you may execute it:
 
 ```shell
-java -jar build/libs/ndex-beacon-#.#.#.jar
+java -jar server/build/libs/ndex-beacon-#.#.#.jar
 ```
 
-where *#.#.#* is the release number of the application (e.g. 1.0.18)
+where *#.#.#* is the release number of the application (e.g. 1.0.18). (You may also be able to use an astrix as a wild card, and use the command `java -jar server/build/libs/ndex-beacon-*.jar`).
 
 ### Running Using Docker (Linux) ##
 
