@@ -25,7 +25,7 @@ If the build is failing make sure you have pulled all git submodules, you may ha
 
 Once the JAR file has been built you may execute it:
 
-```shell
+```
 java -jar server/build/libs/ndex-beacon-#.#.#.jar
 ```
 
