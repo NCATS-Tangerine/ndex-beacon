@@ -44,7 +44,6 @@ sh install.sh
 Then with Docker installed, you can build an image from the `Dockerfile` provided in the main directory of this project.
 
 ```shell
-cd ndex
 docker build -t ncats:ndex .
 ```
 
@@ -54,7 +53,7 @@ Within the Docker container, the Springboot Server is set to run at `localhost:8
 docker run -p 8080:8080 ncats:ndex
 ```
 
-Now open your browser to `localhost:8080/api` to see the application running.
+Now open your browser to http://localhost:8080/beacon/ndex/swagger-ui.html to see the application running.
 
 ## Overview (developer's comments)
 
