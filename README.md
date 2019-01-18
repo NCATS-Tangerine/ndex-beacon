@@ -7,7 +7,7 @@ Knowledge Beacon wrapper for the NDex Bio graph repository
 Clone the project:
 
 ```shell
-git clone https://github.com/NCATS-Tangerine/ndex-beacon.git
+git clone --recursive https://github.com/NCATS-Tangerine/ndex-beacon.git
 ```
 
 You can run the project directly on your machine or from within a Docker container.
