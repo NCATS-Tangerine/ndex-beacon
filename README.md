@@ -21,8 +21,9 @@ Build the project with Gradle (we are currently using Gradle 4.7). From the root
 ```shell
 gradle build
 ```
+If the build is failing make sure you have pulled all git submodules, you may have missed the `--recursive` flag when cloning.
 
-Execute the JAR file:
+Once the JAR file has been built you may execute it:
 
 ```shell
 java -jar build/libs/ndex-beacon-#.#.#.jar
