@@ -31,6 +31,8 @@ java -jar server/build/libs/ndex-beacon-#.#.#.jar
 
 where *#.#.#* is the release number of the application (e.g. 1.0.18). (You may also be able to use an astrix as a wild card, and use the command `java -jar server/build/libs/ndex-beacon-*.jar`).
 
+You may then view the Swagger UI at http://localhost:8080/beacon/ndex/swagger-ui.html
+
 ### Running Using Docker (Linux) ##
 
 Docker can be installed through a shell script available online.
