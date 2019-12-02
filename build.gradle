@@ -1,5 +1,5 @@
 ext {
-	gradleVersion            = '4.7'
+	# gradleVersion            = '4.7' # superfluous?
 	apacheHTTPClientVersion  = '4.5.2'
 	springVersion            = '5.0.4.RELEASE'
 	jacksonXmlVersion        = '2.9.5'
@@ -94,9 +94,12 @@ eclipse {
     }
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = "$gradleVersion"
-}
+#
+# Superfluous?
+#
+# task wrapper(type: Wrapper) {
+#    gradleVersion = "$gradleVersion"
+#}
 
 project(':server') {
 
