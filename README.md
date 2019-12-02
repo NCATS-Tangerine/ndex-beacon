@@ -14,7 +14,7 @@ You can run the project directly on your machine or from within a Docker contain
 
 ### Running Directly on Machine
 
-*[Optional]* Set the port you want to run the beacon on. By default the port is set to **8080** (localhost:8080). Open `server/src/main/resources/application.properties`, and change `server.port`.
+*[Optional]* Set the port you want to run the beacon on. By default the port is set to **8076** (localhost:8076). Open `server/src/main/resources/application.properties`, and change `server.port`.
 
 Build the project with Gradle (we are currently using Gradle 5.2). From the root folder of the project:
 
@@ -31,7 +31,7 @@ java -jar server/build/libs/ndex-beacon-#.#.#.jar
 
 where *#.#.#* is the release number of the application (e.g. 1.0.18). (You may also be able to use an astrix as a wild card, and use the command `java -jar server/build/libs/ndex-beacon-*.jar`).
 
-You may then view the Swagger UI at http://localhost:8080/beacon/ndex/swagger-ui.html
+You may then view the Swagger UI at http://localhost:8076/beacon/ndex/swagger-ui.html
 
 ### Running Using Docker (Linux) ##
 
@@ -47,13 +47,13 @@ Then with Docker installed, you can build an image from the `Dockerfile` provide
 docker build -t ncats:ndex .
 ```
 
-Within the Docker container, the Springboot Server is set to run at `localhost:8080`. You can expose and re-map the ports when you run a Docker image with the `-p` flag.
+Within the Docker container, the Springboot Server is set to run at `localhost:8076`. You can expose and re-map the ports when you run a Docker image with the `-p` flag.
 
 ```shell
-docker run -p 8080:8080 ncats:ndex
+docker run -p 8076:8076 ncats:ndex
 ```
 
-Now open your browser to http://localhost:8080/beacon/ndex/swagger-ui.html to see the application running.
+Now open your browser to http://localhost:8076/beacon/ndex/swagger-ui.html to see the application running.
 
 ## Overview (developer's comments)
 
