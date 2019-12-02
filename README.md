@@ -29,7 +29,7 @@ Once the JAR file has been built you may execute it:
 java -jar server/build/libs/ndex-beacon-#.#.#.jar
 ```
 
-where *#.#.#* is the release number of the application (e.g. 1.0.18). (You may also be able to use an astrix as a wild card, and use the command `java -jar server/build/libs/ndex-beacon-*.jar`).
+where *#.#.#* is the release number of the application (e.g. 1.1.2). (You may also be able to use an astrix as a wild card, and use the command `java -jar server/build/libs/ndex-beacon-*.jar`).
 
 You may then view the Swagger UI at http://localhost:8076/beacon/ndex/swagger-ui.html
 
