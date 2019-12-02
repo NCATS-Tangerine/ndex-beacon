@@ -16,12 +16,12 @@ You can run the project directly on your machine or from within a Docker contain
 
 *[Optional]* Set the port you want to run the beacon on. By default the port is set to **8080** (localhost:8080). Open `server/src/main/resources/application.properties`, and change `server.port`.
 
-Build the project with Gradle (we are currently using Gradle 4.7). From the root folder of the project:
+Build the project with Gradle (we are currently using Gradle 5.2). From the root folder of the project:
 
 ```shell
 gradle build
 ```
-If the build is failing make sure you have pulled all git submodules, you may have missed the `--recursive` flag when cloning. If it's still failing check that you're using Gradle version 4.5 or higher, as previous versions will likely fail.
+If the build is failing make sure you have pulled all git submodules, you may have missed the `--recursive` flag when cloning. If it's still failing check that you're using Gradle version 5.2 or higher, as previous versions will likely fail.
 
 Once the JAR file has been built you may execute it:
 
