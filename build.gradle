@@ -1,5 +1,4 @@
 ext {
-	# gradleVersion            = '4.7' # superfluous?
 	apacheHTTPClientVersion  = '4.5.2'
 	springVersion            = '5.0.4.RELEASE'
 	jacksonXmlVersion        = '2.9.5'
@@ -93,13 +92,6 @@ eclipse {
          containers 'org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8'
     }
 }
-
-#
-# Superfluous?
-#
-# task wrapper(type: Wrapper) {
-#    gradleVersion = "$gradleVersion"
-#}
 
 project(':server') {
 
