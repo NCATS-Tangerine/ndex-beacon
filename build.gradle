@@ -1,4 +1,5 @@
 ext {
+    gradleVersion            = '5.2'
 	apacheHTTPClientVersion  = '4.5.2'
 	springVersion            = '5.0.4.RELEASE'
 	jacksonXmlVersion        = '2.9.5'
@@ -29,6 +30,10 @@ buildscript {
         classpath("io.spring.gradle:dependency-management-plugin:$springDependencyMgmtVersion")
         classpath("com.eriwen:gradle-css-plugin:2.14.0")
     }
+}
+
+wrapper {
+    gradleVersion = "$gradleVersion"
 }
 
 allprojects {
