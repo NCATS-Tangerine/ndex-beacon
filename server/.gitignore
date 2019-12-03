@@ -1,4 +1,5 @@
 build/
+out/
 target/
 .swagger-codegen-ignore
 /README.md
