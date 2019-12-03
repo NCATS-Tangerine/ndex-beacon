@@ -42,3 +42,6 @@ hs_err_pid*
 
 # VSCode
 .vscode
+
+# IntelliJ IDEA
+.idea/
