@@ -1,12 +1,19 @@
+plugins {
+	id 'org.springframework.boot' version '2.2.1.RELEASE'
+	id 'io.spring.dependency-management' version '1.0.8.RELEASE'
+	id 'java'
+}
+
 ext {
-    gradleVersion            = '5.2'
+	gradleVersion            = '5.2'
 	apacheHTTPClientVersion  = '4.5.2'
-	springVersion            = '5.0.4.RELEASE'
+	springVersion            = '5.2.2'
+	springBootVersion        = '2.2.1.RELEASE'
+	springDependencyMgmtVersion = '1.0.8.RELEASE'
 	jacksonXmlVersion        = '2.9.5'
 	logbackCoreVersion       = '1.2.3'
-	springBootVersion        = '2.0.0.RC1'
-	springDataVersion        = 'Kay-SR3'
-	springDataNeo4jVersion   = '5.0.4.RELEASE'
+	springDataVersion        = 'Moore-SR2'
+	springDataNeo4jVersion   = '5.2.2'
 	springNeo4jVersion       = '3.3.4'
 	springNeo4jOGMVersion    = '3.0.3'
 	springfoxSwaggerVersion  = '2.5.0'
@@ -14,37 +21,40 @@ ext {
 	ioSwaggerJaxrsVersion    = '1.5.19'
 }
 
-buildscript {
-    ext {
-        springBootVersion = '2.0.0.RC1'
-        springDependencyMgmtVersion = '1.0.4.RELEASE'
-    }
-    repositories {
-        mavenCentral()
-        maven { url "https://repo.spring.io/libs-release" }
-		maven { url 'https://repo.spring.io/libs-milestone' }
-        maven { url "https://plugins.gradle.org/m2/" }
-    }
-    dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:$springBootVersion") 
-        classpath("io.spring.gradle:dependency-management-plugin:$springDependencyMgmtVersion")
-        classpath("com.eriwen:gradle-css-plugin:2.14.0")
-    }
+wrapper {
+	gradleVersion = "$gradleVersion"
 }
 
-wrapper {
-    gradleVersion = "$gradleVersion"
+repositories {
+	mavenCentral()
+	maven { url "https://repo.spring.io/libs-release" }
+	maven { url 'https://repo.spring.io/libs-milestone' }
+	maven { url "https://plugins.gradle.org/m2/" }
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter'
+	testImplementation('org.springframework.boot:spring-boot-starter-test') {
+		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+	}
+	implementation "org.springframework.boot:spring-boot-gradle-plugin:$springBootVersion"
+	implementation "io.spring.gradle:dependency-management-plugin:$springDependencyMgmtVersion"
+	implementation "com.eriwen:gradle-css-plugin:2.14.0"
+}
+
+test {
+	useJUnitPlatform()
 }
 
 allprojects {
 
-    version = '1.1.2'  
+    version = '2.0.0'
     
     apply plugin: 'maven'
     apply plugin: 'java'
     apply plugin: 'eclipse-wtp'
 
-	group = 'bio.knowledge'
+	group = 'bio.knowledge.beacon'
 	
 	sourceCompatibility = 1.8
 	targetCompatibility = 1.8
@@ -60,22 +70,21 @@ allprojects {
 	    maven { url 'https://repo.spring.io/libs-milestone' }
 	    maven { url 'https://repo.spring.io/libs-snapshot' }
 	    maven { url "https://m2.neo4j.org" }
-	    maven { url 'http://maven.vaadin.com/vaadin-addons' }
 	    maven { url "http://mvnrepository.com/" }
    }
 
 	dependencies {
-		compile "ch.qos.logback:logback-core:$logbackCoreVersion"
-		compile "ch.qos.logback:logback-classic:$logbackCoreVersion"
-		compile "ch.qos.logback:logback-access:$logbackCoreVersion"
+		implementation "ch.qos.logback:logback-core:$logbackCoreVersion"
+		implementation "ch.qos.logback:logback-classic:$logbackCoreVersion"
+		implementation "ch.qos.logback:logback-access:$logbackCoreVersion"
 		
-		testCompile 'junit:junit:4.12'
+		testImplementation 'junit:junit:4.12'
 	}
 
 }
 
 dependencies {
-    compile project(':server')
+    implementation project(':server')
 }
 
 configurations {
@@ -87,15 +96,8 @@ project(':ontology') {
 
     dependencies {
  		// https://mvnrepository.com/artifact/org.apache.commons/commons-text
-		compile "org.apache.commons:commons-text:1.2"
+		implementation "org.apache.commons:commons-text:1.2"
 	}
-}
-
-eclipse {
-    classpath {
-         containers.remove('org.eclipse.jdt.launching.JRE_CONTAINER')
-         containers 'org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8'
-    }
 }
 
 project(':server') {
@@ -111,71 +113,43 @@ project(':server') {
 	
 	dependencies {
 	
-		compile project(':ontology')
+		implementation project(':ontology')
 
-	    compile 'commons-cli:commons-cli:1.1'
-	    compile 'javax.validation:validation-api:1.1.0.Final'
-	    compile 'org.hibernate:hibernate-validator:5.2.2.Final'
+	    implementation 'commons-cli:commons-cli:1.1'
+	    implementation 'javax.validation:validation-api:1.1.0.Final'
+	    implementation 'org.hibernate:hibernate-validator:5.2.2.Final'
 	    	
-		compile "org.springframework:spring-context:$springVersion"
-		compile "org.springframework:spring-context-support:$springVersion"
-		compile "org.springframework:spring-web:$springVersion"
-		compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
-		compile "org.springframework.boot:spring-boot-starter-tomcat:$springBootVersion"
-		compile "org.springframework.boot:spring-boot-starter-test:$springBootVersion" 
-		compile "org.springframework:spring-webmvc:$springVersion"
-		    	
-	    compile "io.springfox:springfox-swagger2:$springfoxSwaggerVersion"
-	    compile "io.springfox:springfox-swagger-ui:$springfoxSwaggerVersion"
-	
-		compile "com.fasterxml.jackson.datatype:jackson-datatype-joda:$jacksonXmlVersion"
-	
-	    compile "joda-time:joda-time:$jodaTimeVersion"
+		implementation "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
+		implementation "org.springframework.boot:spring-boot-starter-tomcat:$springBootVersion"
 
-		compile "io.swagger:swagger-jaxrs:$ioSwaggerJaxrsVersion"
-	}
-	    
-    uploadArchives {
-	    repositories {
-	        mavenDeployer {
-	            pom {
-	                project {
-	                    parent {
-	                        groupId "org.springframework.boot"
-	                        artifactId "spring-boot-starter-parent"
-	                        version "$springBootVersion"
-	                    }
-	                }
-	            }
-	        }
-	    }
-	}
+	    implementation "io.springfox:springfox-swagger2:$springfoxSwaggerVersion"
+	    implementation "io.springfox:springfox-swagger-ui:$springfoxSwaggerVersion"
 	
-		dependencyManagement {
-		imports { 
-			//mavenBom "org.springframework.cloud:spring-cloud-starter-parent:Angel.SR3" 
-			mavenBom "org.springframework:spring-framework-bom:${springVersion}"
-			mavenBom "org.springframework.data:spring-data-releasetrain:${springDataVersion}"
+		implementation "com.fasterxml.jackson.datatype:jackson-datatype-joda:$jacksonXmlVersion"
+	
+	    implementation "joda-time:joda-time:$jodaTimeVersion"
+
+		implementation "io.swagger:swagger-jaxrs:$ioSwaggerJaxrsVersion"
+	}
+
+}
+
+jar {
+	from sourceSets.main.allSource
+	manifest {
+		attributes("provider": "STAR Informatics")
+		attributes("Main-Class": "bio.knowledge.server.Swagger2SpringBoot")
+	}
+}
+
+springBoot {
+	mainClassName = "bio.knowledge.server.Swagger2SpringBoot"
+	buildInfo {
+		properties {
+			artifact = 'bio.knowledge.beacon.ndex'
+			version = '2.0.0'
+			group = 'bio.knowledge.translator'
+			name = 'nDex Bio Knowledge Beacon Wrapper'
 		}
-	}
-	
-	springBoot {
-		mainClassName = "bio.knowledge.server.Swagger2SpringBoot"
-		buildInfo {
-			properties {
-				artifact = 'bio.knowledge.translator'
-				version = '1.1.1'
-				group = 'bio.knowledge.ndex'
-				name = 'nDex Bio Knowledge Beacon Wrapper'
-			}
-		}
-	}
-	
-	jar {
-        from sourceSets.main.allSource
-	    manifest {
-	    	attributes("provider": "STAR Informatics")
-	       attributes("Main-Class": "bio.knowledge.server.Swagger2SpringBoot")
-	    }
 	}
 }
