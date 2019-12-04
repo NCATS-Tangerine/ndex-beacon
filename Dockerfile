@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:xenial
 MAINTAINER Richard Bruskiewich <richard@starinformatics.com>
 USER root
 RUN apt-get -y update && apt-get -y install default-jre-headless
