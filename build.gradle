@@ -19,6 +19,7 @@ ext {
 	springfoxSwaggerVersion  = '2.5.0'
 	jodaTimeVersion          = '2.9.9'
 	ioSwaggerJaxrsVersion    = '1.5.19'
+	hibernateValidatorVersion = '6.1.0.Final'
 }
 
 wrapper {
@@ -120,8 +121,8 @@ project(':server') {
 		implementation 'com.sun.xml.bind:jaxb-impl:2.3.0'
 
 	    implementation 'commons-cli:commons-cli:1.1'
-	    implementation 'javax.validation:validation-api:1.1.0.Final'
-	    implementation 'org.hibernate:hibernate-validator:5.2.2.Final'
+
+	    implementation "org.hibernate:hibernate-validator:$hibernateValidatorVersion"
 	    	
 		implementation "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
 		implementation "org.springframework.boot:spring-boot-starter-tomcat:$springBootVersion"
