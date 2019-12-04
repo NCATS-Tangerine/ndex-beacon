@@ -107,7 +107,8 @@ Within the Docker container, the Springboot Server is set to run at `localhost:8
 ports when you run a Docker image with the `-p` flag.
 
 ```shell
-docker run -p 8076:8076 ncats:ndex
+# run it as a daemon...
+docker run -d -p 8076:8076 ncats:ndex
 ```
 
 Now open your browser to http://localhost:8076/beacon/ndex/swagger-ui.html to see the application running.
