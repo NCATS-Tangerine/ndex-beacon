@@ -112,6 +112,18 @@ docker run -p 8076:8076 ncats:ndex
 
 Now open your browser to http://localhost:8076/beacon/ndex/swagger-ui.html to see the application running.
 
+## Troubleshooting
+
+_non sequitur_: This is not specific to this project, but if your `docker build` exhibits the following error:
+
+```
+Step 4/6 : RUN apt-get -y update && apt-get -y install default-jre-headless
+ ---> Running in ff3a2bb4b16e
+Err:1 http://archive.ubuntu.com/ubuntu bionic InRelease
+  Temporary failure resolving 'archive.ubuntu.com'
+```
+etc., then see the solution [here](https://development.robinwinslow.uk/2016/06/23/fix-docker-networking-dns/). 
+
 ## Overview (developer's comments)
 
 This beacon queries for NDEx networks by our search parameters, and then queries those resulting networks again for 
