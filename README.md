@@ -108,7 +108,7 @@ ports when you run a Docker image with the `-p` flag.
 
 ```shell
 # run it as a daemon...
-docker run -d -p 8076:8076 -name ndex ncats:ndex
+docker run -d -p 8076:8076 --name ndex ncats:ndex
 ```
 
 Now open your browser to http://localhost:8076/beacon/ndex/swagger-ui.html to see the application running.
